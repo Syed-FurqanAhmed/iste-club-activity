@@ -14,6 +14,7 @@
   --bg-alt:#F3EFE6;
   --primary:#1E1B4B;
   --secondary:#6B63B5;
+  --nav-height:120px;
 }
 
 /* RESET */
@@ -27,9 +28,10 @@ body{
   overflow-x:hidden;
 }
 
-section{scroll-margin-top:125px}
+/* Prevent sticky overlap */
+section{scroll-margin-top:var(--nav-height)}
 
-/* ================= ANIMATIONS ================= */
+/* ANIMATIONS */
 @keyframes fadeDown{from{opacity:0;transform:translateY(-30px)}to{opacity:1}}
 @keyframes fadeUp{from{opacity:0;transform:translateY(40px)}to{opacity:1}}
 @keyframes floatPoster{
@@ -37,19 +39,17 @@ section{scroll-margin-top:125px}
   50%{transform:translateY(-12px)}
   100%{transform:translateY(0)}
 }
-
 .reveal{opacity:0;transform:translateY(40px);transition:1s ease}
 .reveal.active{opacity:1;transform:none}
 
-/* ================= NAVBAR ================= */
+/* NAVBAR */
 nav{
-  position:relative; /* IMPORTANT FIX */
   display:flex;
   justify-content:space-between;
   align-items:center;
   padding:32px 8%;
   background:var(--bg);
-  transition:.4s ease;
+  position:relative;
   z-index:999;
 }
 nav.sticky{
@@ -66,6 +66,10 @@ nav.sticky{
 .logo-text span{font-size:26px}
 .logo-text small{font-size:12px;color:var(--secondary)}
 
+.nav-links{
+  display:flex;
+  align-items:center;
+}
 .nav-links a{
   margin-left:26px;
   text-decoration:none;
@@ -79,7 +83,21 @@ nav.sticky{
   border-radius:8px;
 }
 
-/* ================= HERO ================= */
+/* HAMBURGER */
+.hamburger{
+  display:none;
+  flex-direction:column;
+  gap:6px;
+  cursor:pointer;
+}
+.hamburger span{
+  width:26px;
+  height:3px;
+  background:var(--primary);
+  border-radius:3px;
+}
+
+/* HERO */
 .hero{
   display:grid;
   grid-template-columns:1.1fr 1fr;
@@ -90,18 +108,16 @@ nav.sticky{
 .hero h1{font-size:56px;margin-bottom:25px}
 .hero p{font-size:22px;color:var(--secondary);margin-bottom:35px}
 .btn{
-  display:inline-block;
   background:var(--primary);
   color:white;
   padding:16px 40px;
   border-radius:10px;
-  text-decoration:none;
   border:none;
   cursor:pointer;
 }
 .hero-img img{width:100%;max-width:520px}
 
-/* ================= INFO BOX ================= */
+/* INFO */
 .iste-info-box{
   padding:100px 8%;
   text-align:center;
@@ -119,7 +135,6 @@ nav.sticky{
 .iste-box-item h3{
   font-family:'Lexend Deca',sans-serif;
   font-size:22px;
-  margin-bottom:16px;
 }
 .iste-box-item p{
   font-size:16px;
@@ -128,7 +143,7 @@ nav.sticky{
   margin:auto;
 }
 
-/* ================= ACTIVITY ================= */
+/* ACTIVITY */
 .activity{
   background:var(--bg-alt);
   padding:100px 8%;
@@ -136,8 +151,8 @@ nav.sticky{
   grid-template-columns:1.1fr 1fr;
   gap:60px;
 }
-.activity h2{font-size:46px;margin-bottom:20px}
-.activity p{font-size:20px;color:var(--secondary);margin-bottom:25px}
+.activity h2{font-size:46px}
+.activity p{font-size:20px;color:var(--secondary)}
 .poster img{
   max-width:420px;
   width:100%;
@@ -148,14 +163,14 @@ nav.sticky{
   animation:floatPoster 6s ease-in-out infinite;
 }
 
-/* ================= FOOTER ================= */
+/* FOOTER */
 footer{
   background:var(--primary);
   color:white;
   padding:26px 8%;
 }
 
-/* ================= MODAL ================= */
+/* MODAL */
 .modal{
   display:none;
   position:fixed;
@@ -171,19 +186,18 @@ footer{
   margin:5vh auto;
   border-radius:14px;
   overflow:hidden;
-  position:relative;
 }
 .modal iframe{width:100%;height:100%}
 .close-btn{
   position:fixed;
   top:16px;
   right:18px;
-  font-size:32px;
-  color:white;
-  background:rgba(0,0,0,.6);
   width:44px;
   height:44px;
   border-radius:50%;
+  background:black;
+  color:white;
+  font-size:28px;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -191,7 +205,7 @@ footer{
   z-index:10002;
 }
 
-/* ================= SUCCESS ================= */
+/* SUCCESS */
 .success-popup{
   display:none;
   position:fixed;
@@ -206,38 +220,22 @@ footer{
   padding:40px 50px;
   border-radius:14px;
   text-align:center;
-  animation:fadeUp .4s ease;
 }
 .checkmark{
   width:80px;height:80px;
   background:#4CAF50;
   color:white;
   border-radius:50%;
-  line-height:80px;
   font-size:46px;
-  margin:auto auto 20px;
+  line-height:80px;
+  margin:auto;
 }
 
-/* ================= HAMBURGER ================= */
-.hamburger{
-  display:none;
-  flex-direction:column;
-  gap:6px;
-  cursor:pointer;
-}
-.hamburger span{
-  width:26px;
-  height:3px;
-  background:var(--primary);
-  border-radius:3px;
-}
-
-/* ================= MOBILE ================= */
+/* MOBILE */
 @media(max-width:900px){
-  nav{flex-direction:row}
   .hero,.activity{grid-template-columns:1fr;text-align:center}
-  .iste-box-grid{grid-template-columns:1fr;gap:60px}
-
+  .iste-box-grid{grid-template-columns:1fr}
+  .hamburger{display:flex}
   .nav-links{
     position:absolute;
     top:100%;
@@ -248,16 +246,10 @@ footer{
     display:none;
     flex-direction:column;
     gap:18px;
-    box-shadow:0 12px 30px rgba(0,0,0,.15);
-    align-items:center;   /* ALIGN FIX */
-    text-align:center;    /* ALIGN FIX */
-  }
-  .nav-links a{
-    margin:0;             /* ALIGN FIX */
-    width:100%;
+    align-items:center;
   }
   .nav-links.show{display:flex}
-  .hamburger{display:flex}
+  .nav-links a{margin:0;width:100%}
 }
 </style>
 </head>
@@ -307,19 +299,16 @@ footer{
 <section class="activity reveal" id="activity">
   <div>
     <h2>Quick Draw UI Battle</h2>
-    <p>📅 17 Dec 2025 · 2:30 PM · N408<br>🏫 Dept. of Information Science & Engineering, TOCE</p>
-    <a class="btn" href="javascript:void(0)" onclick="openForm()">Register Now</a>
+    <p>📅 17 Dec 2025 · 2:30 PM · N408<br>🏫 Dept. of ISE, TOCE</p>
+    <button class="btn" onclick="openForm()">Register Now</button>
   </div>
   <div class="poster">
     <img src="images/Poster 17Dec.jpg">
   </div>
 </section>
 
-<footer>
-  © 2025. All Rights Reserved.
-</footer>
+<footer>© 2025. All Rights Reserved.</footer>
 
-<!-- MODAL -->
 <div id="formModal" class="modal">
   <span class="close-btn" onclick="closeForm()">×</span>
   <div class="modal-content">
@@ -344,6 +333,8 @@ const links=document.querySelectorAll(".nav-links a");
 
 window.addEventListener("scroll",()=>{
   nav.classList.toggle("sticky",scrollY>30);
+  document.documentElement.style.setProperty("--nav-height", nav.offsetHeight+"px");
+
   sections.forEach(sec=>{
     if(scrollY>=sec.offsetTop-150){
       links.forEach(l=>l.classList.remove("active"));
@@ -363,6 +354,14 @@ const obs=new IntersectionObserver(entries=>{
 },{threshold:.15});
 document.querySelectorAll(".reveal").forEach(el=>obs.observe(el));
 
+function toggleMenu(){
+  document.querySelector(".nav-links").classList.toggle("show");
+}
+
+document.querySelectorAll(".nav-links a").forEach(link=>{
+  link.addEventListener("click",()=>document.querySelector(".nav-links").classList.remove("show"));
+});
+
 function openForm(){
   formModal.style.display="block";
   document.body.style.overflow="hidden";
@@ -376,15 +375,6 @@ function markSubmitted(){
   successPopup.style.display="flex";
   setTimeout(()=>successPopup.style.display="none",3000);
 }
-function toggleMenu(){
-  document.querySelector(".nav-links").classList.toggle("show");
-}
-/* Auto-close hamburger after clicking a link */
-document.querySelectorAll(".nav-links a").forEach(link => {
-  link.addEventListener("click", () => {
-    document.querySelector(".nav-links").classList.remove("show");
-  });
-});
 </script>
 
 </body>
