@@ -1,381 +1,779 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="en">
+
 <head>
+
 <meta charset="UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>ISTE Club Tech Activity</title>
 
+
+
 <link href="https://fonts.googleapis.com/css2?family=Questrial&display=swap" rel="stylesheet">
+
 <link href="https://fonts.googleapis.com/css2?family=Lexend+Deca&display=swap" rel="stylesheet">
 
+
+
 <style>
+
 :root{
-  --bg:#FFF7EA;
-  --bg-alt:#F3EFE6;
-  --primary:#1E1B4B;
-  --secondary:#6B63B5;
-  --nav-height:120px;
+
+  --bg:#FFF7EA;
+
+  --bg-alt:#F3EFE6;
+
+  --primary:#1E1B4B;
+
+  --secondary:#6B63B5;
+
 }
+
+
 
 /* RESET */
+
 *{margin:0;padding:0;box-sizing:border-box;}
+
 html{scroll-behavior:smooth;}
+
 body{
-  font-family:'Questrial',sans-serif;
-  background:var(--bg);
-  color:var(--primary);
-  letter-spacing:3px;
-  overflow-x:hidden;
+
+  font-family:'Questrial',sans-serif;
+
+  background:var(--bg);
+
+  color:var(--primary);
+
+  letter-spacing:3px;
+
+  overflow-x:hidden;
+
 }
 
-/* Prevent sticky overlap */
-section{scroll-margin-top:var(--nav-height)}
 
-/* ANIMATIONS */
+
+section{scroll-margin-top:125px}
+
+
+
+/* ================= ANIMATIONS ================= */
+
 @keyframes fadeDown{from{opacity:0;transform:translateY(-30px)}to{opacity:1}}
+
 @keyframes fadeUp{from{opacity:0;transform:translateY(40px)}to{opacity:1}}
+
 @keyframes floatPoster{
-  0%{transform:translateY(0)}
-  50%{transform:translateY(-12px)}
-  100%{transform:translateY(0)}
+
+  0%{transform:translateY(0)}
+
+  50%{transform:translateY(-12px)}
+
+  100%{transform:translateY(0)}
+
 }
+
+
+
 .reveal{opacity:0;transform:translateY(40px);transition:1s ease}
+
 .reveal.active{opacity:1;transform:none}
 
-/* NAVBAR */
+
+
+/* ================= NAVBAR ================= */
+
 nav{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:32px 8%;
-  background:var(--bg);
-  position:relative;
-  z-index:999;
+
+  position:relative; /* IMPORTANT FIX */
+
+  display:flex;
+
+  justify-content:space-between;
+
+  align-items:center;
+
+  padding:32px 8%;
+
+  background:var(--bg);
+
+  transition:.4s ease;
+
+  z-index:999;
+
 }
+
 nav.sticky{
-  position:fixed;
-  top:0;left:0;width:100%;
-  padding:16px 8%;
-  background:rgba(255,247,234,.96);
-  box-shadow:0 6px 18px rgba(0,0,0,.08);
-  animation:fadeDown .4s ease;
+
+  position:fixed;
+
+  top:0;left:0;width:100%;
+
+  padding:16px 8%;
+
+  background:rgba(255,247,234,.96);
+
+  box-shadow:0 6px 18px rgba(0,0,0,.08);
+
+  animation:fadeDown .4s ease;
+
 }
+
+
 
 .logo{display:flex;align-items:center;gap:18px}
+
 .logo img{width:120px}
+
 .logo-text span{font-size:26px}
+
 .logo-text small{font-size:12px;color:var(--secondary)}
 
-.nav-links{
-  display:flex;
-  align-items:center;
-}
+
+
 .nav-links a{
-  margin-left:26px;
-  text-decoration:none;
-  color:var(--primary);
-  font-size:15px;
+
+  margin-left:26px;
+
+  text-decoration:none;
+
+  color:var(--primary);
+
+  font-size:15px;
+
 }
+
 .nav-links a.active{
-  background:var(--primary);
-  color:white;
-  padding:10px 22px;
-  border-radius:8px;
+
+  background:var(--primary);
+
+  color:white;
+
+  padding:10px 22px;
+
+  border-radius:8px;
+
 }
 
-/* HAMBURGER */
-.hamburger{
-  display:none;
-  flex-direction:column;
-  gap:6px;
-  cursor:pointer;
-}
-.hamburger span{
-  width:26px;
-  height:3px;
-  background:var(--primary);
-  border-radius:3px;
-}
 
-/* HERO */
+
+/* ================= HERO ================= */
+
 .hero{
-  display:grid;
-  grid-template-columns:1.1fr 1fr;
-  align-items:center;
-  padding:100px 8%;
-  gap:60px;
+
+  display:grid;
+
+  grid-template-columns:1.1fr 1fr;
+
+  align-items:center;
+
+  padding:100px 8%;
+
+  gap:60px;
+
 }
+
 .hero h1{font-size:56px;margin-bottom:25px}
+
 .hero p{font-size:22px;color:var(--secondary);margin-bottom:35px}
+
 .btn{
-  background:var(--primary);
-  color:white;
-  padding:16px 40px;
-  border-radius:10px;
-  border:none;
-  cursor:pointer;
+
+  display:inline-block;
+
+  background:var(--primary);
+
+  color:white;
+
+  padding:16px 40px;
+
+  border-radius:10px;
+
+  text-decoration:none;
+
+  border:none;
+
+  cursor:pointer;
+
 }
+
 .hero-img img{width:100%;max-width:520px}
 
-/* INFO */
+
+
+/* ================= INFO BOX ================= */
+
 .iste-info-box{
-  padding:100px 8%;
-  text-align:center;
+
+  padding:100px 8%;
+
+  text-align:center;
+
 }
+
 .iste-info-box h2{
-  font-size:60px;
-  margin-bottom:90px;
+
+  font-size:60px;
+
+  margin-bottom:90px;
+
 }
+
 .iste-box-grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:90px;
+
+  display:grid;
+
+  grid-template-columns:repeat(3,1fr);
+
+  gap:90px;
+
 }
+
 .feature-icon{font-size:44px;margin-bottom:22px}
+
 .iste-box-item h3{
-  font-family:'Lexend Deca',sans-serif;
-  font-size:22px;
+
+  font-family:'Lexend Deca',sans-serif;
+
+  font-size:22px;
+
+  margin-bottom:16px;
+
 }
+
 .iste-box-item p{
-  font-size:16px;
-  line-height:1.7;
-  max-width:260px;
-  margin:auto;
+
+  font-size:16px;
+
+  line-height:1.7;
+
+  max-width:260px;
+
+  margin:auto;
+
 }
 
-/* ACTIVITY */
+
+
+/* ================= ACTIVITY ================= */
+
 .activity{
-  background:var(--bg-alt);
-  padding:100px 8%;
-  display:grid;
-  grid-template-columns:1.1fr 1fr;
-  gap:60px;
+
+  background:var(--bg-alt);
+
+  padding:100px 8%;
+
+  display:grid;
+
+  grid-template-columns:1.1fr 1fr;
+
+  gap:60px;
+
 }
-.activity h2{font-size:46px}
-.activity p{font-size:20px;color:var(--secondary)}
+
+.activity h2{font-size:46px;margin-bottom:20px}
+
+.activity p{font-size:20px;color:var(--secondary);margin-bottom:25px}
+
 .poster img{
-  max-width:420px;
-  width:100%;
-  border-radius:12px;
-  box-shadow:0 12px 30px rgba(0,0,0,.15);
+
+  max-width:420px;
+
+  width:100%;
+
+  border-radius:12px;
+
+  box-shadow:0 12px 30px rgba(0,0,0,.15);
+
 }
+
 .poster.float img{
-  animation:floatPoster 6s ease-in-out infinite;
+
+  animation:floatPoster 6s ease-in-out infinite;
+
 }
 
-/* FOOTER */
+
+
+/* ================= FOOTER ================= */
+
 footer{
-  background:var(--primary);
-  color:white;
-  padding:26px 8%;
+
+  background:var(--primary);
+
+  color:white;
+
+  padding:26px 8%;
+
 }
 
-/* MODAL */
+
+
+/* ================= MODAL ================= */
+
 .modal{
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.65);
-  z-index:10000;
+
+  display:none;
+
+  position:fixed;
+
+  inset:0;
+
+  background:rgba(0,0,0,.65);
+
+  z-index:10000;
+
 }
+
 .modal-content{
-  background:white;
-  width:90%;
-  max-width:640px;
-  height:80vh;
-  margin:5vh auto;
-  border-radius:14px;
-  overflow:hidden;
+
+  background:white;
+
+  width:90%;
+
+  max-width:640px;
+
+  height:80vh;
+
+  margin:5vh auto;
+
+  border-radius:14px;
+
+  overflow:hidden;
+
+  position:relative;
+
 }
+
 .modal iframe{width:100%;height:100%}
+
 .close-btn{
-  position:fixed;
-  top:16px;
-  right:18px;
-  width:44px;
-  height:44px;
-  border-radius:50%;
-  background:black;
-  color:white;
-  font-size:28px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  cursor:pointer;
-  z-index:10002;
+
+  position:fixed;
+
+  top:16px;
+
+  right:18px;
+
+  font-size:32px;
+
+  color:white;
+
+  background:rgba(0,0,0,.6);
+
+  width:44px;
+
+  height:44px;
+
+  border-radius:50%;
+
+  display:flex;
+
+  align-items:center;
+
+  justify-content:center;
+
+  cursor:pointer;
+
+  z-index:10002;
+
 }
 
-/* SUCCESS */
+
+
+/* ================= SUCCESS ================= */
+
 .success-popup{
-  display:none;
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.6);
-  z-index:10001;
-  align-items:center;
-  justify-content:center;
-}
-.success-box{
-  background:white;
-  padding:40px 50px;
-  border-radius:14px;
-  text-align:center;
-}
-.checkmark{
-  width:80px;height:80px;
-  background:#4CAF50;
-  color:white;
-  border-radius:50%;
-  font-size:46px;
-  line-height:80px;
-  margin:auto;
+
+  display:none;
+
+  position:fixed;
+
+  inset:0;
+
+  background:rgba(0,0,0,.6);
+
+  z-index:10001;
+
+  align-items:center;
+
+  justify-content:center;
+
 }
 
-/* MOBILE */
-@media(max-width:900px){
-  .hero,.activity{grid-template-columns:1fr;text-align:center}
-  .iste-box-grid{grid-template-columns:1fr}
-  .hamburger{display:flex}
-  .nav-links{
-    position:absolute;
-    top:100%;
-    right:8%;
-    background:var(--bg);
-    padding:24px;
-    border-radius:14px;
-    display:none;
-    flex-direction:column;
-    gap:18px;
-    align-items:center;
-  }
-  .nav-links.show{display:flex}
-  .nav-links a{margin:0;width:100%}
+.success-box{
+
+  background:white;
+
+  padding:40px 50px;
+
+  border-radius:14px;
+
+  text-align:center;
+
+  animation:fadeUp .4s ease;
+
 }
+
+.checkmark{
+
+  width:80px;height:80px;
+
+  background:#4CAF50;
+
+  color:white;
+
+  border-radius:50%;
+
+  line-height:80px;
+
+  font-size:46px;
+
+  margin:auto auto 20px;
+
+}
+
+
+
+/* ================= HAMBURGER ================= */
+
+.hamburger{
+
+  display:none;
+
+  flex-direction:column;
+
+  gap:6px;
+
+  cursor:pointer;
+
+}
+
+.hamburger span{
+
+  width:26px;
+
+  height:3px;
+
+  background:var(--primary);
+
+  border-radius:3px;
+
+}
+
+
+
+/* ================= MOBILE ================= */
+
+@media(max-width:900px){
+
+  nav{flex-direction:row}
+
+  .hero,.activity{grid-template-columns:1fr;text-align:center}
+
+  .iste-box-grid{grid-template-columns:1fr;gap:60px}
+
+
+
+  .nav-links{
+
+    position:absolute;
+
+    top:100%;
+
+    right:8%;
+
+    background:var(--bg);
+
+    padding:24px;
+
+    border-radius:14px;
+
+    display:none;
+
+    flex-direction:column;
+
+    gap:18px;
+
+    box-shadow:0 12px 30px rgba(0,0,0,.15);
+
+    align-items:center;   /* ALIGN FIX */
+
+    text-align:center;    /* ALIGN FIX */
+
+  }
+
+  .nav-links a{
+
+    margin:0;             /* ALIGN FIX */
+
+    width:100%;
+
+  }
+
+  .nav-links.show{display:flex}
+
+  .hamburger{display:flex}
+
+}
+
 </style>
+
 </head>
+
+
 
 <body>
 
+
+
 <nav id="navbar">
-  <div class="logo">
-    <img src="images/download.png">
-    <div class="logo-text">
-      <span>ISTE</span><br>
-      <small>Indian Society for Technical Education</small>
-    </div>
-  </div>
 
-  <div class="nav-links">
-    <a href="#home" class="active">Home</a>
-    <a href="#activity">Register</a>
-    <a href="#about">About</a>
-  </div>
+  <div class="logo">
 
-  <div class="hamburger" onclick="toggleMenu()">
-    <span></span><span></span><span></span>
-  </div>
+    <img src="images/download.png">
+
+    <div class="logo-text">
+
+      <span>ISTE</span><br>
+
+      <small>Indian Society for Technical Education</small>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="nav-links">
+
+    <a href="#home" class="active">Home</a>
+
+    <a href="#activity">Register</a>
+
+    <a href="#about">About</a>
+
+  </div>
+
+
+
+  <div class="hamburger" onclick="toggleMenu()">
+
+    <span></span><span></span><span></span>
+
+  </div>
+
 </nav>
 
+
+
 <section class="hero reveal" id="home">
-  <div>
-    <h1>Welcome to ISTE<br>Club Activity</h1>
-    <p>Explore Tech with ISTE Club</p>
-    <a class="btn" href="#activity">Register Now</a>
-  </div>
-  <div class="hero-img">
-    <img src="images/activity.png">
-  </div>
+
+  <div>
+
+    <h1>Welcome to ISTE<br>Club Activity</h1>
+
+    <p>Explore Tech with ISTE Club</p>
+
+    <a class="btn" href="#activity">Register Now</a>
+
+  </div>
+
+  <div class="hero-img">
+
+    <img src="images/activity.png">
+
+  </div>
+
 </section>
+
+
 
 <section class="iste-info-box reveal" id="about">
-  <h2>Welcome to ISTE Club Activity</h2>
-  <div class="iste-box-grid">
-    <div class="iste-box-item"><div class="feature-icon">🛡️</div><h3>Tech Workshops</h3><p>Hands-on workshops led by experts.</p></div>
-    <div class="iste-box-item"><div class="feature-icon">🎯</div><h3>Coding Events</h3><p>Sharpen skills via hackathons.</p></div>
-    <div class="iste-box-item"><div class="feature-icon">☁️</div><h3>Tech Community</h3><p>Join a vibrant tech community.</p></div>
-  </div>
+
+  <h2>Welcome to ISTE Club Activity</h2>
+
+  <div class="iste-box-grid">
+
+    <div class="iste-box-item"><div class="feature-icon">🛡️</div><h3>Tech Workshops</h3><p>Hands-on workshops led by experts.</p></div>
+
+    <div class="iste-box-item"><div class="feature-icon">🎯</div><h3>Coding Events</h3><p>Sharpen skills via hackathons.</p></div>
+
+    <div class="iste-box-item"><div class="feature-icon">☁️</div><h3>Tech Community</h3><p>Join a vibrant tech community.</p></div>
+
+  </div>
+
 </section>
+
+
 
 <section class="activity reveal" id="activity">
-  <div>
-    <h2>Quick Draw UI Battle</h2>
-    <p>📅 17 Dec 2025 · 2:30 PM · N408<br>🏫 Dept. of ISE, TOCE</p>
-    <button class="btn" onclick="openForm()">Register Now</button>
-  </div>
-  <div class="poster">
-    <img src="images/Poster 17Dec.jpg">
-  </div>
+
+  <div>
+
+    <h2>Quick Draw UI Battle</h2>
+
+    <p>📅 17 Dec 2025 · 2:30 PM · N408<br>🏫 Dept. of Information Science & Engineering, TOCE</p>
+
+    <a class="btn" href="javascript:void(0)" onclick="openForm()">Register Now</a>
+
+  </div>
+
+  <div class="poster">
+
+    <img src="images/Poster 17Dec.jpg">
+
+  </div>
+
 </section>
 
-<footer>© 2025. All Rights Reserved.</footer>
+
+
+<footer>
+
+  © 2025. All Rights Reserved.
+
+</footer>
+
+
+
+<!-- MODAL -->
 
 <div id="formModal" class="modal">
-  <span class="close-btn" onclick="closeForm()">×</span>
-  <div class="modal-content">
-    <iframe src="https://forms.gle/BK7f2nLmBUj1CtnY7"></iframe>
-    <div style="text-align:center;padding:18px">
-      <button class="btn" onclick="markSubmitted()">I Have Submitted</button>
-    </div>
-  </div>
+
+  <span class="close-btn" onclick="closeForm()">×</span>
+
+  <div class="modal-content">
+
+    <iframe src="https://forms.gle/BK7f2nLmBUj1CtnY7"></iframe>
+
+    <div style="text-align:center;padding:18px">
+
+      <button class="btn" onclick="markSubmitted()">I Have Submitted</button>
+
+    </div>
+
+  </div>
+
 </div>
+
+
 
 <div id="successPopup" class="success-popup">
-  <div class="success-box">
-    <div class="checkmark">✓</div>
-    <h3>Registration Successful</h3>
-  </div>
+
+  <div class="success-box">
+
+    <div class="checkmark">✓</div>
+
+    <h3>Registration Successful</h3>
+
+  </div>
+
 </div>
 
+
+
 <script>
+
 const nav=document.getElementById("navbar");
+
 const sections=document.querySelectorAll("section");
+
 const links=document.querySelectorAll(".nav-links a");
 
-window.addEventListener("scroll",()=>{
-  nav.classList.toggle("sticky",scrollY>30);
-  document.documentElement.style.setProperty("--nav-height", nav.offsetHeight+"px");
 
-  sections.forEach(sec=>{
-    if(scrollY>=sec.offsetTop-150){
-      links.forEach(l=>l.classList.remove("active"));
-      document.querySelector(`.nav-links a[href="#${sec.id}"]`)?.classList.add("active");
-    }
-  });
+
+window.addEventListener("scroll",()=>{
+
+  nav.classList.toggle("sticky",scrollY>30);
+
+  sections.forEach(sec=>{
+
+    if(scrollY>=sec.offsetTop-150){
+
+      links.forEach(l=>l.classList.remove("active"));
+
+      document.querySelector(`.nav-links a[href="#${sec.id}"]`)?.classList.add("active");
+
+    }
+
+  });
+
 });
+
+
 
 const obs=new IntersectionObserver(entries=>{
-  entries.forEach(e=>{
-    if(e.isIntersecting){
-      e.target.classList.add("active");
-      const poster=e.target.querySelector(".poster");
-      if(poster)poster.classList.add("float");
-    }
-  });
+
+  entries.forEach(e=>{
+
+    if(e.isIntersecting){
+
+      e.target.classList.add("active");
+
+      const poster=e.target.querySelector(".poster");
+
+      if(poster)poster.classList.add("float");
+
+    }
+
+  });
+
 },{threshold:.15});
+
 document.querySelectorAll(".reveal").forEach(el=>obs.observe(el));
 
-function toggleMenu(){
-  document.querySelector(".nav-links").classList.toggle("show");
-}
 
-document.querySelectorAll(".nav-links a").forEach(link=>{
-  link.addEventListener("click",()=>document.querySelector(".nav-links").classList.remove("show"));
-});
 
 function openForm(){
-  formModal.style.display="block";
-  document.body.style.overflow="hidden";
+
+  formModal.style.display="block";
+
+  document.body.style.overflow="hidden";
+
 }
+
 function closeForm(){
-  formModal.style.display="none";
-  document.body.style.overflow="auto";
+
+  formModal.style.display="none";
+
+  document.body.style.overflow="auto";
+
 }
+
 function markSubmitted(){
-  closeForm();
-  successPopup.style.display="flex";
-  setTimeout(()=>successPopup.style.display="none",3000);
+
+  closeForm();
+
+  successPopup.style.display="flex";
+
+  setTimeout(()=>successPopup.style.display="none",3000);
+
 }
+
+function toggleMenu(){ 
+  document.querySelector(".nav-lin
+ks").classList.toggle("show");
+
+} 
+/* Auto-close hamburger after clicking a link */
+
+document.querySelectorAll(".nav-links a").forEach(link => {
+
+  link.addEventListener("click", () => {
+
+    document.querySelector(".nav-links").classList.remove("show");
+
+  });
+
+});
+
 </script>
 
+
+
 </body>
+
 </html>
