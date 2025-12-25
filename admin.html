@@ -157,6 +157,36 @@
 
       /* MOBILE NAVBAR */
       @media (max-width: 900px) {
+
+      /* COMPLETELY DISABLE SCROLL ON LOGIN PAGE - MOBILE ONLY */
+      #login-page {
+        overflow: hidden !important;
+        height: 100vh !important;
+        position: fixed !important;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+      }
+
+      body:has(#login-page[style*="display: flex"]) {
+        overflow: hidden !important;
+        position: fixed !important;
+        width: 100% !important;
+        height: 100vh !important;
+      }
+
+      /* Make login box fit screen without overflow */
+      .login-container {
+        overflow: hidden !important;
+        max-height: 100vh !important;
+      }
+
+      .login-box {
+        max-height: 90vh !important;
+        overflow: hidden !important;
+      }
+
         nav {
           padding: 24px 6%;
         }
@@ -530,7 +560,11 @@
       }
 
       tbody tr:hover td {
-        background: linear-gradient(90deg, rgba(107, 99, 181, 0.08), transparent);
+        background: linear-gradient(
+          90deg,
+          rgba(107, 99, 181, 0.08),
+          transparent
+        );
       }
 
       tbody tr:last-child td {
@@ -705,13 +739,13 @@
       <div id="login-page" class="login-container">
         <div class="login-box">
           <h2>Admin Login</h2>
-          <form id="loginForm" onsubmit="handleLogin(event)">
+          <form id="loginForm" onsubmit="handleLogin(event); return false;">
             <div class="form-group">
               <label>👤 Username</label>
               <input
-                type="text"
+                type="email"
                 id="username"
-                placeholder="Enter username"
+                placeholder="Enter Email"
                 required
               />
             </div>
@@ -736,7 +770,7 @@
       <div id="admin-dashboard" class="dashboard">
         <div class="dashboard-header">
           <h2>📊 Event Management</h2>
-          <button class="logout-btn" onclick="handleLogout()">Logout</button>
+          <button id="logoutBtn" class="logout-btn" onclick="handleLogout()">Logout</button>
         </div>
 
         <div class="event-tabs">
@@ -801,223 +835,594 @@
                     </tr>
                   </thead>
                   <tbody>
-              <tr data-team="1">
-                <td class="team-col" rowspan="2">1</td>
-                <td class="name-cell" data-label="Member 1" data-info="5 - Cse">Ariff</td>
-                <td class="name-cell" data-label="Member 2" data-info="47 - Cse">Danish</td>
-                <td class="name-cell" data-label="Member 3" data-info="36 - cse">Rishikesh</td>
-                <td class="email-col" rowspan="2" data-label="Email">ariffmohammad2007@gmail.com</td>
-              </tr>
-              <tr data-team="1" class="info-row">
-                <td class="info-cell">5 - Cse</td>
-                <td class="info-cell">47 - Cse</td>
-                <td class="info-cell">36 - cse</td>
-              </tr>
-              <tr data-team="2">
-                <td class="team-col" rowspan="2">2</td>
-                <td class="name-cell" data-label="Member 1" data-info="39 - ISE">Srikara Y R</td>
-                <td class="name-cell" data-label="Member 2" data-info="27 - ISE">Prajwal Lohit</td>
-                <td class="name-cell" data-label="Member 3" data-info="17 - ISE">Prajwal G</td>
-                <td class="email-col" rowspan="2" data-label="Email">yrsrikara09@gmail.com</td>
-              </tr>
-              <tr data-team="2" class="info-row">
-                <td class="info-cell">39 - ISE</td>
-                <td class="info-cell">27 - ISE</td>
-                <td class="info-cell">17 - ISE</td>
-              </tr>
-              <tr data-team="3">
-                <td class="team-col" rowspan="2">3</td>
-                <td class="name-cell" data-label="Member 1" data-info="35 - Information science engineering">Shashwata Singh</td>
-                <td class="name-cell" data-label="Member 2" data-info="43 - Information science and engineering">Tharun R</td>
-                <td class="name-cell" data-label="Member 3" data-info="15 - Information science and engineering">Pranati Ganesh Shetty</td>
-                <td class="email-col" rowspan="2" data-label="Email">shashwatasingh370@gmail.com</td>
-              </tr>
-              <tr data-team="3" class="info-row">
-                <td class="info-cell">35 - Information science engineering</td>
-                <td class="info-cell">43 - Information science and engineering</td>
-                <td class="info-cell">15 - Information science and engineering</td>
-              </tr>
-              <tr data-team="4">
-                <td class="team-col" rowspan="2">4</td>
-                <td class="name-cell" data-label="Member 1" data-info="1OX24MT019 - Mechatronics">Rishaban MP</td>
-                <td class="name-cell" data-label="Member 2" data-info="1OX24AI004 - AIML">Andhani gowda G</td>
-                <td class="name-cell" data-label="Member 3" data-info="- - -">-</td>
-                <td class="email-col" rowspan="2" data-label="Email">rishabanmp@gmail.com</td>
-              </tr>
-              <tr data-team="4" class="info-row">
-                <td class="info-cell">1OX24MT019 - Mechatronics</td>
-                <td class="info-cell">1OX24AI004 - AIML</td>
-                <td class="info-cell">- - -</td>
-              </tr>
-              <tr data-team="5">
-                <td class="team-col" rowspan="2">5</td>
-                <td class="name-cell" data-label="Member 1" data-info="1OX24MT021 - Mechatronics">S TARUN</td>
-                <td class="name-cell" data-label="Member 2" data-info="1OX24MT001 - Mechatronics">ABHISHEK A</td>
-                <td class="name-cell" data-label="Member 3" data-info="1OX24MT008 - Mechatronics">BINDU K</td>
-                <td class="email-col" rowspan="2" data-label="Email">raghavendra.s1973@gmail.com</td>
-              </tr>
-              <tr data-team="5" class="info-row">
-                <td class="info-cell">1OX24MT021 - Mechatronics</td>
-                <td class="info-cell">1OX24MT001 - Mechatronics</td>
-                <td class="info-cell">1OX24MT008 - Mechatronics</td>
-              </tr>
-              <tr data-team="6">
-                <td class="team-col" rowspan="2">6</td>
-                <td class="name-cell" data-label="Member 1" data-info="1OX24CS076 - CSE">Mukesh Kumar Poddar</td>
-                <td class="name-cell" data-label="Member 2" data-info="1OX24CS079 - CSE">Niranjan G R</td>
-                <td class="name-cell" data-label="Member 3" data-info="- - -">-</td>
-                <td class="email-col" rowspan="2" data-label="Email">mukeshmahesh1812@gmail.com</td>
-              </tr>
-              <tr data-team="6" class="info-row">
-                <td class="info-cell">1OX24CS076 - CSE</td>
-                <td class="info-cell">1OX24CS079 - CSE</td>
-                <td class="info-cell">- - -</td>
-              </tr>
-              <tr data-team="7">
-                <td class="team-col" rowspan="2">7</td>
-                <td class="name-cell" data-label="Member 1" data-info="1OX24MT023 - Mechatronics (MT)">Sharma.N</td>
-                <td class="name-cell" data-label="Member 2" data-info="1OX24EC097 - Ece">Vignesh M</td>
-                <td class="name-cell" data-label="Member 3" data-info="- - -">-</td>
-                <td class="email-col" rowspan="2" data-label="Email">sharma2006sharmaji@gmail.com</td>
-              </tr>
-              <tr data-team="7" class="info-row">
-                <td class="info-cell">1OX24MT023 - Mechatronics (MT)</td>
-                <td class="info-cell">1OX24EC097 - Ece</td>
-                <td class="info-cell">- - -</td>
-              </tr>
-              <tr data-team="8">
-                <td class="team-col" rowspan="2">8</td>
-                <td class="name-cell" data-label="Member 1" data-info="10X24CS058 - CSE">Kiran</td>
-                <td class="name-cell" data-label="Member 2" data-info="1OX24CSO53 - CSe">Gnanesh</td>
-                <td class="name-cell" data-label="Member 3" data-info="1OX24CSO87 - Cse">Pavan</td>
-                <td class="email-col" rowspan="2" data-label="Email">rajkiranraj746@gmail.com</td>
-              </tr>
-              <tr data-team="8" class="info-row">
-                <td class="info-cell">10X24CS058 - CSE</td>
-                <td class="info-cell">1OX24CSO53 - CSe</td>
-                <td class="info-cell">1OX24CSO87 - Cse</td>
-              </tr>
-              <tr data-team="9">
-                <td class="team-col" rowspan="2">9</td>
-                <td class="name-cell" data-label="Member 1" data-info="1OX24MT002 - Mechatronics">Afnaan khan</td>
-                <td class="name-cell" data-label="Member 2" data-info="1OX24MT009 - Mechatronics">Chandan Kumar</td>
-                <td class="name-cell" data-label="Member 3" data-info="- - -">-</td>
-                <td class="email-col" rowspan="2" data-label="Email">afnaankhan276@gmail.com</td>
-              </tr>
-              <tr data-team="9" class="info-row">
-                <td class="info-cell">1OX24MT002 - Mechatronics</td>
-                <td class="info-cell">1OX24MT009 - Mechatronics</td>
-                <td class="info-cell">- - -</td>
-              </tr>
-              <tr data-team="10">
-                <td class="team-col" rowspan="2">10</td>
-                <td class="name-cell" data-label="Member 1" data-info="64 - Ai ds">Zohra Tabassum</td>
-                <td class="name-cell" data-label="Member 2" data-info="62 - Ai ds">Yashaswini cs kattamane</td>
-                <td class="name-cell" data-label="Member 3" data-info="3 - Cse">Suhas reddy</td>
-                <td class="email-col" rowspan="2" data-label="Email">zohratabassum107@gmail.com</td>
-              </tr>
-              <tr data-team="10" class="info-row">
-                <td class="info-cell">64 - Ai ds</td>
-                <td class="info-cell">62 - Ai ds</td>
-                <td class="info-cell">3 - Cse</td>
-              </tr>
-              <tr data-team="11">
-                <td class="team-col" rowspan="2">11</td>
-                <td class="name-cell" data-label="Member 1" data-info="3 - Information Science and Engineering">Amrut Nanda</td>
-                <td class="name-cell" data-label="Member 2" data-info="30 - Information Science and Engineering">K Harsha</td>
-                <td class="name-cell" data-label="Member 3" data-info="- - -">-</td>
-                <td class="email-col" rowspan="2" data-label="Email">amrutnanda2007@gmail.com</td>
-              </tr>
-              <tr data-team="11" class="info-row">
-                <td class="info-cell">3 - Information Science and Engineering</td>
-                <td class="info-cell">30 - Information Science and Engineering</td>
-                <td class="info-cell">- - -</td>
-              </tr>
-              <tr data-team="12">
-                <td class="team-col" rowspan="2">12</td>
-                <td class="name-cell" data-label="Member 1" data-info="012, class : P3, 1st semester - CSE">Vedika</td>
-                <td class="name-cell" data-label="Member 2" data-info="- - -">-</td>
-                <td class="name-cell" data-label="Member 3" data-info="- - -">-</td>
-                <td class="email-col" rowspan="2" data-label="Email">vedikasanju.24@gmail.com</td>
-              </tr>
-              <tr data-team="12" class="info-row">
-                <td class="info-cell">012, class : P3, 1st semester - CSE</td>
-                <td class="info-cell">- - -</td>
-                <td class="info-cell">- - -</td>
-              </tr>
-              <tr data-team="13">
-                <td class="team-col" rowspan="2">13</td>
-                <td class="name-cell" data-label="Member 1" data-info="1OX24IS033 - ISe">Dhesana</td>
-                <td class="name-cell" data-label="Member 2" data-info="1OX24IS053 - ISE">Khushi</td>
-                <td class="name-cell" data-label="Member 3" data-info="1OX24IS009 - ISE">Ananya</td>
-                <td class="email-col" rowspan="2" data-label="Email">khushiskumar2006@gmail.com</td>
-              </tr>
-              <tr data-team="13" class="info-row">
-                <td class="info-cell">1OX24IS033 - ISe</td>
-                <td class="info-cell">1OX24IS053 - ISE</td>
-                <td class="info-cell">1OX24IS009 - ISE</td>
-              </tr>
-              <tr data-team="14">
-                <td class="team-col" rowspan="2">14</td>
-                <td class="name-cell" data-label="Member 1" data-info="24 - AIML">Rishith J</td>
-                <td class="name-cell" data-label="Member 2" data-info="11 - AIML">Pavan</td>
-                <td class="name-cell" data-label="Member 3" data-info="6 - AIML">Nischal</td>
-                <td class="email-col" rowspan="2" data-label="Email">rishithpoojary2808@gmail.com</td>
-              </tr>
-              <tr data-team="14" class="info-row">
-                <td class="info-cell">24 - AIML</td>
-                <td class="info-cell">11 - AIML</td>
-                <td class="info-cell">6 - AIML</td>
-              </tr>
-              <tr data-team="15">
-                <td class="team-col" rowspan="2">15</td>
-                <td class="name-cell" data-label="Member 1" data-info="1OX23IS003 - ISE (5th sem)">Aishwarya S</td>
-                <td class="name-cell" data-label="Member 2" data-info="1OX23IS005 - ISE (5th sem)">Anju A S</td>
-                <td class="name-cell" data-label="Member 3" data-info="1OX23IS034 - ISE (5th sem)">Keerthana R</td>
-                <td class="email-col" rowspan="2" data-label="Email">aishusomanna123@gmail.com</td>
-              </tr>
-              <tr data-team="15" class="info-row">
-                <td class="info-cell">1OX23IS003 - ISE (5th sem)</td>
-                <td class="info-cell">1OX23IS005 - ISE (5th sem)</td>
-                <td class="info-cell">1OX23IS034 - ISE (5th sem)</td>
-              </tr>
-              <tr data-team="16">
-                <td class="team-col" rowspan="2">16</td>
-                <td class="name-cell" data-label="Member 1" data-info="1Ox24MT007 - Mechatronics">Bharath D B</td>
-                <td class="name-cell" data-label="Member 2" data-info="10x24mt017 - Mechatronics">Manoj Bilagi</td>
-                <td class="name-cell" data-label="Member 3" data-info="10x24mt018 - Mechatronics">Praful kage</td>
-                <td class="email-col" rowspan="2" data-label="Email">bharath011bharath@gmail.com</td>
-              </tr>
-              <tr data-team="16" class="info-row">
-                <td class="info-cell">1Ox24MT007 - Mechatronics</td>
-                <td class="info-cell">10x24mt017 - Mechatronics</td>
-                <td class="info-cell">10x24mt018 - Mechatronics</td>
-              </tr>
-              <tr data-team="17">
-                <td class="team-col" rowspan="2">17</td>
-                <td class="name-cell" data-label="Member 1" data-info="1OX24CS096 - Cse">Prakash H</td>
-                <td class="name-cell" data-label="Member 2" data-info="Lateral - Cse">Karthik mc</td>
-                <td class="name-cell" data-label="Member 3" data-info="1OX24CS054 - Cse">Karthik c</td>
-                <td class="email-col" rowspan="2" data-label="Email">prakashhs636@gmail.com</td>
-              </tr>
-              <tr data-team="17" class="info-row">
-                <td class="info-cell">1OX24CS096 - Cse</td>
-                <td class="info-cell">Lateral - Cse</td>
-                <td class="info-cell">1OX24CS054 - Cse</td>
-              </tr>
-              <tr data-team="18">
-                <td class="team-col" rowspan="2">18</td>
-                <td class="name-cell" data-label="Member 1" data-info="26 - Aiml">Sai pranith</td>
-                <td class="name-cell" data-label="Member 2" data-info="36 - Aiml">Ullas R P</td>
-                <td class="name-cell" data-label="Member 3" data-info="01 - Aiml">Rayan</td>
-                <td class="email-col" rowspan="2" data-label="Email">ullasrp13@gmail.com</td>
-              </tr>
-              <tr data-team="18" class="info-row">
-                <td class="info-cell">26 - Aiml</td>
-                <td class="info-cell">36 - Aiml</td>
-                <td class="info-cell">01 - Aiml</td>
-              </tr>
-
+                    <tr data-team="1">
+                      <td class="team-col" rowspan="2">1</td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 1"
+                        data-info="5 - Cse"
+                      >
+                        Ariff
+                      </td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 2"
+                        data-info="47 - Cse"
+                      >
+                        Danish
+                      </td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 3"
+                        data-info="36 - cse"
+                      >
+                        Rishikesh
+                      </td>
+                      <td class="email-col" rowspan="2" data-label="Email">
+                        ariffmohammad2007@gmail.com
+                      </td>
+                    </tr>
+                    <tr data-team="1" class="info-row">
+                      <td class="info-cell">5 - Cse</td>
+                      <td class="info-cell">47 - Cse</td>
+                      <td class="info-cell">36 - cse</td>
+                    </tr>
+                    <tr data-team="2">
+                      <td class="team-col" rowspan="2">2</td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 1"
+                        data-info="39 - ISE"
+                      >
+                        Srikara Y R
+                      </td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 2"
+                        data-info="27 - ISE"
+                      >
+                        Prajwal Lohit
+                      </td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 3"
+                        data-info="17 - ISE"
+                      >
+                        Prajwal G
+                      </td>
+                      <td class="email-col" rowspan="2" data-label="Email">
+                        yrsrikara09@gmail.com
+                      </td>
+                    </tr>
+                    <tr data-team="2" class="info-row">
+                      <td class="info-cell">39 - ISE</td>
+                      <td class="info-cell">27 - ISE</td>
+                      <td class="info-cell">17 - ISE</td>
+                    </tr>
+                    <tr data-team="3">
+                      <td class="team-col" rowspan="2">3</td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 1"
+                        data-info="35 - Information science engineering"
+                      >
+                        Shashwata Singh
+                      </td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 2"
+                        data-info="43 - Information science and engineering"
+                      >
+                        Tharun R
+                      </td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 3"
+                        data-info="15 - Information science and engineering"
+                      >
+                        Pranati Ganesh Shetty
+                      </td>
+                      <td class="email-col" rowspan="2" data-label="Email">
+                        shashwatasingh370@gmail.com
+                      </td>
+                    </tr>
+                    <tr data-team="3" class="info-row">
+                      <td class="info-cell">
+                        35 - Information science engineering
+                      </td>
+                      <td class="info-cell">
+                        43 - Information science and engineering
+                      </td>
+                      <td class="info-cell">
+                        15 - Information science and engineering
+                      </td>
+                    </tr>
+                    <tr data-team="4">
+                      <td class="team-col" rowspan="2">4</td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 1"
+                        data-info="1OX24MT019 - Mechatronics"
+                      >
+                        Rishaban MP
+                      </td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 2"
+                        data-info="1OX24AI004 - AIML"
+                      >
+                        Andhani gowda G
+                      </td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 3"
+                        data-info="- - -"
+                      >
+                        -
+                      </td>
+                      <td class="email-col" rowspan="2" data-label="Email">
+                        rishabanmp@gmail.com
+                      </td>
+                    </tr>
+                    <tr data-team="4" class="info-row">
+                      <td class="info-cell">1OX24MT019 - Mechatronics</td>
+                      <td class="info-cell">1OX24AI004 - AIML</td>
+                      <td class="info-cell">- - -</td>
+                    </tr>
+                    <tr data-team="5">
+                      <td class="team-col" rowspan="2">5</td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 1"
+                        data-info="1OX24MT021 - Mechatronics"
+                      >
+                        S TARUN
+                      </td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 2"
+                        data-info="1OX24MT001 - Mechatronics"
+                      >
+                        ABHISHEK A
+                      </td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 3"
+                        data-info="1OX24MT008 - Mechatronics"
+                      >
+                        BINDU K
+                      </td>
+                      <td class="email-col" rowspan="2" data-label="Email">
+                        raghavendra.s1973@gmail.com
+                      </td>
+                    </tr>
+                    <tr data-team="5" class="info-row">
+                      <td class="info-cell">1OX24MT021 - Mechatronics</td>
+                      <td class="info-cell">1OX24MT001 - Mechatronics</td>
+                      <td class="info-cell">1OX24MT008 - Mechatronics</td>
+                    </tr>
+                    <tr data-team="6">
+                      <td class="team-col" rowspan="2">6</td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 1"
+                        data-info="1OX24CS076 - CSE"
+                      >
+                        Mukesh Kumar Poddar
+                      </td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 2"
+                        data-info="1OX24CS079 - CSE"
+                      >
+                        Niranjan G R
+                      </td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 3"
+                        data-info="- - -"
+                      >
+                        -
+                      </td>
+                      <td class="email-col" rowspan="2" data-label="Email">
+                        mukeshmahesh1812@gmail.com
+                      </td>
+                    </tr>
+                    <tr data-team="6" class="info-row">
+                      <td class="info-cell">1OX24CS076 - CSE</td>
+                      <td class="info-cell">1OX24CS079 - CSE</td>
+                      <td class="info-cell">- - -</td>
+                    </tr>
+                    <tr data-team="7">
+                      <td class="team-col" rowspan="2">7</td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 1"
+                        data-info="1OX24MT023 - Mechatronics (MT)"
+                      >
+                        Sharma.N
+                      </td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 2"
+                        data-info="1OX24EC097 - Ece"
+                      >
+                        Vignesh M
+                      </td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 3"
+                        data-info="- - -"
+                      >
+                        -
+                      </td>
+                      <td class="email-col" rowspan="2" data-label="Email">
+                        sharma2006sharmaji@gmail.com
+                      </td>
+                    </tr>
+                    <tr data-team="7" class="info-row">
+                      <td class="info-cell">1OX24MT023 - Mechatronics (MT)</td>
+                      <td class="info-cell">1OX24EC097 - Ece</td>
+                      <td class="info-cell">- - -</td>
+                    </tr>
+                    <tr data-team="8">
+                      <td class="team-col" rowspan="2">8</td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 1"
+                        data-info="10X24CS058 - CSE"
+                      >
+                        Kiran
+                      </td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 2"
+                        data-info="1OX24CSO53 - CSe"
+                      >
+                        Gnanesh
+                      </td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 3"
+                        data-info="1OX24CSO87 - Cse"
+                      >
+                        Pavan
+                      </td>
+                      <td class="email-col" rowspan="2" data-label="Email">
+                        rajkiranraj746@gmail.com
+                      </td>
+                    </tr>
+                    <tr data-team="8" class="info-row">
+                      <td class="info-cell">10X24CS058 - CSE</td>
+                      <td class="info-cell">1OX24CSO53 - CSe</td>
+                      <td class="info-cell">1OX24CSO87 - Cse</td>
+                    </tr>
+                    <tr data-team="9">
+                      <td class="team-col" rowspan="2">9</td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 1"
+                        data-info="1OX24MT002 - Mechatronics"
+                      >
+                        Afnaan khan
+                      </td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 2"
+                        data-info="1OX24MT009 - Mechatronics"
+                      >
+                        Chandan Kumar
+                      </td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 3"
+                        data-info="- - -"
+                      >
+                        -
+                      </td>
+                      <td class="email-col" rowspan="2" data-label="Email">
+                        afnaankhan276@gmail.com
+                      </td>
+                    </tr>
+                    <tr data-team="9" class="info-row">
+                      <td class="info-cell">1OX24MT002 - Mechatronics</td>
+                      <td class="info-cell">1OX24MT009 - Mechatronics</td>
+                      <td class="info-cell">- - -</td>
+                    </tr>
+                    <tr data-team="10">
+                      <td class="team-col" rowspan="2">10</td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 1"
+                        data-info="64 - Ai ds"
+                      >
+                        Zohra Tabassum
+                      </td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 2"
+                        data-info="62 - Ai ds"
+                      >
+                        Yashaswini cs kattamane
+                      </td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 3"
+                        data-info="3 - Cse"
+                      >
+                        Suhas reddy
+                      </td>
+                      <td class="email-col" rowspan="2" data-label="Email">
+                        zohratabassum107@gmail.com
+                      </td>
+                    </tr>
+                    <tr data-team="10" class="info-row">
+                      <td class="info-cell">64 - Ai ds</td>
+                      <td class="info-cell">62 - Ai ds</td>
+                      <td class="info-cell">3 - Cse</td>
+                    </tr>
+                    <tr data-team="11">
+                      <td class="team-col" rowspan="2">11</td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 1"
+                        data-info="3 - Information Science and Engineering"
+                      >
+                        Amrut Nanda
+                      </td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 2"
+                        data-info="30 - Information Science and Engineering"
+                      >
+                        K Harsha
+                      </td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 3"
+                        data-info="- - -"
+                      >
+                        -
+                      </td>
+                      <td class="email-col" rowspan="2" data-label="Email">
+                        amrutnanda2007@gmail.com
+                      </td>
+                    </tr>
+                    <tr data-team="11" class="info-row">
+                      <td class="info-cell">
+                        3 - Information Science and Engineering
+                      </td>
+                      <td class="info-cell">
+                        30 - Information Science and Engineering
+                      </td>
+                      <td class="info-cell">- - -</td>
+                    </tr>
+                    <tr data-team="12">
+                      <td class="team-col" rowspan="2">12</td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 1"
+                        data-info="012, class : P3, 1st semester - CSE"
+                      >
+                        Vedika
+                      </td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 2"
+                        data-info="- - -"
+                      >
+                        -
+                      </td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 3"
+                        data-info="- - -"
+                      >
+                        -
+                      </td>
+                      <td class="email-col" rowspan="2" data-label="Email">
+                        vedikasanju.24@gmail.com
+                      </td>
+                    </tr>
+                    <tr data-team="12" class="info-row">
+                      <td class="info-cell">
+                        012, class : P3, 1st semester - CSE
+                      </td>
+                      <td class="info-cell">- - -</td>
+                      <td class="info-cell">- - -</td>
+                    </tr>
+                    <tr data-team="13">
+                      <td class="team-col" rowspan="2">13</td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 1"
+                        data-info="1OX24IS033 - ISe"
+                      >
+                        Dhesana
+                      </td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 2"
+                        data-info="1OX24IS053 - ISE"
+                      >
+                        Khushi
+                      </td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 3"
+                        data-info="1OX24IS009 - ISE"
+                      >
+                        Ananya
+                      </td>
+                      <td class="email-col" rowspan="2" data-label="Email">
+                        khushiskumar2006@gmail.com
+                      </td>
+                    </tr>
+                    <tr data-team="13" class="info-row">
+                      <td class="info-cell">1OX24IS033 - ISe</td>
+                      <td class="info-cell">1OX24IS053 - ISE</td>
+                      <td class="info-cell">1OX24IS009 - ISE</td>
+                    </tr>
+                    <tr data-team="14">
+                      <td class="team-col" rowspan="2">14</td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 1"
+                        data-info="24 - AIML"
+                      >
+                        Rishith J
+                      </td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 2"
+                        data-info="11 - AIML"
+                      >
+                        Pavan
+                      </td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 3"
+                        data-info="6 - AIML"
+                      >
+                        Nischal
+                      </td>
+                      <td class="email-col" rowspan="2" data-label="Email">
+                        rishithpoojary2808@gmail.com
+                      </td>
+                    </tr>
+                    <tr data-team="14" class="info-row">
+                      <td class="info-cell">24 - AIML</td>
+                      <td class="info-cell">11 - AIML</td>
+                      <td class="info-cell">6 - AIML</td>
+                    </tr>
+                    <tr data-team="15">
+                      <td class="team-col" rowspan="2">15</td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 1"
+                        data-info="1OX23IS003 - ISE (5th sem)"
+                      >
+                        Aishwarya S
+                      </td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 2"
+                        data-info="1OX23IS005 - ISE (5th sem)"
+                      >
+                        Anju A S
+                      </td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 3"
+                        data-info="1OX23IS034 - ISE (5th sem)"
+                      >
+                        Keerthana R
+                      </td>
+                      <td class="email-col" rowspan="2" data-label="Email">
+                        aishusomanna123@gmail.com
+                      </td>
+                    </tr>
+                    <tr data-team="15" class="info-row">
+                      <td class="info-cell">1OX23IS003 - ISE (5th sem)</td>
+                      <td class="info-cell">1OX23IS005 - ISE (5th sem)</td>
+                      <td class="info-cell">1OX23IS034 - ISE (5th sem)</td>
+                    </tr>
+                    <tr data-team="16">
+                      <td class="team-col" rowspan="2">16</td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 1"
+                        data-info="1Ox24MT007 - Mechatronics"
+                      >
+                        Bharath D B
+                      </td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 2"
+                        data-info="10x24mt017 - Mechatronics"
+                      >
+                        Manoj Bilagi
+                      </td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 3"
+                        data-info="10x24mt018 - Mechatronics"
+                      >
+                        Praful kage
+                      </td>
+                      <td class="email-col" rowspan="2" data-label="Email">
+                        bharath011bharath@gmail.com
+                      </td>
+                    </tr>
+                    <tr data-team="16" class="info-row">
+                      <td class="info-cell">1Ox24MT007 - Mechatronics</td>
+                      <td class="info-cell">10x24mt017 - Mechatronics</td>
+                      <td class="info-cell">10x24mt018 - Mechatronics</td>
+                    </tr>
+                    <tr data-team="17">
+                      <td class="team-col" rowspan="2">17</td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 1"
+                        data-info="1OX24CS096 - Cse"
+                      >
+                        Prakash H
+                      </td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 2"
+                        data-info="Lateral - Cse"
+                      >
+                        Karthik mc
+                      </td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 3"
+                        data-info="1OX24CS054 - Cse"
+                      >
+                        Karthik c
+                      </td>
+                      <td class="email-col" rowspan="2" data-label="Email">
+                        prakashhs636@gmail.com
+                      </td>
+                    </tr>
+                    <tr data-team="17" class="info-row">
+                      <td class="info-cell">1OX24CS096 - Cse</td>
+                      <td class="info-cell">Lateral - Cse</td>
+                      <td class="info-cell">1OX24CS054 - Cse</td>
+                    </tr>
+                    <tr data-team="18">
+                      <td class="team-col" rowspan="2">18</td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 1"
+                        data-info="26 - Aiml"
+                      >
+                        Sai pranith
+                      </td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 2"
+                        data-info="36 - Aiml"
+                      >
+                        Ullas R P
+                      </td>
+                      <td
+                        class="name-cell"
+                        data-label="Member 3"
+                        data-info="01 - Aiml"
+                      >
+                        Rayan
+                      </td>
+                      <td class="email-col" rowspan="2" data-label="Email">
+                        ullasrp13@gmail.com
+                      </td>
+                    </tr>
+                    <tr data-team="18" class="info-row">
+                      <td class="info-cell">26 - Aiml</td>
+                      <td class="info-cell">36 - Aiml</td>
+                      <td class="info-cell">01 - Aiml</td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
@@ -1048,7 +1453,10 @@
             >
               📝 Registration
             </button>
-            <button class="sub-tab" onclick="switchSubTab('uibattle','winners')">
+            <button
+              class="sub-tab"
+              onclick="switchSubTab('uibattle','winners')"
+            >
               🏆 Winners
             </button>
             <button class="sub-tab" onclick="switchSubTab('uibattle','images')">
@@ -1116,7 +1524,10 @@
             >
               🏆 Winners
             </button>
-            <button class="sub-tab" onclick="switchSubTab('hackathon','images')">
+            <button
+              class="sub-tab"
+              onclick="switchSubTab('hackathon','images')"
+            >
               📸 Images
             </button>
           </div>
@@ -1179,21 +1590,8 @@
         }
       });
 
-      // Login handler
-      function handleLogin(event) {
-        event.preventDefault();
-        const username = document.getElementById("username").value;
-        const password = document.getElementById("password").value;
-        const errorMessage = document.getElementById("errorMessage");
 
-        if (username === "admin" && password === "admin123") {
-          document.getElementById("login-page").style.display = "none";
-          document.getElementById("admin-dashboard").classList.add("active");
-          errorMessage.style.display = "none";
-        } else {
-          errorMessage.style.display = "block";
-        }
-      }
+
 
       // Logout handler
       function handleLogout() {
@@ -1228,6 +1626,127 @@
           .getElementById(eventName + "-" + subTabName)
           .classList.add("active");
       }
+      </script>
+
+</script>
+
+  
+    <!-- Firebase Authentication - Consolidated Script -->
+    <script type="module">
+      // Import Firebase modules
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+      import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+
+      // Firebase configuration
+      const firebaseConfig = {
+        apiKey: "AIzaSyCUjDwaThKcc-X9I6YEYlsHVjCZN67z4JI",
+        authDomain: "iste-toce.firebaseapp.com",
+        projectId: "iste-toce",
+        storageBucket: "iste-toce.firebasestorage.app",
+        messagingSenderId: "918228043244",
+        appId: "1:918228043244:web:891b81cc0a80127588ecc9",
+        measurementId: "G-RWG0BCFGEJ"
+      };
+
+      // Initialize Firebase (ONLY ONCE)
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+
+      console.log("Firebase initialized successfully!");
+
+      // ============================================
+      // LOGIN HANDLER
+      // ============================================
+      window.handleLogin = function(event) {
+        event.preventDefault();
+
+        const email = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+        const errorMessage = document.getElementById("errorMessage");
+
+        errorMessage.style.display = "none";
+
+        signInWithEmailAndPassword(auth, email, password)
+          .then((userCredential) => {
+            console.log("Login successful:", userCredential.user.email);
+            document.getElementById("login-page").style.display = "none";
+            document.getElementById("admin-dashboard").classList.add("active");
+          })
+          .catch((error) => {
+            console.error("Login error:", error.code);
+            errorMessage.style.display = "block";
+            errorMessage.textContent = "Invalid email or password!";
+          });
+      };
+
+      // ============================================
+      // LOGOUT HANDLER
+      // ============================================
+      window.addEventListener('DOMContentLoaded', () => {
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+          logoutBtn.addEventListener('click', () => {
+            signOut(auth)
+              .then(() => {
+                console.log("Logout successful");
+                document.getElementById("admin-dashboard").classList.remove("active");
+                document.getElementById("login-page").style.display = "flex";
+              })
+              .catch((error) => {
+                console.error("Logout error:", error);
+              });
+          });
+        }
+      });
+
+      // ============================================
+      // AUTH STATE OBSERVER
+      // ============================================
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          console.log("User authenticated:", user.email);
+        } else {
+          console.log("No user logged in");
+        }
+      });
     </script>
-  </body>
+
+  
+
+<script>
+// Lock body scroll when on login page
+document.addEventListener('DOMContentLoaded', function() {
+  const loginPage = document.getElementById('login-page');
+  const dashboard = document.getElementById('admin-dashboard');
+
+  // Function to lock/unlock scroll
+  function updateScrollLock() {
+    const isLoginVisible = loginPage && window.getComputedStyle(loginPage).display !== 'none';
+
+    if (isLoginVisible) {
+      // Lock scroll on login page
+      document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.documentElement.style.overflow = 'hidden';
+    } else {
+      // Unlock scroll on dashboard
+      document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.documentElement.style.overflow = '';
+    }
+  }
+
+  // Check on page load
+  updateScrollLock();
+
+  // Check when login/dashboard visibility changes
+  const observer = new MutationObserver(updateScrollLock);
+  observer.observe(loginPage, { attributes: true, attributeFilter: ['style'] });
+  observer.observe(dashboard, { attributes: true, attributeFilter: ['class'] });
+});
+</script>
+
+</body>
 </html>
