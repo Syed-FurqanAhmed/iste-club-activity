@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ISTE Admin Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Questrial&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #fff7ea;
+        --text: #222;
+        --border: #1e1b4b;
+        --accent: #6b63b5;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        font-family: "Questrial", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        overflow-x: hidden;
+        letter-spacing: 2px;
+      }
+
+      /* ===== NAVBAR - EXACT from index.html ===== */
+      nav {
+        position: relative;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 32px 8%;
+        background: var(--bg);
+        z-index: 999;
+      }
+
+      nav.sticky {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        padding: 16px 8%;
+        background: rgba(255, 247, 234, 0.96);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+        animation: fadeDown 0.4s ease;
+      }
+
+      @keyframes fadeDown {
+        from {
+          opacity: 0;
+          transform: translateY(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .logo {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+      }
+
+      .logo img {
+        width: 120px;
+      }
+
+      .logo-text span {
+        font-size: 26px;
+        font-weight: bold;
+        color: var(--border);
+        letter-spacing: 3px;
+      }
+
+      .logo-text small {
+        font-size: 12px;
+        color: #666;
+        letter-spacing: 1px;
+      }
+
+      .nav-links {
+        display: flex;
+        gap: 36px;
+      }
+
+      .nav-links a {
+        text-decoration: none;
+        color: var(--text);
+        font-weight: 600;
+        font-size: 16px;
+        letter-spacing: 1.8px;
+        transition: color 0.3s ease;
+        position: relative;
+      }
+
+      .nav-links a:hover,
+      .nav-links a.active {
+        color: var(--accent);
+      }
+
+      .nav-links a::after {
+        content: "";
+        position: absolute;
+        bottom: -6px;
+        left: 0;
+        width: 0;
+        height: 3px;
+        background: linear-gradient(90deg, #6b63b5, #9b87f5);
+        transition: width 0.3s ease;
+      }
+
+      .nav-links a:hover::after,
+      .nav-links a.active::after {
+        width: 100%;
+      }
+
+      .nav-btn {
+        display: none;
+        flex-direction: column;
+        gap: 6px;
+        cursor: pointer;
+      }
+
+      .nav-btn span {
+        width: 30px;
+        height: 3px;
+        background: var(--border);
+        border-radius: 2px;
+        transition: 0.3s;
+      }
+
+      .nav-btn.active span:nth-child(1) {
+        transform: rotate(45deg) translate(8px, 8px);
+      }
+
+      .nav-btn.active span:nth-child(2) {
+        opacity: 0;
+      }
+
+      .nav-btn.active span:nth-child(3) {
+        transform: rotate(-45deg) translate(8px, -8px);
+      }
+
+      /* MOBILE NAVBAR - EXACT from index.html (small dropdown, NOT full screen!) */
+      @media (max-width: 900px) {
+        nav {
+          padding: 24px 6%;
+        }
+
+        .logo img {
+          width: 80px;
+        }
+
+        .logo-text span {
+          font-size: 20px;
+        }
+
+        .logo-text small {
+          font-size: 10px;
+        }
+
+        /* SMALL DROPDOWN MENU - NOT FULL SCREEN */
+        .nav-links {
+          position: absolute;
+          top: 100%;
+          right: 8%;
+          background: var(--bg);
+          padding: 24px;
+          border-radius: 14px;
+          display: none;
+          flex-direction: column;
+          gap: 18px;
+          box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+          align-items: stretch;
+          text-align: center;
+          min-width: 200px;
+        }
+
+        .nav-links.active {
+          display: flex;
+        }
+
+        .nav-links a {
+          padding: 8px 16px;
+          border-radius: 8px;
+          transition: all 0.3s;
+        }
+
+        .nav-links a:hover {
+          background: rgba(107, 99, 181, 0.1);
+        }
+
+        .nav-btn {
+          display: flex;
+        }
+      }
+
+      /* ===== ADMIN CONTENT ===== */
+      .admin-wrapper {
+        min-height: 100vh;
+        padding: 40px 8%;
+      }
+
+      .login-container {
+        min-height: calc(100vh - 200px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 3rem 2rem;
+      }
+
+      .login-box {
+        background: #fff;
+        border: 3px solid var(--border);
+        border-radius: 20px;
+        box-shadow: 12px 12px 0 var(--border);
+        padding: 3rem;
+        max-width: 450px;
+        width: 100%;
+      }
+
+      .login-box h2 {
+        text-align: center;
+        margin-bottom: 2rem;
+        font-size: 2rem;
+        color: var(--border);
+      }
+
+      .form-group {
+        margin-bottom: 1.5rem;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: var(--border);
+      }
+
+      .form-group input {
+        width: 100%;
+        padding: 14px;
+        border: 2px solid var(--border);
+        border-radius: 10px;
+        font-size: 1rem;
+        font-family: inherit;
+        background: #fff;
+      }
+
+      .form-group input:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+
+      .btn {
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(135deg, #6b63b5, #9b87f5);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-family: inherit;
+        letter-spacing: 2px;
+        margin-top: 1rem;
+        transition: transform 0.2s, box-shadow 0.2s;
+        font-weight: 600;
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(107, 99, 181, 0.3);
+      }
+
+      .error-message {
+        background: #fee;
+        color: #d32f2f;
+        padding: 0.75rem;
+        border-radius: 8px;
+        text-align: center;
+        display: none;
+        margin-top: 1rem;
+        border: 1px solid #f5c6cb;
+      }
+
+      .dashboard {
+        display: none;
+      }
+
+      .dashboard.active {
+        display: block;
+      }
+
+      .dashboard-header {
+        background: #fff;
+        border: 3px solid var(--border);
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+        box-shadow: 8px 8px 0 var(--border);
+      }
+
+      .dashboard-header h2 {
+        font-size: 2rem;
+        color: var(--border);
+      }
+
+      .dashboard-header h2::before {
+        content: "ðŸ“Š ";
+      }
+
+      .logout-btn {
+        padding: 12px 28px;
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        font-family: inherit;
+        letter-spacing: 2px;
+        font-weight: 600;
+        transition: transform 0.2s;
+      }
+
+      .logout-btn:hover {
+        transform: translateY(-2px);
+      }
+
+      .event-tabs {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+      }
+
+      .event-tab {
+        padding: 14px 28px;
+        background: #fff;
+        border: 3px solid var(--border);
+        border-radius: 12px;
+        cursor: pointer;
+        font-family: inherit;
+        letter-spacing: 2px;
+        font-weight: 600;
+        transition: all 0.3s;
+      }
+
+      .event-tab:hover {
+        transform: translateY(-2px);
+      }
+
+      .event-tab.active {
+        background: linear-gradient(135deg, #6b63b5, #9b87f5);
+        color: #fff;
+        box-shadow: 6px 6px 0 var(--border);
+      }
+
+      .event-content {
+        display: none;
+      }
+
+      .event-content.active {
+        display: block;
+      }
+
+      .sub-tabs {
+        display: flex;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+      }
+
+      .sub-tab {
+        padding: 10px 20px;
+        background: #fff;
+        border: 2px solid var(--border);
+        border-radius: 8px;
+        cursor: pointer;
+        font-family: inherit;
+        letter-spacing: 1.5px;
+        transition: all 0.3s;
+      }
+
+      .sub-tab.active {
+        background: var(--border);
+        color: #fff;
+      }
+
+      .sub-content {
+        display: none;
+      }
+
+      .sub-content.active {
+        display: block;
+      }
+
+      .content-box {
+        background: #fff;
+        border: 3px solid var(--border);
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 8px 8px 0 var(--border);
+      }
+
+      .content-box h3 {
+        margin-bottom: 1.5rem;
+        font-size: 1.6rem;
+        color: var(--border);
+      }
+
+      .stats-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+      }
+
+      .stat-card {
+        background: #fff;
+        border: 2px solid var(--border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 4px 4px 0 var(--border);
+      }
+
+      .stat-card h4 {
+        color: var(--accent);
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+      }
+
+      .stat-card .number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: var(--border);
+      }
+
+      .table-wrapper {
+        overflow-x: auto;
+        border-radius: 16px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+        margin: 1rem 0;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: #fff;
+        min-width: 900px;
+      }
+
+      thead th {
+        background: linear-gradient(135deg, #6b63b5, #9b87f5);
+        color: #fff;
+        padding: 1.2rem 1rem;
+        text-align: left;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        font-weight: bold;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+
+      thead th:first-child {
+        border-radius: 16px 0 0 0;
+        text-align: center;
+        width: 80px;
+      }
+
+      thead th:last-child {
+        border-radius: 0 16px 0 0;
+      }
+
+      tbody td {
+        padding: 0.8rem 1rem;
+        border-bottom: 1px solid #e5e7eb;
+        vertical-align: middle;
+      }
+
+      td.team-col {
+        text-align: center;
+        font-weight: bold;
+        font-size: 1.1rem;
+        color: #fff;
+        background: linear-gradient(135deg, #6b63b5, #9b87f5);
+        border-bottom: 1px solid #5a52a5;
+      }
+
+      td.name-cell {
+        font-weight: 600;
+        color: var(--border);
+        font-size: 0.95rem;
+        background: #fff;
+      }
+
+      td.info-cell {
+        font-size: 0.8rem;
+        color: #6b7280;
+        font-family: monospace;
+        background: #fafafa;
+      }
+
+      td.email-col {
+        font-size: 0.85rem;
+        word-break: break-all;
+      }
+
+      tr.info-row td {
+        border-bottom: 2px solid #d1d5db;
+      }
+
+      tbody tr:hover td {
+        background: linear-gradient(90deg, rgba(107, 99, 181, 0.08), transparent);
+      }
+
+      tbody tr:last-child td {
+        border-bottom: none;
+      }
+
+      tbody tr:last-child td:first-child {
+        border-radius: 0 0 0 16px;
+      }
+
+      tbody tr:last-child td:last-child {
+        border-radius: 0 0 16px 0;
+      }
+
+      .placeholder-text {
+        color: var(--accent);
+        font-style: italic;
+        text-align: center;
+        padding: 4rem 2rem;
+        font-size: 1.1rem;
+      }
+
+      /* Mobile table */
+      @media (max-width: 900px) {
+        .admin-wrapper {
+          padding: 24px 4%;
+        }
+
+        .table-wrapper {
+          overflow-x: visible;
+          box-shadow: none;
+          border-radius: 0;
+        }
+
+        table {
+          min-width: 100%;
+          border: 0;
+        }
+
+        table thead {
+          display: none;
+        }
+
+        table tbody {
+          display: block;
+        }
+
+        tr.info-row {
+          display: none;
+        }
+
+        table tr {
+          display: block;
+          margin-bottom: 1.5rem;
+          border: 3px solid var(--border);
+          border-radius: 16px;
+          overflow: hidden;
+          box-shadow: 6px 6px 0 var(--border);
+          background: #fff;
+          position: relative;
+          padding-top: 3rem;
+        }
+
+        table tr::before {
+          content: "Team " attr(data-team);
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          background: linear-gradient(135deg, #6b63b5, #9b87f5);
+          color: #fff;
+          padding: 0.75rem;
+          font-weight: bold;
+          text-align: center;
+          letter-spacing: 2px;
+        }
+
+        table td {
+          display: block;
+          padding: 1rem 1.25rem;
+          border-bottom: 1px solid #e5e7eb;
+          background: #fff !important;
+        }
+
+        table td:last-child {
+          border-bottom: none;
+        }
+
+        table td::before {
+          content: attr(data-label);
+          font-weight: bold;
+          color: var(--border);
+          display: block;
+          margin-bottom: 0.4rem;
+          font-size: 0.8rem;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        }
+
+        td.team-col {
+          display: none;
+        }
+
+        td.name-cell {
+          font-size: 1rem;
+          font-weight: 600;
+          color: var(--border);
+        }
+
+        td.name-cell::after {
+          content: attr(data-info);
+          display: block;
+          font-size: 0.85rem;
+          color: #6b7280;
+          font-family: monospace;
+          font-weight: normal;
+          margin-top: 0.3rem;
+        }
+
+        tbody tr:hover td {
+          background: #fff !important;
+        }
+
+        .dashboard-header {
+          padding: 1.5rem;
+        }
+
+        .dashboard-header h2 {
+          font-size: 1.5rem;
+        }
+
+        .content-box {
+          padding: 1.5rem;
+        }
+
+        .login-box {
+          padding: 2rem;
+        }
+
+        .login-container {
+          padding: 2rem 1rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- NAVBAR - EXACT from index.html -->
+    <nav id="navbar">
+      <div class="logo">
+        <img src="images/download.png" alt="ISTE Logo" />
+        <div class="logo-text">
+          <span>ISTE</span><br />
+          <small>Indian Society for Technical Education</small>
+        </div>
+      </div>
+      <div class="nav-links" id="navLinks">
+        <a href="index.html">Home</a>
+        <a href="index.html#about">About</a>
+        <a href="index.html#activity">Register</a>
+        <a href="index.html#winners">Winners</a>
+        <a href="index.html#gallery">Gallery</a>
+        <a href="#" class="active">Admin</a>
+      </div>
+      <div class="nav-btn" id="navBtn" onclick="toggleNav()">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </nav>
+
+    <div class="admin-wrapper">
+      <!-- LOGIN PAGE -->
+      <div id="login-page" class="login-container">
+        <div class="login-box">
+          <h2>Admin Login</h2>
+          <form id="loginForm" onsubmit="handleLogin(event)">
+            <div class="form-group">
+              <label>ðŸ‘¤ Username</label>
+              <input
+                type="text"
+                id="username"
+                placeholder="Enter username"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label>ðŸ”’ Password</label>
+              <input
+                type="password"
+                id="password"
+                placeholder="Enter password"
+                required
+              />
+            </div>
+            <div class="error-message" id="errorMessage">
+              âŒ Invalid username or password
+            </div>
+            <button type="submit" class="btn">Login</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- ADMIN DASHBOARD -->
+      <div id="admin-dashboard" class="dashboard">
+        <div class="dashboard-header">
+          <h2>Event Management</h2>
+          <button class="logout-btn" onclick="handleLogout()">Logout</button>
+        </div>
+
+        <div class="event-tabs">
+          <button class="event-tab active" onclick="switchEvent('promptquest')">
+            ðŸŽ¯ PromptQuest
+          </button>
+          <button class="event-tab" onclick="switchEvent('uibattle')">
+            ðŸŽ¨ Quick UI Battle
+          </button>
+          <button class="event-tab" onclick="switchEvent('hackathon')">
+            ðŸ’» Hackathon
+          </button>
+        </div>
+
+        <!-- PROMPTQUEST CONTENT -->
+        <div id="promptquest-content" class="event-content active">
+          <div class="sub-tabs">
+            <button
+              class="sub-tab active"
+              onclick="switchSubTab('promptquest','registration')"
+            >
+              ðŸ“ Registration
+            </button>
+            <button
+              class="sub-tab"
+              onclick="switchSubTab('promptquest','winners')"
+            >
+              ðŸ† Winners
+            </button>
+            <button
+              class="sub-tab"
+              onclick="switchSubTab('promptquest','images')"
+            >
+              ðŸ“¸ Images
+            </button>
+          </div>
+
+          <div id="promptquest-registration" class="sub-content active">
+            <div class="content-box">
+              <h3>ðŸ“‹ PromptQuest Registrations</h3>
+
+              <div class="stats-cards">
+                <div class="stat-card">
+                  <h4>Total Teams</h4>
+                  <div class="number">18</div>
+                </div>
+                <div class="stat-card">
+                  <h4>Total Participants</h4>
+                  <div class="number">48</div>
+                </div>
+              </div>
+
+              <div class="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Team #</th>
+                      <th>Member 1</th>
+                      <th>Member 2</th>
+                      <th>Member 3</th>
+                      <th>Email</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+              <tr data-team="1">
+                <td class="team-col" rowspan="2">1</td>
+                <td class="name-cell" data-label="Member 1" data-info="5 - Cse">Ariff</td>
+                <td class="name-cell" data-label="Member 2" data-info="47 - Cse">Danish</td>
+                <td class="name-cell" data-label="Member 3" data-info="36 - cse">Rishikesh</td>
+                <td class="email-col" rowspan="2" data-label="Email">ariffmohammad2007@gmail.com</td>
+              </tr>
+              <tr data-team="1" class="info-row">
+                <td class="info-cell">5 - Cse</td>
+                <td class="info-cell">47 - Cse</td>
+                <td class="info-cell">36 - cse</td>
+              </tr>
+              <tr data-team="2">
+                <td class="team-col" rowspan="2">2</td>
+                <td class="name-cell" data-label="Member 1" data-info="39 - ISE">Srikara Y R</td>
+                <td class="name-cell" data-label="Member 2" data-info="27 - ISE">Prajwal Lohit</td>
+                <td class="name-cell" data-label="Member 3" data-info="17 - ISE">Prajwal G</td>
+                <td class="email-col" rowspan="2" data-label="Email">yrsrikara09@gmail.com</td>
+              </tr>
+              <tr data-team="2" class="info-row">
+                <td class="info-cell">39 - ISE</td>
+                <td class="info-cell">27 - ISE</td>
+                <td class="info-cell">17 - ISE</td>
+              </tr>
+              <tr data-team="3">
+                <td class="team-col" rowspan="2">3</td>
+                <td class="name-cell" data-label="Member 1" data-info="35 - Information science engineering">Shashwata Singh</td>
+                <td class="name-cell" data-label="Member 2" data-info="43 - Information science and engineering">Tharun R</td>
+                <td class="name-cell" data-label="Member 3" data-info="15 - Information science and engineering">Pranati Ganesh Shetty</td>
+                <td class="email-col" rowspan="2" data-label="Email">shashwatasingh370@gmail.com</td>
+              </tr>
+              <tr data-team="3" class="info-row">
+                <td class="info-cell">35 - Information science engineering</td>
+                <td class="info-cell">43 - Information science and engineering</td>
+                <td class="info-cell">15 - Information science and engineering</td>
+              </tr>
+              <tr data-team="4">
+                <td class="team-col" rowspan="2">4</td>
+                <td class="name-cell" data-label="Member 1" data-info="1OX24MT019 - Mechatronics">Rishaban MP</td>
+                <td class="name-cell" data-label="Member 2" data-info="1OX24AI004 - AIML">Andhani gowda G</td>
+                <td class="name-cell" data-label="Member 3" data-info="- - -">-</td>
+                <td class="email-col" rowspan="2" data-label="Email">rishabanmp@gmail.com</td>
+              </tr>
+              <tr data-team="4" class="info-row">
+                <td class="info-cell">1OX24MT019 - Mechatronics</td>
+                <td class="info-cell">1OX24AI004 - AIML</td>
+                <td class="info-cell">- - -</td>
+              </tr>
+              <tr data-team="5">
+                <td class="team-col" rowspan="2">5</td>
+                <td class="name-cell" data-label="Member 1" data-info="1OX24MT021 - Mechatronics">S TARUN</td>
+                <td class="name-cell" data-label="Member 2" data-info="1OX24MT001 - Mechatronics">ABHISHEK A</td>
+                <td class="name-cell" data-label="Member 3" data-info="1OX24MT008 - Mechatronics">BINDU K</td>
+                <td class="email-col" rowspan="2" data-label="Email">raghavendra.s1973@gmail.com</td>
+              </tr>
+              <tr data-team="5" class="info-row">
+                <td class="info-cell">1OX24MT021 - Mechatronics</td>
+                <td class="info-cell">1OX24MT001 - Mechatronics</td>
+                <td class="info-cell">1OX24MT008 - Mechatronics</td>
+              </tr>
+              <tr data-team="6">
+                <td class="team-col" rowspan="2">6</td>
+                <td class="name-cell" data-label="Member 1" data-info="1OX24CS076 - CSE">Mukesh Kumar Poddar</td>
+                <td class="name-cell" data-label="Member 2" data-info="1OX24CS079 - CSE">Niranjan G R</td>
+                <td class="name-cell" data-label="Member 3" data-info="- - -">-</td>
+                <td class="email-col" rowspan="2" data-label="Email">mukeshmahesh1812@gmail.com</td>
+              </tr>
+              <tr data-team="6" class="info-row">
+                <td class="info-cell">1OX24CS076 - CSE</td>
+                <td class="info-cell">1OX24CS079 - CSE</td>
+                <td class="info-cell">- - -</td>
+              </tr>
+              <tr data-team="7">
+                <td class="team-col" rowspan="2">7</td>
+                <td class="name-cell" data-label="Member 1" data-info="1OX24MT023 - Mechatronics (MT)">Sharma.N</td>
+                <td class="name-cell" data-label="Member 2" data-info="1OX24EC097 - Ece">Vignesh M</td>
+                <td class="name-cell" data-label="Member 3" data-info="- - -">-</td>
+                <td class="email-col" rowspan="2" data-label="Email">sharma2006sharmaji@gmail.com</td>
+              </tr>
+              <tr data-team="7" class="info-row">
+                <td class="info-cell">1OX24MT023 - Mechatronics (MT)</td>
+                <td class="info-cell">1OX24EC097 - Ece</td>
+                <td class="info-cell">- - -</td>
+              </tr>
+              <tr data-team="8">
+                <td class="team-col" rowspan="2">8</td>
+                <td class="name-cell" data-label="Member 1" data-info="10X24CS058 - CSE">Kiran</td>
+                <td class="name-cell" data-label="Member 2" data-info="1OX24CSO53 - CSe">Gnanesh</td>
+                <td class="name-cell" data-label="Member 3" data-info="1OX24CSO87 - Cse">Pavan</td>
+                <td class="email-col" rowspan="2" data-label="Email">rajkiranraj746@gmail.com</td>
+              </tr>
+              <tr data-team="8" class="info-row">
+                <td class="info-cell">10X24CS058 - CSE</td>
+                <td class="info-cell">1OX24CSO53 - CSe</td>
+                <td class="info-cell">1OX24CSO87 - Cse</td>
+              </tr>
+              <tr data-team="9">
+                <td class="team-col" rowspan="2">9</td>
+                <td class="name-cell" data-label="Member 1" data-info="1OX24MT002 - Mechatronics">Afnaan khan</td>
+                <td class="name-cell" data-label="Member 2" data-info="1OX24MT009 - Mechatronics">Chandan Kumar</td>
+                <td class="name-cell" data-label="Member 3" data-info="- - -">-</td>
+                <td class="email-col" rowspan="2" data-label="Email">afnaankhan276@gmail.com</td>
+              </tr>
+              <tr data-team="9" class="info-row">
+                <td class="info-cell">1OX24MT002 - Mechatronics</td>
+                <td class="info-cell">1OX24MT009 - Mechatronics</td>
+                <td class="info-cell">- - -</td>
+              </tr>
+              <tr data-team="10">
+                <td class="team-col" rowspan="2">10</td>
+                <td class="name-cell" data-label="Member 1" data-info="64 - Ai ds">Zohra Tabassum</td>
+                <td class="name-cell" data-label="Member 2" data-info="62 - Ai ds">Yashaswini cs kattamane</td>
+                <td class="name-cell" data-label="Member 3" data-info="3 - Cse">Suhas reddy</td>
+                <td class="email-col" rowspan="2" data-label="Email">zohratabassum107@gmail.com</td>
+              </tr>
+              <tr data-team="10" class="info-row">
+                <td class="info-cell">64 - Ai ds</td>
+                <td class="info-cell">62 - Ai ds</td>
+                <td class="info-cell">3 - Cse</td>
+              </tr>
+              <tr data-team="11">
+                <td class="team-col" rowspan="2">11</td>
+                <td class="name-cell" data-label="Member 1" data-info="3 - Information Science and Engineering">Amrut Nanda</td>
+                <td class="name-cell" data-label="Member 2" data-info="30 - Information Science and Engineering">K Harsha</td>
+                <td class="name-cell" data-label="Member 3" data-info="- - -">-</td>
+                <td class="email-col" rowspan="2" data-label="Email">amrutnanda2007@gmail.com</td>
+              </tr>
+              <tr data-team="11" class="info-row">
+                <td class="info-cell">3 - Information Science and Engineering</td>
+                <td class="info-cell">30 - Information Science and Engineering</td>
+                <td class="info-cell">- - -</td>
+              </tr>
+              <tr data-team="12">
+                <td class="team-col" rowspan="2">12</td>
+                <td class="name-cell" data-label="Member 1" data-info="012, class : P3, 1st semester - CSE">Vedika</td>
+                <td class="name-cell" data-label="Member 2" data-info="- - -">-</td>
+                <td class="name-cell" data-label="Member 3" data-info="- - -">-</td>
+                <td class="email-col" rowspan="2" data-label="Email">vedikasanju.24@gmail.com</td>
+              </tr>
+              <tr data-team="12" class="info-row">
+                <td class="info-cell">012, class : P3, 1st semester - CSE</td>
+                <td class="info-cell">- - -</td>
+                <td class="info-cell">- - -</td>
+              </tr>
+              <tr data-team="13">
+                <td class="team-col" rowspan="2">13</td>
+                <td class="name-cell" data-label="Member 1" data-info="1OX24IS033 - ISe">Dhesana</td>
+                <td class="name-cell" data-label="Member 2" data-info="1OX24IS053 - ISE">Khushi</td>
+                <td class="name-cell" data-label="Member 3" data-info="1OX24IS009 - ISE">Ananya</td>
+                <td class="email-col" rowspan="2" data-label="Email">khushiskumar2006@gmail.com</td>
+              </tr>
+              <tr data-team="13" class="info-row">
+                <td class="info-cell">1OX24IS033 - ISe</td>
+                <td class="info-cell">1OX24IS053 - ISE</td>
+                <td class="info-cell">1OX24IS009 - ISE</td>
+              </tr>
+              <tr data-team="14">
+                <td class="team-col" rowspan="2">14</td>
+                <td class="name-cell" data-label="Member 1" data-info="24 - AIML">Rishith J</td>
+                <td class="name-cell" data-label="Member 2" data-info="11 - AIML">Pavan</td>
+                <td class="name-cell" data-label="Member 3" data-info="6 - AIML">Nischal</td>
+                <td class="email-col" rowspan="2" data-label="Email">rishithpoojary2808@gmail.com</td>
+              </tr>
+              <tr data-team="14" class="info-row">
+                <td class="info-cell">24 - AIML</td>
+                <td class="info-cell">11 - AIML</td>
+                <td class="info-cell">6 - AIML</td>
+              </tr>
+              <tr data-team="15">
+                <td class="team-col" rowspan="2">15</td>
+                <td class="name-cell" data-label="Member 1" data-info="1OX23IS003 - ISE (5th sem)">Aishwarya S</td>
+                <td class="name-cell" data-label="Member 2" data-info="1OX23IS005 - ISE (5th sem)">Anju A S</td>
+                <td class="name-cell" data-label="Member 3" data-info="1OX23IS034 - ISE (5th sem)">Keerthana R</td>
+                <td class="email-col" rowspan="2" data-label="Email">aishusomanna123@gmail.com</td>
+              </tr>
+              <tr data-team="15" class="info-row">
+                <td class="info-cell">1OX23IS003 - ISE (5th sem)</td>
+                <td class="info-cell">1OX23IS005 - ISE (5th sem)</td>
+                <td class="info-cell">1OX23IS034 - ISE (5th sem)</td>
+              </tr>
+              <tr data-team="16">
+                <td class="team-col" rowspan="2">16</td>
+                <td class="name-cell" data-label="Member 1" data-info="1Ox24MT007 - Mechatronics">Bharath D B</td>
+                <td class="name-cell" data-label="Member 2" data-info="10x24mt017 - Mechatronics">Manoj Bilagi</td>
+                <td class="name-cell" data-label="Member 3" data-info="10x24mt018 - Mechatronics">Praful kage</td>
+                <td class="email-col" rowspan="2" data-label="Email">bharath011bharath@gmail.com</td>
+              </tr>
+              <tr data-team="16" class="info-row">
+                <td class="info-cell">1Ox24MT007 - Mechatronics</td>
+                <td class="info-cell">10x24mt017 - Mechatronics</td>
+                <td class="info-cell">10x24mt018 - Mechatronics</td>
+              </tr>
+              <tr data-team="17">
+                <td class="team-col" rowspan="2">17</td>
+                <td class="name-cell" data-label="Member 1" data-info="1OX24CS096 - Cse">Prakash H</td>
+                <td class="name-cell" data-label="Member 2" data-info="Lateral - Cse">Karthik mc</td>
+                <td class="name-cell" data-label="Member 3" data-info="1OX24CS054 - Cse">Karthik c</td>
+                <td class="email-col" rowspan="2" data-label="Email">prakashhs636@gmail.com</td>
+              </tr>
+              <tr data-team="17" class="info-row">
+                <td class="info-cell">1OX24CS096 - Cse</td>
+                <td class="info-cell">Lateral - Cse</td>
+                <td class="info-cell">1OX24CS054 - Cse</td>
+              </tr>
+              <tr data-team="18">
+                <td class="team-col" rowspan="2">18</td>
+                <td class="name-cell" data-label="Member 1" data-info="26 - Aiml">Sai pranith</td>
+                <td class="name-cell" data-label="Member 2" data-info="36 - Aiml">Ullas R P</td>
+                <td class="name-cell" data-label="Member 3" data-info="01 - Aiml">Rayan</td>
+                <td class="email-col" rowspan="2" data-label="Email">ullasrp13@gmail.com</td>
+              </tr>
+              <tr data-team="18" class="info-row">
+                <td class="info-cell">26 - Aiml</td>
+                <td class="info-cell">36 - Aiml</td>
+                <td class="info-cell">01 - Aiml</td>
+              </tr>
+
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div id="promptquest-winners" class="sub-content">
+            <div class="content-box">
+              <h3>ðŸ† PromptQuest Winners</h3>
+              <p class="placeholder-text">Winners will be announced soon! ðŸŽ‰</p>
+            </div>
+          </div>
+
+          <div id="promptquest-images" class="sub-content">
+            <div class="content-box">
+              <h3>ðŸ“¸ PromptQuest Event Gallery</h3>
+              <p class="placeholder-text">Event photos coming soon! ðŸ“·</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- UI BATTLE CONTENT -->
+        <div id="uibattle-content" class="event-content">
+          <div class="sub-tabs">
+            <button
+              class="sub-tab active"
+              onclick="switchSubTab('uibattle','registration')"
+            >
+              ðŸ“ Registration
+            </button>
+            <button class="sub-tab" onclick="switchSubTab('uibattle','winners')">
+              ðŸ† Winners
+            </button>
+            <button class="sub-tab" onclick="switchSubTab('uibattle','images')">
+              ðŸ“¸ Images
+            </button>
+          </div>
+
+          <div id="uibattle-registration" class="sub-content active">
+            <div class="content-box">
+              <h3>ðŸ“‹ Quick UI Battle Registrations</h3>
+              <p class="placeholder-text">No registration data available</p>
+            </div>
+          </div>
+
+          <div id="uibattle-winners" class="sub-content">
+            <div class="content-box">
+              <h3>ðŸ† Quick UI Battle Winners</h3>
+              <div class="table-wrapper">
+                <table>
+                  <thead>
+                    <tr>
+                      <th style="width: 150px">Rank</th>
+                      <th>Name</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr data-team="1">
+                      <td>ðŸ¥‡ 1st Place</td>
+                      <td>Harini SD</td>
+                    </tr>
+                    <tr data-team="2">
+                      <td>ðŸ¥ˆ 2nd Place</td>
+                      <td>Sinchana SD</td>
+                    </tr>
+                    <tr data-team="3">
+                      <td>ðŸ¥‰ 3rd Place</td>
+                      <td>Lokesh</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div id="uibattle-images" class="sub-content">
+            <div class="content-box">
+              <h3>ðŸ“¸ Quick UI Battle Gallery</h3>
+              <p class="placeholder-text">Event photos coming soon! ðŸ“·</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- HACKATHON CONTENT -->
+        <div id="hackathon-content" class="event-content">
+          <div class="sub-tabs">
+            <button
+              class="sub-tab active"
+              onclick="switchSubTab('hackathon','registration')"
+            >
+              ðŸ“ Registration
+            </button>
+            <button
+              class="sub-tab"
+              onclick="switchSubTab('hackathon','winners')"
+            >
+              ðŸ† Winners
+            </button>
+            <button class="sub-tab" onclick="switchSubTab('hackathon','images')">
+              ðŸ“¸ Images
+            </button>
+          </div>
+
+          <div id="hackathon-registration" class="sub-content active">
+            <div class="content-box">
+              <h3>ðŸ“‹ Hackathon Registrations</h3>
+              <p class="placeholder-text">Registration opens soon! ðŸš€</p>
+            </div>
+          </div>
+
+          <div id="hackathon-winners" class="sub-content">
+            <div class="content-box">
+              <h3>ðŸ† Hackathon Winners</h3>
+              <p class="placeholder-text">Winners will be announced soon! ðŸŽ‰</p>
+            </div>
+          </div>
+
+          <div id="hackathon-images" class="sub-content">
+            <div class="content-box">
+              <h3>ðŸ“¸ Hackathon Gallery</h3>
+              <p class="placeholder-text">Event photos coming soon! ðŸ“·</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Sticky navbar
+      window.addEventListener("scroll", function () {
+        const navbar = document.getElementById("navbar");
+        if (window.scrollY > 100) {
+          navbar.classList.add("sticky");
+        } else {
+          navbar.classList.remove("sticky");
+        }
+      });
+
+      // Toggle mobile navigation - SMALL DROPDOWN
+      function toggleNav() {
+        const navLinks = document.getElementById("navLinks");
+        const navBtn = document.getElementById("navBtn");
+        navLinks.classList.toggle("active");
+        navBtn.classList.toggle("active");
+      }
+
+      // Close menu when clicking outside
+      document.addEventListener("click", function (event) {
+        const navLinks = document.getElementById("navLinks");
+        const navBtn = document.getElementById("navBtn");
+        const navbar = document.getElementById("navbar");
+
+        if (
+          !navbar.contains(event.target) &&
+          navLinks.classList.contains("active")
+        ) {
+          navLinks.classList.remove("active");
+          navBtn.classList.remove("active");
+        }
+      });
+
+      // Login handler
+      function handleLogin(event) {
+        event.preventDefault();
+        const username = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+        const errorMessage = document.getElementById("errorMessage");
+
+        if (username === "admin" && password === "admin123") {
+          document.getElementById("login-page").style.display = "none";
+          document.getElementById("admin-dashboard").classList.add("active");
+          errorMessage.style.display = "none";
+        } else {
+          errorMessage.style.display = "block";
+        }
+      }
+
+      // Logout handler
+      function handleLogout() {
+        document.getElementById("login-page").style.display = "flex";
+        document.getElementById("admin-dashboard").classList.remove("active");
+        document.getElementById("loginForm").reset();
+      }
+
+      // Switch event tabs
+      function switchEvent(eventName) {
+        document
+          .querySelectorAll(".event-tab")
+          .forEach((tab) => tab.classList.remove("active"));
+        document
+          .querySelectorAll(".event-content")
+          .forEach((content) => content.classList.remove("active"));
+        event.target.classList.add("active");
+        document.getElementById(eventName + "-content").classList.add("active");
+      }
+
+      // Switch sub tabs
+      function switchSubTab(eventName, subTabName) {
+        const eventContent = document.getElementById(eventName + "-content");
+        eventContent
+          .querySelectorAll(".sub-tab")
+          .forEach((tab) => tab.classList.remove("active"));
+        eventContent
+          .querySelectorAll(".sub-content")
+          .forEach((content) => content.classList.remove("active"));
+        event.target.classList.add("active");
+        document
+          .getElementById(eventName + "-" + subTabName)
+          .classList.add("active");
+      }
+    </script>
+  </body>
+</html>
