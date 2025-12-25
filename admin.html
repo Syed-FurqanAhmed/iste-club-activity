@@ -36,7 +36,7 @@
         letter-spacing: 2px;
       }
 
-      /* ===== NAVBAR - EXACT from index.html ===== */
+      /* ===== NAVBAR ===== */
       nav {
         position: relative;
         display: flex;
@@ -155,7 +155,7 @@
         transform: rotate(-45deg) translate(8px, -8px);
       }
 
-      /* MOBILE NAVBAR - EXACT from index.html (small dropdown, NOT full screen!) */
+      /* MOBILE NAVBAR */
       @media (max-width: 900px) {
         nav {
           padding: 24px 6%;
@@ -173,7 +173,6 @@
           font-size: 10px;
         }
 
-        /* SMALL DROPDOWN MENU - NOT FULL SCREEN */
         .nav-links {
           position: absolute;
           top: 100%;
@@ -323,10 +322,6 @@
       .dashboard-header h2 {
         font-size: 2rem;
         color: var(--border);
-      }
-
-      .dashboard-header h2::before {
-        content: "ðŸ“Š ";
       }
 
       .logout-btn {
@@ -558,7 +553,6 @@
         font-size: 1.1rem;
       }
 
-      /* Mobile table */
       @media (max-width: 900px) {
         .admin-wrapper {
           padding: 24px 4%;
@@ -682,7 +676,7 @@
     </style>
   </head>
   <body>
-    <!-- NAVBAR - EXACT from index.html -->
+    <!-- NAVBAR -->
     <nav id="navbar">
       <div class="logo">
         <img src="images/download.png" alt="ISTE Logo" />
@@ -741,19 +735,19 @@
       <!-- ADMIN DASHBOARD -->
       <div id="admin-dashboard" class="dashboard">
         <div class="dashboard-header">
-          <h2>Event Management</h2>
+          <h2>📊 Event Management</h2>
           <button class="logout-btn" onclick="handleLogout()">Logout</button>
         </div>
 
         <div class="event-tabs">
           <button class="event-tab active" onclick="switchEvent('promptquest')">
-            ðŸŽ¯ PromptQuest
+            🎯 PromptQuest
           </button>
           <button class="event-tab" onclick="switchEvent('uibattle')">
-            ðŸŽ¨ Quick UI Battle
+            🎨 Quick UI Battle
           </button>
           <button class="event-tab" onclick="switchEvent('hackathon')">
-            ðŸ’» Hackathon
+            💻 Hackathon
           </button>
         </div>
 
@@ -764,25 +758,25 @@
               class="sub-tab active"
               onclick="switchSubTab('promptquest','registration')"
             >
-              ðŸ“ Registration
+              📝 Registration
             </button>
             <button
               class="sub-tab"
               onclick="switchSubTab('promptquest','winners')"
             >
-              ðŸ† Winners
+              🏆 Winners
             </button>
             <button
               class="sub-tab"
               onclick="switchSubTab('promptquest','images')"
             >
-              ðŸ“¸ Images
+              📸 Images
             </button>
           </div>
 
           <div id="promptquest-registration" class="sub-content active">
             <div class="content-box">
-              <h3>ðŸ“‹ PromptQuest Registrations</h3>
+              <h3>📋 PromptQuest Registrations</h3>
 
               <div class="stats-cards">
                 <div class="stat-card">
@@ -1032,15 +1026,15 @@
 
           <div id="promptquest-winners" class="sub-content">
             <div class="content-box">
-              <h3>ðŸ† PromptQuest Winners</h3>
-              <p class="placeholder-text">Winners will be announced soon! ðŸŽ‰</p>
+              <h3>🏆 PromptQuest Winners</h3>
+              <p class="placeholder-text">Winners will be announced soon! 🎉</p>
             </div>
           </div>
 
           <div id="promptquest-images" class="sub-content">
             <div class="content-box">
-              <h3>ðŸ“¸ PromptQuest Event Gallery</h3>
-              <p class="placeholder-text">Event photos coming soon! ðŸ“·</p>
+              <h3>📸 PromptQuest Event Gallery</h3>
+              <p class="placeholder-text">Event photos coming soon! 📷</p>
             </div>
           </div>
         </div>
@@ -1052,26 +1046,26 @@
               class="sub-tab active"
               onclick="switchSubTab('uibattle','registration')"
             >
-              ðŸ“ Registration
+              📝 Registration
             </button>
             <button class="sub-tab" onclick="switchSubTab('uibattle','winners')">
-              ðŸ† Winners
+              🏆 Winners
             </button>
             <button class="sub-tab" onclick="switchSubTab('uibattle','images')">
-              ðŸ“¸ Images
+              📸 Images
             </button>
           </div>
 
           <div id="uibattle-registration" class="sub-content active">
             <div class="content-box">
-              <h3>ðŸ“‹ Quick UI Battle Registrations</h3>
+              <h3>📋 Quick UI Battle Registrations</h3>
               <p class="placeholder-text">No registration data available</p>
             </div>
           </div>
 
           <div id="uibattle-winners" class="sub-content">
             <div class="content-box">
-              <h3>ðŸ† Quick UI Battle Winners</h3>
+              <h3>🏆 Quick UI Battle Winners</h3>
               <div class="table-wrapper">
                 <table>
                   <thead>
@@ -1082,15 +1076,15 @@
                   </thead>
                   <tbody>
                     <tr data-team="1">
-                      <td>ðŸ¥‡ 1st Place</td>
+                      <td>🥇 1st Place</td>
                       <td>Harini SD</td>
                     </tr>
                     <tr data-team="2">
-                      <td>ðŸ¥ˆ 2nd Place</td>
+                      <td>🥈 2nd Place</td>
                       <td>Sinchana SD</td>
                     </tr>
                     <tr data-team="3">
-                      <td>ðŸ¥‰ 3rd Place</td>
+                      <td>🥉 3rd Place</td>
                       <td>Lokesh</td>
                     </tr>
                   </tbody>
@@ -1101,8 +1095,8 @@
 
           <div id="uibattle-images" class="sub-content">
             <div class="content-box">
-              <h3>ðŸ“¸ Quick UI Battle Gallery</h3>
-              <p class="placeholder-text">Event photos coming soon! ðŸ“·</p>
+              <h3>📸 Quick UI Battle Gallery</h3>
+              <p class="placeholder-text">Event photos coming soon! 📷</p>
             </div>
           </div>
         </div>
@@ -1114,37 +1108,37 @@
               class="sub-tab active"
               onclick="switchSubTab('hackathon','registration')"
             >
-              ðŸ“ Registration
+              📝 Registration
             </button>
             <button
               class="sub-tab"
               onclick="switchSubTab('hackathon','winners')"
             >
-              ðŸ† Winners
+              🏆 Winners
             </button>
             <button class="sub-tab" onclick="switchSubTab('hackathon','images')">
-              ðŸ“¸ Images
+              📸 Images
             </button>
           </div>
 
           <div id="hackathon-registration" class="sub-content active">
             <div class="content-box">
-              <h3>ðŸ“‹ Hackathon Registrations</h3>
-              <p class="placeholder-text">Registration opens soon! ðŸš€</p>
+              <h3>📋 Hackathon Registrations</h3>
+              <p class="placeholder-text">Registration opens soon! 🚀</p>
             </div>
           </div>
 
           <div id="hackathon-winners" class="sub-content">
             <div class="content-box">
-              <h3>ðŸ† Hackathon Winners</h3>
-              <p class="placeholder-text">Winners will be announced soon! ðŸŽ‰</p>
+              <h3>🏆 Hackathon Winners</h3>
+              <p class="placeholder-text">Winners will be announced soon! 🎉</p>
             </div>
           </div>
 
           <div id="hackathon-images" class="sub-content">
             <div class="content-box">
-              <h3>ðŸ“¸ Hackathon Gallery</h3>
-              <p class="placeholder-text">Event photos coming soon! ðŸ“·</p>
+              <h3>📸 Hackathon Gallery</h3>
+              <p class="placeholder-text">Event photos coming soon! 📷</p>
             </div>
           </div>
         </div>
@@ -1162,7 +1156,7 @@
         }
       });
 
-      // Toggle mobile navigation - SMALL DROPDOWN
+      // Toggle mobile navigation
       function toggleNav() {
         const navLinks = document.getElementById("navLinks");
         const navBtn = document.getElementById("navBtn");
