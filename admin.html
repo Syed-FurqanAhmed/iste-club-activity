@@ -1637,17 +1637,10 @@
       import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
       import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
 
+      </script>
       // Firebase configuration
-      const firebaseConfig = {
-        apiKey: "",
-        authDomain: "iste-toce.firebaseapp.com",
-        projectId: "iste-toce",
-        storageBucket: "iste-toce.firebasestorage.app",
-        messagingSenderId: "918228043244",
-        appId: "1:918228043244:web:891b81cc0a80127588ecc9",
-        measurementId: "G-RWG0BCFGEJ"
-      };
-
+      <script src="config.js"></script>
+      
       // Initialize Firebase (ONLY ONCE)
       const app = initializeApp(firebaseConfig);
       const auth = getAuth(app);

@@ -1,0 +1,10 @@
+# Sensitive files - DO NOT COMMIT
+config.js
+.env
+*.key
+secrets/
+credentials/
+
+# Other common ignores
+node_modules/
+.DS_Store
