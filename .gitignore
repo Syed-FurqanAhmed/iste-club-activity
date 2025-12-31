@@ -1,6 +1,10 @@
 # Firebase Import folder - contains sensitive files, not needed for website
 firebase-import/
 
+# Old numbered files (replaced by main files)
+index1.html
+admin1.html
+
 # OS files
 .DS_Store
 Thumbs.db
