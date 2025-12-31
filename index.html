@@ -1,798 +1,1494 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ISTE Club Tech Activity</title>
+    <title>ISTE Club | Tech Activity Hub</title>
+    <meta name="description"
+        content="ISTE Club - Indian Society for Technical Education. Explore tech workshops, coding events, and join our vibrant tech community." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Questrial&display=swap"
-      rel="stylesheet"
-    />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Lexend+Deca&display=swap"
-      rel="stylesheet"
-    />
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet" />
     <style>
-      :root {
-        --bg: #fff7ea;
-        --bg-alt: #f3efe6;
-        --primary: #1e1b4b;
-        --secondary: #6b63b5;
-      }
-      /* RESET */
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-      html {
-        scroll-behavior: smooth;
-      }
-      body {
-        font-family: "Questrial", sans-serif;
-        background: var(--bg);
-        color: var(--primary);
-        letter-spacing: 3px;
-        overflow-x: hidden;
-      }
-      section {
-        scroll-margin-top: 120px;
-      }
-      /* ===== ANIMATIONS ===== */
-      @keyframes fadeDown {
-        from {
-          opacity: 0;
-          transform: translateY(-30px);
+        :root {
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --bg-card: rgba(255, 255, 255, 0.9);
+            --glass: rgba(255, 255, 255, 0.8);
+            --glass-border: rgba(99, 102, 241, 0.2);
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --accent-1: #6366f1;
+            --accent-2: #8b5cf6;
+            --accent-3: #a855f7;
+            --accent-cyan: #0891b2;
+            --accent-pink: #ec4899;
+            --gradient-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+            --gradient-button: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            --gradient-soft: linear-gradient(135deg, #e0e7ff 0%, #ede9fe 50%, #fae8ff 100%);
+            --shadow-soft: 0 4px 20px rgba(99, 102, 241, 0.12);
+            --shadow-card: 0 8px 32px rgba(99, 102, 241, 0.1);
+            --shadow-glow: 0 0 30px rgba(99, 102, 241, 0.25);
+            --radius-sm: 12px;
+            --radius-md: 16px;
+            --radius-lg: 24px;
+            --radius-xl: 32px;
         }
-        to {
-          opacity: 1;
-        }
-      }
-      @keyframes fadeUp {
-        from {
-          opacity: 0;
-          transform: translateY(40px);
-        }
-        to {
-          opacity: 1;
-        }
-      }
-      .reveal {
-        opacity: 0;
-        transform: translateY(40px);
-        transition: 1s ease;
-      }
-      .reveal.active {
-        opacity: 1;
-        transform: none;
-      }
-      /* ===== NAVBAR ===== */
-      nav {
-        position: relative;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 32px 8%;
-        background: var(--bg);
-        z-index: 999;
-      }
-      nav.sticky {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        padding: 16px 8%;
-        background: rgba(255, 247, 234, 0.96);
-        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
-        animation: fadeDown 0.4s ease;
-      }
-      .logo {
-        display: flex;
-        align-items: center;
-        gap: 18px;
-      }
-      .logo img {
-        width: 120px;
-      }
-      .logo-text span {
-        font-size: 26px;
-        font-weight: bold;
-      }
-      .logo-text small {
-        font-size: 12px;
-        color: var(--secondary);
-      }
-      .nav-links a {
-        margin-left: 26px;
-        text-decoration: none;
-        color: var(--primary);
-        font-size: 15px;
-        font-weight: 600;
-        position: relative;
-        transition: color 0.3s ease;
-      }
 
-      .nav-links a::after {
-        content: "";
-        position: absolute;
-        bottom: -6px;
-        left: 0;
-        width: 0;
-        height: 3px;
-        background: linear-gradient(90deg, #6b63b5, #9b87f5);
-        transition: width 0.3s ease;
-      }
-
-      .nav-links a:hover::after,
-      .nav-links a.active::after {
-        width: 100%;
-      }
-
-      .nav-links a:hover,
-      .nav-links a.active {
-        color: #6b63b5;
-      }
-      /* .nav-links a.active {
-        background: var(--primary);
-        color: white;
-        padding: 10px 22px;
-        border-radius: 8px;
-      } */
-      /* ===== HERO ===== */
-      .hero {
-        display: grid;
-        grid-template-columns: 1.1fr 1fr;
-        align-items: center;
-        padding: 120px 8%;
-        gap: 80px;
-      }
-      .hero h1 {
-        font-size: 56px;
-        margin-bottom: 25px;
-      }
-      .hero p {
-        font-size: 22px;
-        color: var(--secondary);
-        margin-bottom: 35px;
-      }
-      .btn {
-        display: inline-block;
-        background: var(--primary);
-        color: white;
-        padding: 16px 40px;
-        border-radius: 10px;
-        text-decoration: none;
-      }
-      .hero-img img {
-        width: 100%;
-        max-width: 520px;
-      }
-      /* ===== ABOUT / INFO ===== */
-      .iste-info-box {
-        padding: 100px 8%;
-        text-align: center;
-      }
-      .iste-info-box h2 {
-        font-size: 60px;
-        margin-bottom: 90px;
-      }
-      .iste-box-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 90px;
-      }
-      .feature-icon {
-        font-size: 44px;
-        margin-bottom: 22px;
-      }
-      .iste-box-item h3 {
-        font-family: "Lexend Deca", sans-serif;
-        font-size: 22px;
-        margin-bottom: 16px;
-      }
-      .iste-box-item p {
-        font-size: 16px;
-        line-height: 1.7;
-        max-width: 260px;
-        margin: auto;
-      }
-      /* ===== EVENT ===== */
-      .activity {
-        background: var(--bg-alt);
-        padding: 100px 8%;
-        display: grid;
-        grid-template-columns: 1.1fr 1fr;
-        gap: 60px;
-      }
-      .activity h2 {
-        font-size: 46px;
-        margin-bottom: 20px;
-      }
-      .activity p {
-        font-size: 20px;
-        color: var(--secondary);
-        margin-bottom: 25px;
-      }
-      .poster img {
-        width: 100%;
-        max-width: 420px;
-        border-radius: 12px;
-        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
-      }
-      /* ===== WINNERS ===== */
-      .winners {
-        padding: 100px 8%;
-        text-align: center;
-      }
-      .winners h2 {
-        font-size: 50px;
-        margin-bottom: 60px;
-      }
-      .winner-grid {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 40px;
-      }
-      .winner-card {
-        background: rgba(255, 247, 234, 0.9); /* same base as page bg */
-        border: 1px solid rgba(30, 27, 75, 0.12); /* subtle definition */
-        padding: 30px;
-        border-radius: 16px;
-        transition: 0.4s ease;
-      }
-      /* Gold */
-      .winner-card:nth-child(1) {
-        border-color: rgba(212, 175, 55, 0.55);
-      }
-      /* Silver */
-      .winner-card:nth-child(2) {
-        border-color: rgba(192, 192, 192, 0.7);
-      }
-      /* Bronze */
-      .winner-card:nth-child(3) {
-        border-color: rgba(205, 127, 50, 0.6);
-      }
-      /* Gold hover */
-      .winner-card:nth-child(1):hover {
-        box-shadow: 0 12px 30px rgba(212, 175, 55, 0.25);
-      }
-      /* Silver hover */
-      .winner-card:nth-child(2):hover {
-        box-shadow: 0 12px 30px rgba(160, 160, 160, 0.4);
-      }
-      /* Bronze hover */
-      .winner-card:nth-child(3):hover {
-        box-shadow: 0 12px 30px rgba(205, 127, 50, 0.25);
-      }
-      .winner-card p {
-        font-family: "Lexend Deca", sans-serif;
-        font-size: 15px;
-        letter-spacing: 0.5px;
-        line-height: 1.8;
-        color: var(--secondary);
-      }
-      .medal {
-        font-size: 22px;
-        line-height: 1;
-      }
-      .winner-card:hover {
-        transform: translateY(-10px);
-      }
-      .winner-card h3 {
-        font-family: "Lexend Deca", sans-serif;
-        margin-bottom: 10px;
-      }
-      .winner-title {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-      }
-      .winner-card p {
-        font-size: 14px;
-        letter-spacing: 1px;
-      }
-      /* ===== GALLERY ===== */
-      .gallery {
-        padding: 80px 8%;
-        background: #fff;
-      }
-      .gallery h2 {
-        text-align: center;
-        font-size: 50px;
-        margin-bottom: 60px;
-      }
-      .gallery-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 24px;
-        max-width: 1200px;
-        margin: 0 auto;
-      }
-      .gallery-grid img {
-        width: 100%;
-        max-height: 350px;
-        object-fit: cover;
-        border-radius: 14px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        cursor: pointer;
-      }
-
-      .gallery-grid img:hover {
-        transform: translateY(-6px);
-        box-shadow: 0 8px 20px rgba(107, 99, 181, 0.2);
-      }
-      /* ===== FOOTER ===== */
-      footer {
-        background: var(--primary);
-        color: white;
-        padding: 26px 8%;
-      }
-      /* ===== MOBILE ===== */
-      .hamburger {
-        display: none;
-        flex-direction: column;
-        gap: 6px;
-        cursor: pointer;
-      }
-      @media (max-width: 900px) {
-        .hero,
-        .activity {
-          grid-template-columns: 1fr;
-          text-align: center;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        .iste-box-grid,
-        .winner-grid,
-        .gallery-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-          gap: 24px;
-          max-width: 1200px;
-          margin: 0 auto;
+
+        html {
+            scroll-behavior: smooth;
         }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* ===== ANIMATED BACKGROUND ===== */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+            background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 50%, #fae8ff 100%);
+        }
+
+        .bg-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.5;
+            animation: float 20s ease-in-out infinite;
+        }
+
+        .bg-orb-1 {
+            width: 700px;
+            height: 700px;
+            background: linear-gradient(135deg, #c7d2fe, #ddd6fe);
+            top: -250px;
+            left: -250px;
+        }
+
+        .bg-orb-2 {
+            width: 600px;
+            height: 600px;
+            background: linear-gradient(135deg, #fae8ff, #f5d0fe);
+            top: 40%;
+            right: -200px;
+            animation-delay: -5s;
+        }
+
+        .bg-orb-3 {
+            width: 500px;
+            height: 500px;
+            background: linear-gradient(135deg, #a5f3fc, #c4b5fd);
+            bottom: -150px;
+            left: 30%;
+            animation-delay: -10s;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            25% {
+                transform: translate(50px, 50px) scale(1.1);
+            }
+
+            50% {
+                transform: translate(-30px, 80px) scale(0.95);
+            }
+
+            75% {
+                transform: translate(40px, -40px) scale(1.05);
+            }
+        }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--gradient-primary);
+            border-radius: 4px;
+        }
+
+        /* ===== KEYFRAMES ===== */
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: -200% center;
+            }
+
+            100% {
+                background-position: 200% center;
+            }
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ===== NAVBAR ===== */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 6%;
+            z-index: 1000;
+            transition: all 0.4s ease;
+        }
+
+        nav.scrolled {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.08);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            text-decoration: none;
+        }
+
+        .logo img {
+            width: 70px;
+            height: auto;
+            transition: transform 0.3s ease;
+        }
+
+        .logo:hover img {
+            transform: scale(1.05);
+        }
+
+        .logo-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo-text span {
+            font-family: 'Outfit', sans-serif;
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--text-primary);
+            letter-spacing: 2px;
+        }
+
+        .logo-text small {
+            font-size: 9px;
+            color: var(--text-secondary);
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+
         .nav-links {
-          position: absolute;
-          top: 100%;
-          right: 8%;
-          background: var(--bg);
-          padding: 24px;
-          border-radius: 14px;
-          display: none;
-          flex-direction: column;
-          gap: 18px;
-          box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
-          align-items: stretch; /* 🔑 key fix */
-          text-align: center;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
+
         .nav-links a {
-          margin-left: 10px;
-          margin-right: 10px;
-          text-decoration: none;
-          color: var(--primary);
-          font-size: 15px;
-          position: relative;
-          transition: color 0.3s ease;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 10px 18px;
+            border-radius: var(--radius-sm);
+            transition: all 0.3s ease;
         }
-        .nav-links {
-          position: absolute;
-          top: 100%;
-          right: 8%;
-          background: var(--bg);
-          padding: 24px;
-          border-radius: 14px;
-          display: none;
-          flex-direction: column;
-          gap: 18px;
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--accent-1);
+            background: rgba(99, 102, 241, 0.08);
         }
-        .nav-links.show {
-          display: flex;
+
+        .nav-cta {
+            background: var(--gradient-button) !important;
+            color: white !important;
+            margin-left: 10px;
         }
-        /* ✅ ADD THIS */
+
+        .nav-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-glow);
+        }
+
         .hamburger {
-          display: flex;
-        }
-      }
-      .hamburger span {
-        width: 26px;
-        height: 3px;
-        background: var(--primary);
-      }
-      /* ===== WINNER IMAGES ===== */
-      .winner-card img {
-        width: 100%;
-        max-width: 180px;
-        height: 180px;
-        object-fit: cover;
-        border-radius: 14px;
-        margin-bottom: 18px;
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-      }
-      /* ================= REGISTER MODAL ================= */
-      .modal {
-        display: none;
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.65);
-        z-index: 10000;
-      }
-      .modal-content {
-        background: white;
-        width: 90%;
-        max-width: 640px;
-        height: 80vh;
-        margin: 5vh auto;
-        border-radius: 14px;
-        overflow: hidden;
-        position: relative;
-      }
-      .modal iframe {
-        width: 100%;
-        height: 100%;
-        border: none;
-      }
-      .close-btn {
-        position: fixed;
-        top: 16px;
-        right: 18px;
-        font-size: 32px;
-        color: white;
-        background: rgba(0, 0, 0, 0.6);
-        width: 44px;
-        height: 44px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        z-index: 10002;
-      }
-      /* ================= SUCCESS POPUP ================= */
-      .success-popup {
-        display: none;
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.6);
-        z-index: 10001;
-        align-items: center;
-        justify-content: center;
-      }
-      .success-box {
-        background: white;
-        padding: 40px 50px;
-        border-radius: 14px;
-        text-align: center;
-        animation: fadeUp 0.4s ease;
-      }
-      .checkmark {
-        width: 80px;
-        height: 80px;
-        background: #4caf50;
-        color: white;
-        border-radius: 50%;
-        line-height: 80px;
-        font-size: 46px;
-        margin: auto auto 20px;
-      }
-      .winner-subtitle {
-        margin-top: -35px;
-        margin-bottom: 50px;
-        font-size: 18px;
-        font-weight: 900;
-        letter-spacing: 1px;
-        color: var(--secondary);
-      }
-
-      /* Fullscreen Image Modal */
-      .image-modal {
-        display: none;
-        position: fixed;
-        z-index: 9999;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.95);
-        cursor: pointer;
-      }
-
-      .image-modal img {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        max-width: 95%;
-        max-height: 95%;
-        object-fit: contain;
-        border-radius: 8px;
-      }
-
-      .image-modal.show {
-        display: block;
-      }
-
-      /* Mobile Gallery Styles */
-      @media (max-width: 900px) {
-        .gallery-grid {
-          grid-template-columns: 1fr;
-          gap: 20px;
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            padding: 10px;
+            z-index: 1001;
         }
 
-        .gallery-grid img {
-          max-height: 280px;
+        .hamburger span {
+            width: 25px;
+            height: 2.5px;
+            background: var(--accent-1);
+            border-radius: 2px;
+            transition: all 0.3s ease;
         }
-      }
+
+        /* ===== HERO SECTION ===== */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 120px 6% 80px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-content {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 60px;
+            align-items: center;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .hero-text {
+            z-index: 10;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--gradient-soft);
+            border: 2px solid var(--glass-border);
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent-1);
+            margin-bottom: 25px;
+            animation: fadeUp 0.8s ease;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .hero-badge::before {
+            content: '';
+            width: 10px;
+            height: 10px;
+            background: var(--accent-1);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .hero h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(40px, 6vw, 72px);
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 24px;
+            animation: fadeUp 0.8s ease 0.1s both;
+            color: var(--text-primary);
+        }
+
+        .hero h1 .gradient-text {
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-description {
+            font-size: 18px;
+            color: var(--text-secondary);
+            max-width: 500px;
+            margin-bottom: 35px;
+            animation: fadeUp 0.8s ease 0.2s both;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            animation: fadeUp 0.8s ease 0.3s both;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 32px;
+            border-radius: var(--radius-md);
+            font-size: 15px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--gradient-button);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .btn-secondary {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 2px solid var(--glass-border);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-1);
+            color: var(--accent-1);
+            transform: translateY(-3px);
+        }
+
+        .hero-image {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: fadeUp 0.8s ease 0.4s both;
+        }
+
+        .hero-image img {
+            width: 100%;
+            max-width: 500px;
+            position: relative;
+            z-index: 2;
+            filter: drop-shadow(0 30px 60px rgba(99, 102, 241, 0.2));
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .hero-glow {
+            position: absolute;
+            width: 450px;
+            height: 450px;
+            background: var(--gradient-soft);
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: 1;
+            opacity: 0.7;
+        }
+
+        .hero-shapes {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        .shape {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.8;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .shape-1 {
+            width: 24px;
+            height: 24px;
+            background: var(--accent-cyan);
+            top: 20%;
+            left: 10%;
+            animation: float 4s ease-in-out infinite;
+        }
+
+        .shape-2 {
+            width: 18px;
+            height: 18px;
+            background: var(--accent-pink);
+            top: 60%;
+            left: 5%;
+            animation: float 5s ease-in-out infinite reverse;
+        }
+
+        .shape-3 {
+            width: 30px;
+            height: 30px;
+            background: var(--accent-1);
+            top: 30%;
+            right: 15%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        /* ===== STATS BAR ===== */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 60px 6%;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 35px 25px;
+            background: var(--bg-card);
+            border: 2px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-card);
+            transition: all 0.3s ease;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .stat-number {
+            font-family: 'Outfit', sans-serif;
+            font-size: 48px;
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        /* ===== ABOUT SECTION ===== */
+        .about {
+            padding: 100px 6%;
+            position: relative;
+        }
+
+        .section-header {
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto 60px;
+        }
+
+        .section-tag {
+            display: inline-block;
+            background: var(--gradient-soft);
+            border: 2px solid var(--glass-border);
+            padding: 8px 18px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--accent-1);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(32px, 5vw, 50px);
+            font-weight: 800;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        .section-title .gradient-text {
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .section-subtitle {
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 2px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 40px 30px;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-card);
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-primary);
+            transform: scaleX(0);
+            transition: transform 0.4s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .feature-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .feature-icon {
+            width: 85px;
+            height: 85px;
+            margin: 0 auto 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--gradient-soft);
+            border-radius: var(--radius-md);
+            font-size: 40px;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover .feature-icon {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .feature-card h3 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+            font-size: 15px;
+            line-height: 1.7;
+        }
+
+        /* ===== ACTIVITY SECTION ===== */
+        .activity {
+            padding: 100px 6%;
+            background: var(--bg-secondary);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .activity::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--gradient-primary);
+        }
+
+        .activity-content {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 60px;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .activity-info h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(32px, 5vw, 48px);
+            font-weight: 800;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        .activity-info h2 .gradient-text {
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .activity-details {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .activity-detail {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: var(--text-secondary);
+            font-size: 16px;
+        }
+
+        .activity-detail-icon {
+            width: 48px;
+            height: 48px;
+            background: var(--gradient-soft);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .activity-poster {
+            position: relative;
+        }
+
+        .activity-poster img {
+            width: 100%;
+            max-width: 400px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-card);
+            transition: transform 0.3s ease;
+        }
+
+        .activity-poster:hover img {
+            transform: scale(1.02);
+        }
+
+        /* ===== WINNERS SECTION ===== */
+        .winners {
+            padding: 100px 6%;
+            position: relative;
+        }
+
+        .winners-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .winner-card {
+            background: var(--bg-card);
+            border: 2px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 35px 25px;
+            text-align: center;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-card);
+        }
+
+        .winner-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .winner-card.gold::before {
+            background: linear-gradient(90deg, #fbbf24, #f59e0b);
+        }
+
+        .winner-card.silver::before {
+            background: linear-gradient(90deg, #94a3b8, #64748b);
+        }
+
+        .winner-card.bronze::before {
+            background: linear-gradient(90deg, #fb923c, #ea580c);
+        }
+
+        .winner-card:hover {
+            transform: translateY(-10px);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .winner-medal {
+            font-size: 55px;
+            margin-bottom: 20px;
+        }
+
+        .winner-card h3 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .winner-card .event {
+            color: var(--accent-1);
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        /* ===== GALLERY SECTION ===== */
+        .gallery {
+            padding: 100px 6%;
+            background: var(--bg-secondary);
+        }
+
+        .gallery-scroll {
+            display: flex;
+            gap: 25px;
+            overflow-x: auto;
+            padding: 20px 0;
+            scroll-snap-type: x mandatory;
+            scrollbar-width: none;
+        }
+
+        .gallery-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .gallery-item {
+            flex: 0 0 420px;
+            scroll-snap-align: start;
+            position: relative;
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: var(--shadow-card);
+            transition: transform 0.3s ease;
+        }
+
+        .gallery-item:hover {
+            transform: scale(1.03);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: 380px;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+
+        .gallery-item:hover img {
+            transform: scale(1.1);
+        }
+
+        .gallery-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(30, 41, 59, 0.95));
+            padding: 60px 20px 20px;
+            transform: translateY(100%);
+            transition: transform 0.4s ease;
+        }
+
+        .gallery-item:hover .gallery-overlay {
+            transform: translateY(0);
+        }
+
+        .gallery-overlay span {
+            color: white;
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        /* ===== IMAGE MODAL ===== */
+        .image-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(20px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .image-modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .image-modal img {
+            max-width: 90%;
+            max-height: 90%;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background: var(--gradient-button);
+            border: none;
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.3s ease;
+        }
+
+        .modal-close:hover {
+            transform: scale(1.1);
+        }
+
+        /* ===== REGISTRATION MODAL ===== */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(20px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            padding: 20px;
+        }
+
+        .modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            max-width: 700px;
+            width: 100%;
+            max-height: 90vh;
+            overflow: hidden;
+            position: relative;
+            box-shadow: var(--shadow-glow);
+        }
+
+        .modal-header {
+            background: var(--gradient-button);
+            padding: 25px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .modal-header button {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s ease;
+        }
+
+        .modal-header button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .modal-body {
+            padding: 0;
+        }
+
+        .modal-body iframe {
+            width: 100%;
+            height: 500px;
+            border: none;
+        }
+
+        /* ===== FOOTER ===== */
+        footer {
+            background: var(--text-primary);
+            color: var(--bg-primary);
+            padding: 60px 6% 30px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+            max-width: 1200px;
+            margin: 0 auto 40px;
+        }
+
+        .footer-section h4 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .footer-section p,
+        .footer-section a {
+            color: var(--text-muted);
+            font-size: 14px;
+            line-height: 1.8;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 10px;
+            transition: color 0.3s ease;
+        }
+
+        .footer-section a:hover {
+            color: var(--accent-1);
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer-bottom p {
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1024px) {
+            .hero-content {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .hero-text {
+                order: 2;
+            }
+
+            .hero-image {
+                order: 1;
+            }
+
+            .hero h1 {
+                font-size: clamp(36px, 8vw, 52px);
+            }
+
+            .hero-description {
+                margin: 0 auto 30px;
+            }
+
+            .hero-buttons {
+                justify-content: center;
+            }
+
+            .stats-bar {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .features-grid,
+            .winners-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .activity-content {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .activity-poster {
+                order: -1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            nav {
+                padding: 15px 5%;
+            }
+
+            .nav-links {
+                position: fixed;
+                top: 0;
+                right: -100%;
+                width: 280px;
+                height: 100vh;
+                background: var(--bg-secondary);
+                flex-direction: column;
+                padding: 100px 30px 30px;
+                gap: 10px;
+                transition: right 0.4s ease;
+                box-shadow: -10px 0 30px rgba(99, 102, 241, 0.1);
+            }
+
+            .nav-links.active {
+                right: 0;
+            }
+
+            .nav-links a {
+                width: 100%;
+                text-align: center;
+                padding: 15px;
+            }
+
+            .hamburger {
+                display: flex;
+            }
+
+            .hero {
+                padding: 100px 5% 60px;
+            }
+
+            .stats-bar,
+            .features-grid,
+            .winners-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .gallery-item {
+                flex: 0 0 280px;
+            }
+        }
     </style>
-  </head>
-  <body>
+</head>
+
+<body>
+    <!-- Animated Background -->
+    <div class="bg-animation">
+        <div class="bg-orb bg-orb-1"></div>
+        <div class="bg-orb bg-orb-2"></div>
+        <div class="bg-orb bg-orb-3"></div>
+    </div>
+
+    <!-- NAVBAR -->
     <nav id="navbar">
-      <div class="logo">
-        <img src="images/download.png" />
-        <div class="logo-text">
-          <span>ISTE</span><br />
-          <small>Indian Society for Technical Education</small>
+        <a href="#" class="logo">
+            <img src="images/download.png" alt="ISTE Logo" />
+            <div class="logo-text">
+                <span>ISTE</span>
+                <small>Indian Society for Technical Education</small>
+            </div>
+        </a>
+        <div class="nav-links" id="navLinks">
+            <a href="#" class="active">Home</a>
+            <a href="#about">About</a>
+            <a href="#activity">Events</a>
+            <a href="#winners">Winners</a>
+            <a href="#gallery">Gallery</a>
+            <a href="admin1.html" class="nav-cta">Admin</a>
         </div>
-      </div>
-      <div class="nav-links">
-        <a href="#home" class="active">Home</a>
-        <a href="#about">About</a>
-        <a href="#activity">Register</a>
-        <a href="#winners">Winners</a>
-        <a href="#gallery">Gallery</a>
-        <a href="admin.html">Admin</a>
-      </div>
-      <div class="hamburger" onclick="toggleMenu()">
-        <span></span><span></span><span></span>
-      </div>
+        <div class="hamburger" id="hamburger" onclick="toggleNav()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
     </nav>
-    <section class="hero reveal" id="home">
-      <div>
-        <h1>Welcome to ISTE<br />Club Activity</h1>
-        <p>Explore Tech with ISTE Club</p>
-        <a class="btn" href="#winners">View Winners</a>
-      </div>
-      <div class="hero-img">
-        <img src="images/activity.png" />
-      </div>
+
+    <!-- HERO SECTION -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="hero-text">
+                <div class="hero-badge">🚀 Now Accepting Registrations</div>
+                <h1>Welcome to <br><span class="gradient-text">ISTE Tech Hub</span></h1>
+                <p class="hero-description">Join the most vibrant technical community. Participate in workshops,
+                    hackathons, and coding challenges to level up your skills.</p>
+                <div class="hero-buttons">
+                    <a href="#activity" class="btn btn-primary">Explore Events ✨</a>
+                    <a href="#about" class="btn btn-secondary">Learn More</a>
+                </div>
+            </div>
+            <div class="hero-image">
+                <div class="hero-glow"></div>
+                <div class="hero-shapes">
+                    <div class="shape shape-1"></div>
+                    <div class="shape shape-2"></div>
+                    <div class="shape shape-3"></div>
+                </div>
+                <img src="images/activity.png" alt="PromptQuest Event" />
+            </div>
+        </div>
     </section>
-    <section class="iste-info-box reveal" id="about">
-      <h2>Welcome to ISTE Club Activity</h2>
-      <div class="iste-box-grid">
-        <div class="iste-box-item">
-          <div class="feature-icon">🛡️</div>
-          <h3>Tech Workshops</h3>
-          <p>Hands-on workshops led by experts.</p>
+
+    <!-- STATS BAR -->
+    <section class="stats-bar reveal">
+        <div class="stat-item">
+            <div class="stat-number">500+</div>
+            <div class="stat-label">Active Members</div>
         </div>
-        <div class="iste-box-item">
-          <div class="feature-icon">🎯</div>
-          <h3>Coding Events</h3>
-          <p>Sharpen skills via hackathons.</p>
+        <div class="stat-item">
+            <div class="stat-number">25+</div>
+            <div class="stat-label">Events Hosted</div>
         </div>
-        <div class="iste-box-item">
-          <div class="feature-icon">☁️</div>
-          <h3>Tech Community</h3>
-          <p>Join a vibrant tech community.</p>
+        <div class="stat-item">
+            <div class="stat-number">15+</div>
+            <div class="stat-label">Workshops</div>
         </div>
-      </div>
+        <div class="stat-item">
+            <div class="stat-number">100%</div>
+            <div class="stat-label">Fun Guaranteed</div>
+        </div>
     </section>
+
+    <!-- ABOUT SECTION -->
+    <section class="about reveal" id="about">
+        <div class="section-header">
+            <span class="section-tag">About Us</span>
+            <h2 class="section-title">Why <span class="gradient-text">ISTE?</span></h2>
+            <p class="section-subtitle">Empowering students through technology, innovation, and hands-on learning
+                experiences.</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">💡</div>
+                <h3>Innovation Hub</h3>
+                <p>Explore cutting-edge technologies and develop innovative solutions to real-world problems.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <h3>Skill Development</h3>
+                <p>Enhance your technical skills through workshops, bootcamps, and hands-on projects.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🤝</div>
+                <h3>Community</h3>
+                <p>Connect with like-minded peers, mentors, and industry professionals.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ACTIVITY SECTION -->
     <section class="activity reveal" id="activity">
-      <div>
-        <h2>Quick Draw UI Battle</h2>
-        <p>
-          📅 17 Dec 2025 · 2:30 PM · N408<br />
-          🏫 Dept. of Information Science & Engineering, TOCE
-        </p>
-        <a class="btn" href="javascript:void(0)" onclick="openForm()"
-          >Register Now</a
-        >
-      </div>
-      <div class="poster">
-        <img src="images/Poster 17Dec.jpg" />
-      </div>
+        <div class="activity-content">
+            <div class="activity-info">
+                <span class="section-tag">Upcoming Event</span>
+                <h2>PromptQuest <span class="gradient-text">2024</span></h2>
+                <div class="activity-details">
+                    <div class="activity-detail">
+                        <div class="activity-detail-icon">📅</div>
+                        <span>December 20, 2024</span>
+                    </div>
+                    <div class="activity-detail">
+                        <div class="activity-detail-icon">🕐</div>
+                        <span>10:00 AM - 4:00 PM</span>
+                    </div>
+                    <div class="activity-detail">
+                        <div class="activity-detail-icon">📍</div>
+                        <span>Main Auditorium, TOCE</span>
+                    </div>
+                    <div class="activity-detail">
+                        <div class="activity-detail-icon">👥</div>
+                        <span>Team Size: 2-3 Members</span>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="openModal()">Register Now 🎉</button>
+            </div>
+            <div class="activity-poster">
+                <img src="images/IMG-20251216-WA0008.jpg" alt="PromptQuest Event Poster" />
+            </div>
+        </div>
     </section>
+
+    <!-- WINNERS SECTION -->
     <section class="winners reveal" id="winners">
-      <h2>🏆 Winners</h2>
-      <p class="winner-subtitle">Quick UI Battle • 17 Dec 2025</p>
-      <div class="winner-grid">
-        <!-- 1st -->
-        <div class="winner-card">
-          <h3 class="winner-title">
-            <span class="medal">🥇</span>
-            1st Place – Team Dual Entropy
-          </h3>
-          <p>
-            Harini SD<br />
-            Sinchana SD
-          </p>
+        <div class="section-header">
+            <span class="section-tag">Hall of Fame</span>
+            <h2 class="section-title">Our <span class="gradient-text">Champions</span></h2>
+            <p class="section-subtitle">Celebrating the brilliant minds who conquered our challenges.</p>
         </div>
-        <!-- 2nd -->
-        <div class="winner-card">
-          <h3 class="winner-title">
-            <span class="medal">🥈</span>
-            2nd Place – Team Log 1
-          </h3>
-          <p>
-            Lokesh<br />
-            Shalini R<br />
-            Tharun V
-          </p>
+        <div class="winners-grid">
+            <div class="winner-card gold">
+                <div class="winner-medal">🥇</div>
+                <h3>Harini SD</h3>
+                <span class="event">Quick UI Battle</span>
+            </div>
+            <div class="winner-card silver">
+                <div class="winner-medal">🥈</div>
+                <h3>Sinchana SD</h3>
+                <span class="event">Quick UI Battle</span>
+            </div>
+            <div class="winner-card bronze">
+                <div class="winner-medal">🥉</div>
+                <h3>Lokesh</h3>
+                <span class="event">Quick UI Battle</span>
+            </div>
         </div>
-        <!-- 3rd -->
-        <div class="winner-card">
-          <h3 class="winner-title">
-            <span class="medal">🥉</span>
-            3rd Place – Symbiote
-          </h3>
-          <p>
-            Rishaban MP<br />
-            Andhani Gowda G
-          </p>
-        </div>
-      </div>
     </section>
+
+    <!-- GALLERY SECTION -->
     <section class="gallery reveal" id="gallery">
-      <h2>Event Gallery</h2>
-      <div
-        class="gallery-grid"
-        style="
-          display: flex;
-          gap: 24px;
-          overflow-x: auto;
-          overflow-y: hidden;
-          scroll-snap-type: x mandatory;
-          padding-bottom: 16px;
-        "
-      >
-        <!-- NEW EVENT IMAGES (FIRST) -->
-        <img src="images/Poster 17Dec.jpg" />
-        <img src="images/IMG-20251217-WA0030.jpg" />
-        <img src="images/IMG-20251217-WA0028.jpg" />
-        <img src="images/IMG-20251216-WA0008.jpg" />
+        <div class="section-header">
+            <span class="section-tag">Gallery</span>
+            <h2 class="section-title">Event <span class="gradient-text">Highlights</span></h2>
+            <p class="section-subtitle">Relive the excitement from our past events.</p>
+        </div>
 
-        <!-- EXISTING GALLERY IMAGES -->
-        <img src="images/Gallery0.jpg" />
-        <img src="images/Gallery1.jpg" />
-        <img src="images/Gallery2.jpg" />
-      </div>
-      <p
-        style="
-          text-align: center;
-          font-size: 14px;
-          color: #6b63b5;
-          margin-top: 10px;
-        "
-      >
-        ← Swipe horizontally to view more
-      </p>
+
+        <div class="gallery-scroll">
+            <div class="gallery-item" onclick="openImage(this)">
+                <img src="images/Gallery.jpg" alt="Event Highlights" />
+                <div class="gallery-overlay">
+                    <span>Event Highlights</span>
+                </div>
+            </div>
+            <div class="gallery-item" onclick="openImage(this)">
+                <img src="images/Gallery0.jpg" alt="Quick UI Battle" />
+                <div class="gallery-overlay">
+                    <span>Quick UI Battle</span>
+                </div>
+            </div>
+            <div class="gallery-item" onclick="openImage(this)">
+                <img src="images/Gallery1.jpg" alt="Tech Workshop" />
+                <div class="gallery-overlay">
+                    <span>Tech Workshop</span>
+                </div>
+            </div>
+            <div class="gallery-item" onclick="openImage(this)">
+                <img src="images/Gallery2.jpg" alt="Team Activities" />
+                <div class="gallery-overlay">
+                    <span>Team Activities</span>
+                </div>
+            </div>
+            <div class="gallery-item" onclick="openImage(this)">
+                <img src="images/IMG-20251217-WA0028.jpg" alt="PromptQuest 2024" />
+                <div class="gallery-overlay">
+                    <span>PromptQuest 2024</span>
+                </div>
+            </div>
+            <div class="gallery-item" onclick="openImage(this)">
+                <img src="images/IMG-20251217-WA0030.jpg" alt="Winners Ceremony" />
+                <div class="gallery-overlay">
+                    <span>Winners Ceremony</span>
+                </div>
+            </div>
+        </div>
     </section>
 
-    <footer>© 2025. All Rights Reserved.</footer>
-    <!-- REGISTER MODAL -->
-    <div id="formModal" class="modal">
-      <span class="close-btn" onclick="closeForm()">×</span>
-      <div class="modal-content">
-        <iframe
-          src="https://forms.gle/LXWkWFMrLHHZGdx49
-"
-        ></iframe>
-        <div style="text-align: center; padding: 18px">
-          <button class="btn" onclick="markSubmitted()">
-            I Have Submitted
-          </button>
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>ISTE TOCE</h4>
+                <p>Indian Society for Technical Education - The Oxford College of Engineering Chapter</p>
+            </div>
+            <div class="footer-section">
+                <h4>Quick Links</h4>
+                <a href="#about">About Us</a>
+                <a href="#activity">Events</a>
+                <a href="#winners">Winners</a>
+                <a href="#gallery">Gallery</a>
+            </div>
+            <div class="footer-section">
+                <h4>Contact</h4>
+                <p>📧 iste@toce.edu.in</p>
+                <p>📍 The Oxford College of Engineering, Bangalore</p>
+            </div>
         </div>
-      </div>
+        <div class="footer-bottom">
+            <p>© 2024 ISTE TOCE. Made with 💜 by the Tech Team</p>
+        </div>
+    </footer>
+
+    <!-- IMAGE MODAL -->
+    <div class="image-modal" id="imageModal">
+        <button class="modal-close" onclick="closeImageModal()">✕</button>
+        <img src="" alt="Full View" id="modalImage" />
     </div>
-    <!-- SUCCESS MESSAGE -->
-    <div id="successPopup" class="success-popup">
-      <div class="success-box">
-        <div class="checkmark">✓</div>
-        <h3>Registration Successful</h3>
-      </div>
+
+    <!-- REGISTRATION MODAL -->
+    <div class="modal" id="formModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🎯 Event Registration</h3>
+                <button onclick="closeModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <iframe src="https://forms.gle/LXWkWFMrLHHZGdx49"></iframe>
+            </div>
+        </div>
     </div>
+
     <script>
-      function openForm() {
-        document.getElementById("formModal").style.display = "block";
-        document.body.style.overflow = "hidden";
-      }
-      function closeForm() {
-        document.getElementById("formModal").style.display = "none";
-        document.body.style.overflow = "auto";
-      }
-      function markSubmitted() {
-        closeForm();
-        document.getElementById("successPopup").style.display = "flex";
-        setTimeout(() => {
-          document.getElementById("successPopup").style.display = "none";
-        }, 3000);
-      }
-    </script>
-    <script>
-      const nav = document.getElementById("navbar");
-      const sections = document.querySelectorAll("section");
-      const navLinks = document.querySelectorAll(".nav-links a");
-      window.addEventListener("scroll", () => {
-        nav.classList.toggle("sticky", window.scrollY > 30);
-        let current = "";
-        sections.forEach((section) => {
-          const sectionTop = section.offsetTop - 150;
-          if (window.scrollY >= sectionTop) {
-            current = section.getAttribute("id");
-          }
+        // Navbar scroll effect
+        window.addEventListener('scroll', function () {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 80) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
         });
-        navLinks.forEach((link) => {
-          link.classList.remove("active");
-          if (link.getAttribute("href") === `#${current}`) {
-            link.classList.add("active");
-          }
-        });
-      });
-      const obs = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((e) => {
-            if (e.isIntersecting) e.target.classList.add("active");
-          });
-        },
-        { threshold: 0.15 }
-      );
-      document.querySelectorAll(".reveal").forEach((el) => obs.observe(el));
-      function toggleMenu() {
-        document.querySelector(".nav-links").classList.toggle("show");
-      }
-    </script>
-    <script>
-      document.querySelectorAll(".nav-links a").forEach((link) => {
-        link.addEventListener("click", () => {
-          document.querySelector(".nav-links").classList.remove("show");
-        });
-      });
-    </script>
-    <script>
-      document.addEventListener("keydown", function (e) {
-        if (e.key === "Escape") {
-          closeForm();
+
+        // Mobile navigation
+        function toggleNav() {
+            const navLinks = document.getElementById('navLinks');
+            const hamburger = document.getElementById('hamburger');
+            navLinks.classList.toggle('active');
+            hamburger.classList.toggle('active');
         }
-      });
-    </script>
 
-    <!-- Fullscreen Image Modal -->
-    <div id="imageModal" class="image-modal" onclick="closeImageModal()">
-      <img id="modalImage" src="" alt="Fullscreen Image" />
-    </div>
-
-    <script>
-      // Fullscreen image functionality
-      function openImageModal(imgElement) {
-        const modal = document.getElementById("imageModal");
-        const modalImg = document.getElementById("modalImage");
-        modal.classList.add("show");
-        modalImg.src = imgElement.src;
-        document.body.style.overflow = "hidden";
-      }
-
-      function closeImageModal() {
-        const modal = document.getElementById("imageModal");
-        modal.classList.remove("show");
-        document.body.style.overflow = "auto";
-      }
-
-      // Close on ESC key
-      document.addEventListener("keydown", function (event) {
-        if (event.key === "Escape") {
-          closeImageModal();
-        }
-      });
-
-      // Add click handlers to all gallery images
-      document.addEventListener("DOMContentLoaded", function () {
-        const galleryImages = document.querySelectorAll(".gallery-grid img");
-        galleryImages.forEach((img) => {
-          img.style.cursor = "pointer";
-          img.addEventListener("click", function (e) {
-            e.stopPropagation();
-            openImageModal(this);
-          });
+        // Close menu when clicking outside
+        document.addEventListener('click', function (event) {
+            const navLinks = document.getElementById('navLinks');
+            const hamburger = document.getElementById('hamburger');
+            const navbar = document.getElementById('navbar');
+            if (!navbar.contains(event.target) && navLinks.classList.contains('active')) {
+                navLinks.classList.remove('active');
+                hamburger.classList.remove('active');
+            }
         });
-      });
+
+        // Reveal on scroll
+        const reveals = document.querySelectorAll('.reveal');
+        function revealOnScroll() {
+            reveals.forEach(el => {
+                const windowHeight = window.innerHeight;
+                const top = el.getBoundingClientRect().top;
+                if (top < windowHeight - 100) {
+                    el.classList.add('active');
+                }
+            });
+        }
+        window.addEventListener('scroll', revealOnScroll);
+        revealOnScroll();
+
+        // Modal functions
+        function openModal() {
+            document.getElementById('formModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            document.getElementById('formModal').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Image modal
+        function openImage(el) {
+            const img = el.querySelector('img');
+            document.getElementById('modalImage').src = img.src;
+            document.getElementById('imageModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeImageModal() {
+            document.getElementById('imageModal').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Close modals with Escape key
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                closeModal();
+                closeImageModal();
+            }
+        });
     </script>
-  </body>
+</body>
+
 </html>
