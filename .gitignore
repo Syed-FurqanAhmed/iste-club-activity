@@ -1,9 +1,12 @@
 # Firebase Import folder - contains sensitive files, not needed for website
 firebase-import/
 
-# Old numbered files (replaced by main files)
-index1.html
-admin1.html
+# Firebase config - contains API keys (safe but triggers GitHub warnings)
+config.js
+
+# Old numbered files (replaced by main files) - COMMENTED FOR TESTING
+# index1.html
+# admin1.html
 
 # OS files
 .DS_Store
