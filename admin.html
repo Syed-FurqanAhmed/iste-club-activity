@@ -235,9 +235,14 @@
         }
 
         /* ===== ADMIN WRAPPER ===== */
+        /* ===== ADMIN WRAPPER ===== */
         .admin-wrapper {
             min-height: 100vh;
             padding: 90px 5% 40px;
+        }
+
+        .admin-wrapper.active {
+            display: block;
         }
 
         /* ===== LOGIN PAGE ===== */
@@ -645,33 +650,90 @@
             }
         }
 
-        /* ===== PRETTIER TABLE ===== */
+        /* ===== LUMINOUS GLASS DATA GRID ===== */
         .data-table-wrapper {
-            overflow-x: auto;
-            border-radius: var(--radius-md);
-            background: linear-gradient(135deg, #f8fafc, #f0f4ff);
-            padding: 2px;
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-card);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        .data-table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--glass-border);
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .data-table-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .data-table-controls {
+            display: flex;
+            gap: 12px;
+        }
+
+        .table-search-input {
+            padding: 10px 16px 10px 40px;
+            background: var(--bg-input);
+            border: 1px solid transparent;
+            border-radius: 50px;
+            font-size: 13px;
+            width: 220px;
+            transition: all 0.3s ease;
+        }
+
+        .table-search-input:focus {
+            outline: none;
+            background: #fff;
+            border-color: var(--accent-1);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+            width: 260px;
+        }
+
+        .search-wrapper {
+            position: relative;
+        }
+
+        .search-wrapper .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 14px;
+            pointer-events: none;
         }
 
         .data-table {
             width: 100%;
             border-collapse: separate;
             border-spacing: 0;
-            min-width: 700px;
-            background: #fff;
-            border-radius: var(--radius-md);
-            overflow: hidden;
         }
 
         .data-table thead th {
-            background: var(--gradient-button);
-            color: #fff;
-            padding: 16px 18px;
+            padding: 16px 24px;
             text-align: left;
-            font-size: 12px;
+            font-family: 'Outfit', sans-serif;
+            font-size: 11px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1.5px;
+            color: #fff;
+            background: var(--gradient-button);
+            border-bottom: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
         }
 
         .data-table thead th:first-child {
@@ -682,32 +744,92 @@
             border-radius: 0 var(--radius-sm) 0 0;
         }
 
-        .data-table tbody td {
-            padding: 16px 18px;
-            background: #fff;
-            font-size: 14px;
-            border-bottom: 1px solid rgba(99, 102, 241, 0.08);
-            transition: background 0.2s ease;
+        .data-table thead th:hover {
+            background: linear-gradient(135deg, #5558e8 0%, #7c4ddb 100%);
+            color: #fff;
         }
 
-        .data-table tbody tr:nth-child(even) td {
-            background: rgba(99, 102, 241, 0.02);
+        .data-table tbody tr {
+            transition: all 0.25s ease;
+        }
+
+        .data-table tbody td {
+            padding: 16px 24px;
+            font-size: 14px;
+            color: var(--text-primary);
+            border-bottom: 1px solid rgba(99, 102, 241, 0.05);
+            background: transparent;
+        }
+
+        /* Lightswind "Lift" Effect on Hover */
+        .data-table tbody tr:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.08);
+            position: relative;
+            z-index: 10;
         }
 
         .data-table tbody tr:hover td {
-            background: rgba(99, 102, 241, 0.06);
+            background: rgba(255, 255, 255, 0.7);
         }
 
         .data-table tbody tr:last-child td {
             border-bottom: none;
         }
 
-        .data-table tbody tr:last-child td:first-child {
-            border-radius: 0 0 0 var(--radius-sm);
+        /* Status Pills */
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
         }
 
-        .data-table tbody tr:last-child td:last-child {
-            border-radius: 0 0 var(--radius-sm) 0;
+        .status-pill.verified,
+        .status-pill.active {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--accent-green);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .status-pill.pending {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--accent-orange);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .status-pill.inactive {
+            background: rgba(100, 116, 139, 0.1);
+            color: var(--text-secondary);
+            border: 1px solid rgba(100, 116, 139, 0.2);
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 6px;
+            border-radius: 8px;
+            opacity: 0.5;
+            transition: all 0.2s ease;
+        }
+
+        .action-btn:hover {
+            opacity: 1;
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .action-btn.delete:hover {
+            background: rgba(239, 68, 68, 0.1);
         }
 
         .team-badge {
@@ -1089,6 +1211,167 @@
                 flex-wrap: wrap;
             }
         }
+
+        /* ===== MODALS ===== */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(8px);
+            z-index: 9999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal {
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 25px 50px rgba(99, 102, 241, 0.15);
+            transform: scale(0.9) translateY(20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .modal {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover {
+            color: var(--accent-red);
+        }
+
+        .modal-body {
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-input);
+            border: 1px solid transparent;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent-1);
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+        }
+
+        .btn-secondary {
+            background: var(--bg-input);
+            color: var(--text-secondary);
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        .btn-primary {
+            background: var(--gradient-button);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-danger {
+            background: var(--gradient-danger);
+            color: #fff;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+        }
+
+        .delete-warning {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .delete-warning .icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .delete-warning p {
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .delete-warning strong {
+            color: var(--text-primary);
+        }
     </style>
 </head>
 
@@ -1103,9 +1386,102 @@
     <!-- Toast Notification -->
     <div class="toast" id="toast">Action completed!</div>
 
+    <!-- Edit Modal -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <span class="modal-title">✏️ Edit Team</span>
+                <button class="modal-close" onclick="closeModal('editModal')">&times;</button>
+            </div>
+            <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+                <input type="hidden" id="editTeamId">
+
+                <p
+                    style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px;">
+                    🏷️ Team Info</p>
+                <div class="form-group">
+                    <label>Team Name</label>
+                    <input type="text" id="editTeamName" placeholder="e.g. Code Crushers">
+                </div>
+
+                <p
+                    style="font-size: 12px; color: var(--text-muted); margin: 20px 0 16px; text-transform: uppercase; letter-spacing: 1px;">
+                    👤 Member 1</p>
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="editM1Name" placeholder="Enter name">
+                </div>
+                <div class="form-group">
+                    <label>Details (USN • Dept)</label>
+                    <input type="text" id="editM1Detail" placeholder="1CR23CS001 • CSE">
+                </div>
+
+                <p
+                    style="font-size: 12px; color: var(--text-muted); margin: 20px 0 16px; text-transform: uppercase; letter-spacing: 1px;">
+                    👤 Member 2</p>
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="editM2Name" placeholder="Enter name">
+                </div>
+                <div class="form-group">
+                    <label>Details (USN • Dept)</label>
+                    <input type="text" id="editM2Detail" placeholder="1CR23CS002 • CSE">
+                </div>
+
+                <p
+                    style="font-size: 12px; color: var(--text-muted); margin: 20px 0 16px; text-transform: uppercase; letter-spacing: 1px;">
+                    👤 Member 3</p>
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="editM3Name" placeholder="Enter name (optional)">
+                </div>
+                <div class="form-group">
+                    <label>Details (USN • Dept)</label>
+                    <input type="text" id="editM3Detail" placeholder="1CR23CS003 • CSE">
+                </div>
+
+                <p
+                    style="font-size: 12px; color: var(--text-muted); margin: 20px 0 16px; text-transform: uppercase; letter-spacing: 1px;">
+                    📧 Contact</p>
+                <div class="form-group">
+                    <label>Team Email</label>
+                    <input type="email" id="editEmail" placeholder="team@example.com">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('editModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveEdit()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">🗑️ Delete Team</span>
+                <button class="modal-close" onclick="closeModal('deleteModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="deleteTeamId">
+                <div class="delete-warning">
+                    <div class="icon">⚠️</div>
+                    <p>Are you sure you want to delete</p>
+                    <p><strong id="deleteTeamName">Team 1</strong>?</p>
+                    <p style="color: var(--accent-red); font-size: 12px; margin-top: 12px;">This action cannot be
+                        undone.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('deleteModal')">Cancel</button>
+                <button class="btn btn-danger" onclick="confirmDelete()">Delete</button>
+            </div>
+        </div>
+    </div>
+
     <!-- NAVBAR -->
     <nav id="navbar">
-        <a href="index1.html" class="logo">
+        <a href="index.html" class="logo">
             <img src="images/download.png" alt="ISTE Logo" />
             <div class="logo-text">
                 <span>ISTE</span>
@@ -1128,7 +1504,7 @@
     </nav>
 
     <div class="admin-wrapper">
-        <!-- LOGIN PAGE -->
+        <!-- LOGIN PAGE (VISIBLE BY DEFAULT) -->
         <div id="login-page" class="login-container">
             <div class="login-box">
                 <h2>🔐 Admin Login</h2>
@@ -1196,14 +1572,79 @@
 
                     <!-- Main Event Tabs -->
                     <div class="event-tabs">
-                        <button class="event-tab active" onclick="switchEvent('promptquest', this)">🎯
+                        <button class="event-tab active" onclick="switchEvent('testing', this)">🧪
+                            Testing</button>
+                        <button class="event-tab" onclick="switchEvent('promptquest', this)">🎯
                             PromptQuest</button>
                         <button class="event-tab" onclick="switchEvent('uibattle', this)">🎨 UI Battle</button>
                         <button class="event-tab" onclick="switchEvent('hackathon', this)">💻 Hackathon</button>
                     </div>
 
+                    <!-- Testing Content (New registrations from index.html) -->
+                    <div id="testing-content" class="event-content active">
+                        <div class="sub-tabs">
+                            <button class="sub-tab active" onclick="switchSubTab('testing', 'reg', this)">📝
+                                Registration</button>
+                            <button class="sub-tab" onclick="switchSubTab('testing', 'winners', this)">🏆
+                                Winners</button>
+                            <button class="sub-tab" onclick="switchSubTab('testing', 'images', this)">📸
+                                Images</button>
+                        </div>
+
+                        <!-- Registration Sub-content -->
+                        <div id="testing-reg" class="sub-content active">
+                            <div class="data-table-wrapper">
+                                <div class="data-table-header">
+                                    <span class="data-table-title">📋 Participants</span>
+                                    <div class="data-table-controls">
+                                        <div class="search-wrapper">
+                                            <span class="search-icon">🔍</span>
+                                            <input type="text" class="table-search-input" id="testing-search"
+                                                placeholder="Search..."
+                                                onkeyup="handleTableSearch('testing', this.value)">
+                                        </div>
+                                    </div>
+                                </div>
+                                <table class="data-table" id="testing-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Team</th>
+                                            <th>Team Name</th>
+                                            <th>Member 1</th>
+                                            <th>Member 2</th>
+                                            <th>Member 3</th>
+                                            <th>Email</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="testing-tbody"></tbody>
+                                </table>
+                            </div>
+                            <div class="pagination" id="testing-pagination"></div>
+                        </div>
+
+                        <!-- Winners Sub-content -->
+                        <div id="testing-winners" class="sub-content">
+                            <div class="placeholder-box">
+                                <div class="icon">🏆</div>
+                                <h4>Winners Coming Soon!</h4>
+                                <p>Testing winners will be announced after the event.</p>
+                            </div>
+                        </div>
+
+                        <!-- Images Sub-content -->
+                        <div id="testing-images" class="sub-content">
+                            <div class="placeholder-box">
+                                <div class="icon">📷</div>
+                                <h4>Event Photos Coming Soon!</h4>
+                                <p>Photos will be uploaded after the event.</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- PromptQuest Content -->
-                    <div id="promptquest-content" class="event-content active">
+                    <div id="promptquest-content" class="event-content">
                         <div class="sub-tabs">
                             <button class="sub-tab active" onclick="switchSubTab('promptquest', 'reg', this)">📝
                                 Registration</button>
@@ -1398,6 +1839,89 @@
     </div>
 
     <script>
+        // ===== MODAL FUNCTIONS =====
+        function openEditModal(teamId, teamName, m1Name, m1Detail, m2Name, m2Detail, m3Name, m3Detail, email) {
+            document.getElementById('editTeamId').value = teamId;
+            document.getElementById('editTeamName').value = teamName || '';
+            document.getElementById('editM1Name').value = m1Name || '';
+            document.getElementById('editM1Detail').value = m1Detail || '';
+            document.getElementById('editM2Name').value = m2Name || '';
+            document.getElementById('editM2Detail').value = m2Detail || '';
+            document.getElementById('editM3Name').value = m3Name || '';
+            document.getElementById('editM3Detail').value = m3Detail || '';
+            document.getElementById('editEmail').value = email || '';
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        function openDeleteModal(teamId, teamName) {
+            document.getElementById('deleteTeamId').value = teamId;
+            document.getElementById('deleteTeamName').textContent = teamName;
+            document.getElementById('deleteModal').classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        async function saveEdit() {
+            const teamId = document.getElementById('editTeamId').value;
+            const data = {
+                teamName: document.getElementById('editTeamName').value,
+                member1Name: document.getElementById('editM1Name').value,
+                member1Detail: document.getElementById('editM1Detail').value,
+                member2Name: document.getElementById('editM2Name').value,
+                member2Detail: document.getElementById('editM2Detail').value,
+                member3Name: document.getElementById('editM3Name').value,
+                member3Detail: document.getElementById('editM3Detail').value,
+                email: document.getElementById('editEmail').value,
+            };
+
+            // Try to update in Firestore
+            if (window.updateInFirestore) {
+                const success = await window.updateInFirestore('registrations', teamId, data);
+                if (success) {
+                    showToast('✅ Team updated in database!');
+                } else {
+                    showToast('⚠️ Updated locally (Firebase permission denied)');
+                }
+            } else {
+                console.log('Saving locally:', { teamId, ...data });
+                showToast('✅ Team updated (local only)');
+            }
+
+            closeModal('editModal');
+        }
+
+        async function confirmDelete() {
+            const teamId = document.getElementById('deleteTeamId').value;
+
+            // Try to delete from Firestore
+            if (window.deleteFromFirestore) {
+                const success = await window.deleteFromFirestore('registrations', teamId);
+                if (success) {
+                    showToast('🗑️ Team deleted from database!');
+                } else {
+                    showToast('⚠️ Removed from view (Firebase permission denied)');
+                }
+            } else {
+                console.log('Deleting locally:', teamId);
+                showToast('🗑️ Team removed (local only)');
+            }
+
+            closeModal('deleteModal');
+
+            // Remove row from DOM
+            const row = document.querySelector(`tr[data-team="${teamId}"]`);
+            if (row) row.remove();
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal-overlay')) {
+                e.target.classList.remove('active');
+            }
+        });
+
         // PromptQuest Data - Loaded from Firestore
         let promptquestData = [];
         let isLoading = true;
@@ -1554,6 +2078,24 @@
             showToast('📧 Opening email client...');
         }
 
+        // --- TABLE SEARCH ---
+        let searchTimeouts = {};
+        function handleTableSearch(tableId, query) {
+            clearTimeout(searchTimeouts[tableId]);
+            searchTimeouts[tableId] = setTimeout(() => {
+                const tbody = document.getElementById(tableId + '-tbody');
+                if (!tbody) return;
+
+                const rows = tbody.querySelectorAll('tr');
+                const q = query.toLowerCase().trim();
+
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(q) ? '' : 'none';
+                });
+            }, 300);
+        }
+
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             renderTable(1);
@@ -1567,7 +2109,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-        import { getFirestore, collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, deleteDoc, updateDoc, orderBy, query } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAf1JlNjAsUGib1PpZWF6xELseRERpLE48",
@@ -1582,6 +2124,33 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+
+        // ===== EXPOSE FIRESTORE OPERATIONS TO WINDOW =====
+        // Delete a registration from Firestore
+        window.deleteFromFirestore = async function (collectionPath, docId) {
+            try {
+                const docRef = doc(db, collectionPath, docId);
+                await deleteDoc(docRef);
+                console.log(`✅ Deleted document: ${docId}`);
+                return true;
+            } catch (error) {
+                console.error('❌ Error deleting from Firestore:', error);
+                return false;
+            }
+        };
+
+        // Update a registration in Firestore
+        window.updateInFirestore = async function (collectionPath, docId, data) {
+            try {
+                const docRef = doc(db, collectionPath, docId);
+                await updateDoc(docRef, data);
+                console.log(`✅ Updated document: ${docId}`);
+                return true;
+            } catch (error) {
+                console.error('❌ Error updating Firestore:', error);
+                return false;
+            }
+        };
 
         // Load data from Firestore
         async function loadFromFirestore() {
@@ -1615,11 +2184,78 @@
             }
         }
 
+        // Load Testing registrations (from index.html form)
+        async function loadTestingData() {
+            try {
+                console.log('🧪 Loading Testing registrations...');
+                const regsRef = collection(db, 'registrations');
+                const q = query(regsRef, orderBy('registeredAt', 'desc'));
+                const snapshot = await getDocs(q);
+
+                const tbody = document.getElementById('testing-tbody');
+                if (snapshot.empty) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted);">No test registrations yet</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = '';
+                let i = 1;
+                snapshot.forEach(doc => {
+                    const d = doc.data();
+                    const docId = doc.id;
+                    tbody.innerHTML += `
+                        <tr data-team="${docId}">
+                            <td><span class="team-badge">${i++}</span></td>
+                            <td><strong>${d.teamName || '—'}</strong></td>
+                            <td><div class="member-info"><span class="name">${d.member1?.name || '-'}</span><span class="detail">${d.member1?.usn || ''} • ${d.member1?.dept || ''}</span></div></td>
+                            <td><div class="member-info"><span class="name">${d.member2?.name || '-'}</span><span class="detail">${d.member2?.usn || ''} • ${d.member2?.dept || ''}</span></div></td>
+                            <td><div class="member-info"><span class="name">${d.member3?.name || '-'}</span><span class="detail">${d.member3?.usn || ''} • ${d.member3?.dept || ''}</span></div></td>
+                            <td><a href="mailto:${d.email}" class="email-link">${d.email}</a></td>
+                            <td><span class="status-pill ${(d.status || 'pending').toLowerCase()}">${d.status || 'pending'}</span></td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="action-btn edit" title="Edit" onclick="openEditModal('${docId}', '${(d.teamName || '').replace(/'/g, "\\'")}', '${(d.member1?.name || '').replace(/'/g, "\\'")}', '${d.member1?.usn || ''} • ${d.member1?.dept || ''}', '${(d.member2?.name || '').replace(/'/g, "\\'")}', '${d.member2?.usn || ''} • ${d.member2?.dept || ''}', '${(d.member3?.name || '').replace(/'/g, "\\'")}', '${d.member3?.usn || ''} • ${d.member3?.dept || ''}', '${d.email}')">✏️</button>
+                                    <button class="action-btn delete" title="Delete" onclick="openDeleteModal('${docId}', '${(d.teamName || 'Team ' + i).replace(/'/g, "\\'")}')">🗑️</button>
+                                </div>
+                            </td>
+                        </tr>`;
+                });
+                console.log(`✅ Loaded ${snapshot.size} testing registrations`);
+            } catch (err) {
+                console.error('❌ Error loading testing data:', err);
+                // Fallback to mock data for demonstration
+                const tbody = document.getElementById('testing-tbody');
+                if (tbody) {
+                    const mockData = [];
+                    tbody.innerHTML = mockData.map(d => `
+                        <tr data-team="${d.team}">
+                            <td><span class="team-badge">${d.team}</span></td>
+                            <td><strong>${d.teamName}</strong></td>
+                            <td><div class="member-info"><span class="name">${d.m1}</span><span class="detail">${d.m1d}</span></div></td>
+                            <td><div class="member-info"><span class="name">${d.m2}</span><span class="detail">${d.m2d}</span></div></td>
+                            <td><div class="member-info"><span class="name">${d.m3}</span><span class="detail">${d.m3d}</span></div></td>
+                            <td><a href="mailto:${d.email}" class="email-link">${d.email}</a></td>
+                            <td><span class="status-pill ${d.status.toLowerCase()}">${d.status}</span></td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="action-btn edit" title="Edit" onclick="openEditModal('${d.team}', '${d.teamName}', '${d.m1}', '${d.m1d}', '${d.m2}', '${d.m2d}', '${d.m3}', '${d.m3d}', '${d.email}')">✏️</button>
+                                    <button class="action-btn delete" title="Delete" onclick="openDeleteModal('${d.team}', '${d.teamName}')">🗑️</button>
+                                </div>
+                            </td>
+                        </tr>
+                    `).join('');
+                    console.log('⚠️ Loaded fallback mock data (Firestore permission denied)');
+                }
+            }
+        }
+
         // Initialize data on page load
         window.addEventListener('DOMContentLoaded', async () => {
             // Load Firestore data
             promptquestData = await loadFromFirestore();
             isLoading = false;
+
+            // Load Testing data
+            await loadTestingData();
 
             // Update stats
             document.querySelector('.overview-card.purple .number').textContent = promptquestData.length;
