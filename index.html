@@ -10,7 +10,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap"
         rel="stylesheet" />
     <style>
         :root {
@@ -343,7 +343,7 @@
         }
 
         .hero h1 {
-            font-family: 'Outfit', sans-serif;
+            font-family: 'Playfair Display', serif;
             font-size: clamp(40px, 6vw, 72px);
             font-weight: 800;
             line-height: 1.1;
@@ -442,7 +442,19 @@
             position: relative;
             z-index: 2;
             filter: drop-shadow(0 30px 60px rgba(99, 102, 241, 0.2));
-            animation: float 6s ease-in-out infinite;
+            animation: heroFloat 6s ease-in-out infinite;
+        }
+
+        @keyframes heroFloat {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-15px);
+            }
         }
 
         .hero-glow {
@@ -566,7 +578,7 @@
         }
 
         .section-title {
-            font-family: 'Outfit', sans-serif;
+            font-family: 'Playfair Display', serif;
             font-size: clamp(32px, 5vw, 50px);
             font-weight: 800;
             margin-bottom: 16px;
@@ -582,7 +594,9 @@
 
         .section-subtitle {
             color: var(--text-secondary);
-            font-size: 16px;
+            font-size: 18px;
+            font-weight: 500;
+            letter-spacing: 0.3px;
         }
 
         .features-grid {
@@ -685,7 +699,7 @@
         }
 
         .activity-info h2 {
-            font-family: 'Outfit', sans-serif;
+            font-family: 'Playfair Display', serif;
             font-size: clamp(32px, 5vw, 48px);
             font-weight: 800;
             margin-bottom: 20px;
@@ -800,11 +814,33 @@
         }
 
         .winner-card h3 {
-            font-family: 'Outfit', sans-serif;
+            font-family: 'Playfair Display', serif;
             font-size: 22px;
-            font-weight: 700;
-            margin-bottom: 8px;
-            color: var(--text-primary);
+            font-weight: 800;
+            margin-bottom: 12px;
+            letter-spacing: 0.3px;
+            line-height: 1.3;
+        }
+
+        .winner-card.gold h3 {
+            background: linear-gradient(135deg, #F4D03F 0%, #FFA726 50%, #FF6F00 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .winner-card.silver h3 {
+            background: linear-gradient(135deg, #E8EAF6 0%, #B0BEC5 50%, #78909C 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .winner-card.bronze h3 {
+            background: linear-gradient(135deg, #FFAB91 0%, #FF7043 50%, #D84315 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .winner-card .event {
@@ -817,6 +853,56 @@
         .gallery {
             padding: 100px 6%;
             background: var(--bg-secondary);
+        }
+
+        .gallery-container {
+            position: relative;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .gallery-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 48px;
+            height: 48px;
+            background: var(--bg-card);
+            border: 2px solid var(--glass-border);
+            border-radius: 50%;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .gallery-arrow:hover {
+            background: var(--accent-1);
+            border-color: var(--accent-1);
+            color: white;
+            box-shadow: var(--shadow-glow);
+        }
+
+        .gallery-arrow:focus-visible {
+            outline: 2px solid var(--accent-1);
+            outline-offset: 2px;
+        }
+
+        .gallery-arrow-left {
+            left: -24px;
+        }
+
+        .gallery-arrow-right {
+            right: -24px;
+        }
+
+        .gallery-arrow.hidden {
+            opacity: 0;
+            pointer-events: none;
         }
 
         .gallery-scroll {
@@ -1001,13 +1087,206 @@
         }
 
         .modal-body {
-            padding: 0;
+            padding: 28px;
+            max-height: 70vh;
+            overflow-y: auto;
         }
 
-        .modal-body iframe {
-            width: 100%;
-            height: 500px;
+        /* Form Styles */
+        .reg-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .form-section {
+            background: var(--bg-primary);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-md);
+            padding: 20px;
+        }
+
+        .form-section-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--accent-1);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .form-row.single {
+            grid-template-columns: 1fr;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group label .required {
+            color: #ef4444;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 12px 14px;
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .form-group select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            padding-right: 40px;
+            cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
+        }
+
+        .form-group input:hover,
+        .form-group select:hover {
+            border-color: var(--accent-1);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--accent-1);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+        }
+
+        .form-group input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .member-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            background: var(--gradient-button);
+            color: white;
+            border-radius: 50%;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .submit-btn {
+            background: var(--gradient-button);
+            color: white;
+            padding: 16px 32px;
             border: none;
+            border-radius: var(--radius-md);
+            font-size: 16px;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .submit-btn .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: none;
+        }
+
+        .submit-btn.loading .spinner {
+            display: block;
+        }
+
+        .submit-btn.loading .btn-text {
+            display: none;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .form-success {
+            text-align: center;
+            padding: 40px 20px;
+            display: none;
+        }
+
+        .form-success.show {
+            display: block;
+            animation: fadeIn 0.6s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-success .success-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .form-success h4 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        .form-success p {
+            color: var(--text-secondary);
         }
 
         /* ===== FOOTER ===== */
@@ -1154,6 +1433,18 @@
             .gallery-item {
                 flex: 0 0 280px;
             }
+
+            .gallery-arrow {
+                display: none;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-body {
+                padding: 20px;
+            }
         }
     </style>
 </head>
@@ -1210,7 +1501,7 @@
                     <div class="shape shape-2"></div>
                     <div class="shape shape-3"></div>
                 </div>
-                <img src="images/activity.png" alt="PromptQuest Event" />
+                <img src="images/hero_light.png" alt="ISTE Tech Hub" />
             </div>
         </div>
     </section>
@@ -1267,19 +1558,19 @@
         <div class="activity-content">
             <div class="activity-info">
                 <span class="section-tag">Upcoming Event</span>
-                <h2>PromptQuest <span class="gradient-text">2024</span></h2>
+                <h2>Sketch Your App - <span class="gradient-text">Quick Draw UI Battle</span></h2>
                 <div class="activity-details">
                     <div class="activity-detail">
                         <div class="activity-detail-icon">📅</div>
-                        <span>December 20, 2024</span>
+                        <span>December 17, 2025 (Wednesday)</span>
                     </div>
                     <div class="activity-detail">
                         <div class="activity-detail-icon">🕐</div>
-                        <span>10:00 AM - 4:00 PM</span>
+                        <span>2:30 PM</span>
                     </div>
                     <div class="activity-detail">
                         <div class="activity-detail-icon">📍</div>
-                        <span>Main Auditorium, TOCE</span>
+                        <span>N408, Department of ISE, TOCE</span>
                     </div>
                     <div class="activity-detail">
                         <div class="activity-detail-icon">👥</div>
@@ -1299,23 +1590,27 @@
         <div class="section-header">
             <span class="section-tag">Hall of Fame</span>
             <h2 class="section-title">Our <span class="gradient-text">Champions</span></h2>
-            <p class="section-subtitle">Celebrating the brilliant minds who conquered our challenges.</p>
+            <p class="section-subtitle">Winners of Quick Draw UI Battle</p>
         </div>
         <div class="winners-grid">
             <div class="winner-card gold">
                 <div class="winner-medal">🥇</div>
-                <h3>Harini SD</h3>
-                <span class="event">Quick UI Battle</span>
+                <h3>Team Dual Entropy</h3>
+                <span class="event">Harini SD</span><br>
+                <span class="event">Sinchana SD</span><br>
             </div>
             <div class="winner-card silver">
                 <div class="winner-medal">🥈</div>
-                <h3>Sinchana SD</h3>
-                <span class="event">Quick UI Battle</span>
+                <h3>Team Log 1</h3>
+                <span class="event">Lokesh</span><br>
+                <span class="event">Shalini R</span><br>
+                <span class="event">Tharun V</span><br>
             </div>
             <div class="winner-card bronze">
                 <div class="winner-medal">🥉</div>
-                <h3>Lokesh</h3>
-                <span class="event">Quick UI Battle</span>
+                <h3>Team Symbiote</h3>
+                <span class="event">Rishaban MP</span><br>
+                <span class="event">Andhani Gowda G</span><br>
             </div>
         </div>
     </section>
@@ -1328,44 +1623,57 @@
             <p class="section-subtitle">Relive the excitement from our past events.</p>
         </div>
 
-
-        <div class="gallery-scroll">
-            <div class="gallery-item" onclick="openImage(this)">
-                <img src="images/Gallery.jpg" alt="Event Highlights" />
-                <div class="gallery-overlay">
-                    <span>Event Highlights</span>
+        <div class="gallery-container">
+            <button class="gallery-arrow gallery-arrow-left" id="galleryPrev" aria-label="Previous images">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+            </button>
+            <div class="gallery-scroll" id="galleryScroll">
+                <div class="gallery-item" onclick="openImage(this)">
+                    <img src="images/Gallery.jpg" alt="Event Highlights" />
+                    <div class="gallery-overlay">
+                        <span>Event Highlights</span>
+                    </div>
+                </div>
+                <div class="gallery-item" onclick="openImage(this)">
+                    <img src="images/Gallery0.jpg" alt="Quick UI Battle" />
+                    <div class="gallery-overlay">
+                        <span>Quick UI Battle</span>
+                    </div>
+                </div>
+                <div class="gallery-item" onclick="openImage(this)">
+                    <img src="images/Gallery1.jpg" alt="Tech Workshop" />
+                    <div class="gallery-overlay">
+                        <span>Tech Workshop</span>
+                    </div>
+                </div>
+                <div class="gallery-item" onclick="openImage(this)">
+                    <img src="images/Gallery2.jpg" alt="Team Activities" />
+                    <div class="gallery-overlay">
+                        <span>Team Activities</span>
+                    </div>
+                </div>
+                <div class="gallery-item" onclick="openImage(this)">
+                    <img src="images/IMG-20251217-WA0028.jpg" alt="PromptQuest 2024" />
+                    <div class="gallery-overlay">
+                        <span>PromptQuest 2024</span>
+                    </div>
+                </div>
+                <div class="gallery-item" onclick="openImage(this)">
+                    <img src="images/IMG-20251217-WA0030.jpg" alt="Winners Ceremony" />
+                    <div class="gallery-overlay">
+                        <span>Winners Ceremony</span>
+                    </div>
                 </div>
             </div>
-            <div class="gallery-item" onclick="openImage(this)">
-                <img src="images/Gallery0.jpg" alt="Quick UI Battle" />
-                <div class="gallery-overlay">
-                    <span>Quick UI Battle</span>
-                </div>
-            </div>
-            <div class="gallery-item" onclick="openImage(this)">
-                <img src="images/Gallery1.jpg" alt="Tech Workshop" />
-                <div class="gallery-overlay">
-                    <span>Tech Workshop</span>
-                </div>
-            </div>
-            <div class="gallery-item" onclick="openImage(this)">
-                <img src="images/Gallery2.jpg" alt="Team Activities" />
-                <div class="gallery-overlay">
-                    <span>Team Activities</span>
-                </div>
-            </div>
-            <div class="gallery-item" onclick="openImage(this)">
-                <img src="images/IMG-20251217-WA0028.jpg" alt="PromptQuest 2024" />
-                <div class="gallery-overlay">
-                    <span>PromptQuest 2024</span>
-                </div>
-            </div>
-            <div class="gallery-item" onclick="openImage(this)">
-                <img src="images/IMG-20251217-WA0030.jpg" alt="Winners Ceremony" />
-                <div class="gallery-overlay">
-                    <span>Winners Ceremony</span>
-                </div>
-            </div>
+            <button class="gallery-arrow gallery-arrow-right" id="galleryNext" aria-label="Next images">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+            </button>
         </div>
     </section>
 
@@ -1385,7 +1693,7 @@
             </div>
             <div class="footer-section">
                 <h4>Contact</h4>
-                <p>📧 iste@toce.edu.in</p>
+                <p>📧 ISTE.TOCE@gmail.com</p>
                 <p>📍 The Oxford College of Engineering, Bangalore</p>
             </div>
         </div>
@@ -1401,35 +1709,152 @@
     </div>
 
     <!-- REGISTRATION MODAL -->
-    <div class="modal" id="formModal">
+    <div class="modal" id="formModal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>🎯 Event Registration</h3>
-                <button onclick="closeModal()">✕</button>
+                <h3 id="modal-title">🎯 Event Registration</h3>
+                <button onclick="closeModal()" aria-label="Close modal">✕</button>
             </div>
             <div class="modal-body">
-                <iframe src="https://forms.gle/LXWkWFMrLHHZGdx49"></iframe>
+                <div class="form-success" id="formSuccess">
+                    <div class="success-icon">🎉</div>
+                    <h4>Registration Successful!</h4>
+                    <p>Your team has been registered. We'll contact you soon!</p>
+                </div>
+                <form class="reg-form" id="registrationForm">
+                    <div class="form-section">
+                        <div class="form-section-title">📧 Team Contact</div>
+                        <div class="form-row single">
+                            <div class="form-group">
+                                <label>Team Email <span class="required">*</span></label>
+                                <input type="email" id="teamEmail" placeholder="team@email.com" required>
+                            </div>
+                        </div>
+                        <div class="form-row single">
+                            <div class="form-group">
+                                <label>Team Name <span class="required">*</span></label>
+                                <input type="text" id="teamName" placeholder="e.g. Code Crushers" required>
+                                <small id="teamNameError" style="color: #ef4444; font-size: 12px; display: none;">This
+                                    team name is already taken!</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="form-section-title"><span class="member-badge">1</span> Team Member 1 <span
+                                class="required">*</span></div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Name <span class="required">*</span></label>
+                                <input type="text" id="member1Name" placeholder="Full Name" required>
+                            </div>
+                            <div class="form-group">
+                                <label>USN / Roll No <span class="required">*</span></label>
+                                <input type="text" id="member1USN" placeholder="1OX00XX000" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Department <span class="required">*</span></label>
+                                <select id="member1Dept" required>
+                                    <option value="">Select Dept</option>
+                                    <option value="ISE">ISE</option>
+                                    <option value="CSE">CSE</option>
+                                    <option value="AIML">AIML</option>
+                                    <option value="AI&DS">AI&DS</option>
+                                    <option value="ECE">ECE</option>
+                                    <option value="EEE">EEE</option>
+                                    <option value="CV">CV</option>
+                                    <option value="ME">ME</option>
+                                    <option value="Mechatronics">Mechatronics</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-section">
+                        <div class="form-section-title"><span class="member-badge">2</span> Team Member 2</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Name</label>
+                                <input type="text" id="member2Name" placeholder="Full Name">
+                            </div>
+                            <div class="form-group">
+                                <label>USN / Roll No</label>
+                                <input type="text" id="member2USN" placeholder="1OX00XX000">
+                            </div>
+                            <div class="form-group">
+                                <label>Department</label>
+                                <select id="member2Dept">
+                                    <option value="">Select Dept</option>
+                                    <option value="ISE">ISE</option>
+                                    <option value="CSE">CSE</option>
+                                    <option value="AIML">AIML</option>
+                                    <option value="AI&DS">AI&DS</option>
+                                    <option value="ECE">ECE</option>
+                                    <option value="EEE">EEE</option>
+                                    <option value="CV">CV</option>
+                                    <option value="ME">ME</option>
+                                    <option value="Mechatronics">Mechatronics</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-section">
+                        <div class="form-section-title"><span class="member-badge">3</span> Team Member 3</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Name</label>
+                                <input type="text" id="member3Name" placeholder="Full Name">
+                            </div>
+                            <div class="form-group">
+                                <label>USN / Roll No</label>
+                                <input type="text" id="member3USN" placeholder="1OX00XX000">
+                            </div>
+                            <div class="form-group">
+                                <label>Department</label>
+                                <select id="member3Dept">
+                                    <option value="">Select Dept</option>
+                                    <option value="ISE">ISE</option>
+                                    <option value="CSE">CSE</option>
+                                    <option value="AIML">AIML</option>
+                                    <option value="AI&DS">AI&DS</option>
+                                    <option value="ECE">ECE</option>
+                                    <option value="EEE">EEE</option>
+                                    <option value="CV">CV</option>
+                                    <option value="ME">ME</option>
+                                    <option value="Mechatronics">Mechatronics</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="submit-btn" id="submitBtn">
+                        <span class="btn-text">Register Team 🚀</span>
+                        <div class="spinner"></div>
+                    </button>
+                </form>
             </div>
         </div>
     </div>
 
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    <script src="config.js"></script>
     <script>
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
         // Navbar scroll effect
         window.addEventListener('scroll', function () {
             const navbar = document.getElementById('navbar');
-            if (window.scrollY > 80) {
-                navbar.classList.add('scrolled');
-            } else {
-                navbar.classList.remove('scrolled');
-            }
+            navbar.classList.toggle('scrolled', window.scrollY > 80);
         });
 
         // Mobile navigation
         function toggleNav() {
-            const navLinks = document.getElementById('navLinks');
-            const hamburger = document.getElementById('hamburger');
-            navLinks.classList.toggle('active');
-            hamburger.classList.toggle('active');
+            document.getElementById('navLinks').classList.toggle('active');
+            document.getElementById('hamburger').classList.toggle('active');
         }
 
         // Close menu when clicking outside
@@ -1461,6 +1886,9 @@
         function openModal() {
             document.getElementById('formModal').classList.add('active');
             document.body.style.overflow = 'hidden';
+            document.getElementById('registrationForm').reset();
+            document.getElementById('registrationForm').style.display = 'flex';
+            document.getElementById('formSuccess').classList.remove('show');
         }
 
         function closeModal() {
@@ -1486,6 +1914,101 @@
             if (e.key === 'Escape') {
                 closeModal();
                 closeImageModal();
+            }
+        });
+
+        // Gallery navigation
+        const galleryScroll = document.getElementById('galleryScroll');
+        const galleryPrev = document.getElementById('galleryPrev');
+        const galleryNext = document.getElementById('galleryNext');
+
+        if (galleryScroll && galleryPrev && galleryNext) {
+            const scrollAmount = 440;
+
+            galleryPrev.addEventListener('click', function () {
+                galleryScroll.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+            });
+
+            galleryNext.addEventListener('click', function () {
+                galleryScroll.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+            });
+
+            // Update arrow visibility based on scroll position
+            function updateArrowVisibility() {
+                const scrollLeft = galleryScroll.scrollLeft;
+                const maxScroll = galleryScroll.scrollWidth - galleryScroll.clientWidth;
+
+                galleryPrev.classList.toggle('hidden', scrollLeft <= 10);
+                galleryNext.classList.toggle('hidden', scrollLeft >= maxScroll - 10);
+            }
+
+            galleryScroll.addEventListener('scroll', updateArrowVisibility);
+            updateArrowVisibility();
+        }
+
+        // Form submission with duplicate team name check
+        document.getElementById('registrationForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            const teamNameInput = document.getElementById('teamName');
+            const teamNameError = document.getElementById('teamNameError');
+            const teamName = teamNameInput.value.trim();
+
+            // Reset error state
+            teamNameError.style.display = 'none';
+            teamNameInput.style.borderColor = '';
+
+            btn.classList.add('loading');
+            btn.disabled = true;
+
+            try {
+                // Check for duplicate team name
+                const existingTeams = await db.collection('registrations')
+                    .where('teamName', '==', teamName)
+                    .get();
+
+                if (!existingTeams.empty) {
+                    // Team name already exists
+                    teamNameError.style.display = 'block';
+                    teamNameInput.style.borderColor = '#ef4444';
+                    teamNameInput.focus();
+                    btn.classList.remove('loading');
+                    btn.disabled = false;
+                    return;
+                }
+
+                // Save to Firestore
+                await db.collection('registrations').add({
+                    teamName: teamName,
+                    email: document.getElementById('teamEmail').value,
+                    event: 'Quick Draw UI Battle',
+                    member1: {
+                        name: document.getElementById('member1Name').value,
+                        usn: document.getElementById('member1USN').value,
+                        dept: document.getElementById('member1Dept').value
+                    },
+                    member2: {
+                        name: document.getElementById('member2Name').value || null,
+                        usn: document.getElementById('member2USN').value || null,
+                        dept: document.getElementById('member2Dept').value || null
+                    },
+                    member3: {
+                        name: document.getElementById('member3Name').value || null,
+                        usn: document.getElementById('member3USN').value || null,
+                        dept: document.getElementById('member3Dept').value || null
+                    },
+                    registeredAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    status: 'pending'
+                });
+                document.getElementById('registrationForm').style.display = 'none';
+                document.getElementById('formSuccess').classList.add('show');
+                setTimeout(closeModal, 3000);
+            } catch (err) {
+                console.error('Error:', err);
+                alert('Registration failed. Please try again.');
+            } finally {
+                btn.classList.remove('loading');
+                btn.disabled = false;
             }
         });
     </script>
