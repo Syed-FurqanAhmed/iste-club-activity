@@ -2022,9 +2022,17 @@
             const newStatus = currentStatus === 'Verified' ? 'Pending' : 'Verified';
 
             try {
-                // Update in Firestore using modular SDK
-                const docRef = doc(db, 'registrations', teamId);
-                await updateDoc(docRef, { status: newStatus });
+                // Update in Firestore using global helper (defined in module)
+                if (window.updateInFirestore) {
+                    const success = await window.updateInFirestore('registrations', teamId, { status: newStatus });
+                    if (!success) {
+                        throw new Error('Firestore update returned false');
+                    }
+                } else {
+                    console.error('updateInFirestore not available yet');
+                    showToast('⚠️ Please wait for page to fully load');
+                    return;
+                }
 
                 // Update the UI immediately
                 const row = document.querySelector(`tr[data-team="${teamId}"]`);
