@@ -2506,13 +2506,14 @@
         async function loadTestingData() {
             try {
                 console.log('🧪 Loading Testing registrations...');
+                // Filter to show only Testing registrations (not UI Battle or other events)
                 const regsRef = collection(db, 'registrations');
-                const q = query(regsRef, orderBy('registeredAt', 'desc'));
+                const q = query(regsRef, where('event', '==', 'testing'), orderBy('registeredAt', 'desc'));
                 const snapshot = await getDocs(q);
 
                 const tbody = document.getElementById('testing-tbody');
                 if (snapshot.empty) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--text-muted);">No test registrations yet</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted);">No test registrations yet</td></tr>';
                     return;
                 }
                 tbody.innerHTML = '';
