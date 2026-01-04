@@ -2036,8 +2036,10 @@
 
                 // Update the UI immediately
                 const row = document.querySelector(`tr[data-team="${teamId}"]`);
+                console.log('[toggleStatus] Looking for row with data-team:', teamId, 'Found:', row);
                 if (row) {
                     const statusPill = row.querySelector('.status-pill');
+                    console.log('[toggleStatus] Status pill found:', statusPill);
                     if (statusPill) {
                         statusPill.textContent = newStatus;
                         statusPill.className = `status-pill clickable ${newStatus.toLowerCase()}`;
@@ -2049,6 +2051,9 @@
                         verifyBtn.title = newStatus === 'Verified' ? 'Mark as Pending' : 'Mark as Verified';
                         verifyBtn.setAttribute('onclick', `toggleStatus('${teamId}', '${newStatus}')`);
                     }
+                } else {
+                    console.warn('[toggleStatus] Row not found! Available rows:',
+                        [...document.querySelectorAll('tr[data-team]')].map(r => r.dataset.team));
                 }
 
                 showToast(`✅ Status changed to ${newStatus}`);
