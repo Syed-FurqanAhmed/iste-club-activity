@@ -2660,6 +2660,10 @@
             document.getElementById('deleteModal').classList.add('active');
         }
 
+        // ===== EXPOSE UI BATTLE FUNCTIONS GLOBALLY =====
+        window.toggleUIBattleStatus = toggleUIBattleStatus;
+        window.openDeleteUIBattleModal = openDeleteUIBattleModal;
+
         // Initialize data on page load
         window.addEventListener('DOMContentLoaded', async () => {
             // Load Firestore data
