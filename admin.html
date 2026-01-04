@@ -1863,11 +1863,38 @@
 
                         <!-- Registration Sub-content -->
                         <div id="uibattle-reg" class="sub-content active">
-                            <div class="placeholder-box">
-                                <div class="icon">📋</div>
-                                <h4>No Registrations</h4>
-                                <p>UI Battle registration data not available.</p>
+                            <div class="data-table-wrapper">
+                                <div class="data-table-header">
+                                    <span class="data-table-title">🎨 UI Battle Participants</span>
+                                    <div class="data-table-controls">
+                                        <button class="table-refresh-btn" id="uibattleRefreshBtn"
+                                            onclick="refreshUIBattleData()" title="Refresh data">
+                                            <span class="refresh-icon">↻</span>
+                                        </button>
+                                        <div class="search-wrapper">
+                                            <span class="search-icon">🔍</span>
+                                            <input type="text" class="table-search-input" id="uibattle-search"
+                                                placeholder="Search..."
+                                                onkeyup="handleTableSearch('uibattle', this.value)">
+                                        </div>
+                                    </div>
+                                </div>
+                                <table class="data-table" id="uibattle-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Team</th>
+                                            <th>Team Name</th>
+                                            <th>Member 1</th>
+                                            <th>Member 2</th>
+                                            <th>Member 3</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="uibattle-tbody"></tbody>
+                                </table>
                             </div>
+                            <div class="pagination" id="uibattle-pagination"></div>
                         </div>
 
                         <!-- Winners Sub-content -->
@@ -2374,7 +2401,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-        import { getFirestore, collection, getDocs, doc, deleteDoc, updateDoc, orderBy, query } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, deleteDoc, updateDoc, orderBy, query, where } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
         /**
          * SECURITY: Firebase Configuration
@@ -2541,6 +2568,97 @@
             }
         }
 
+        // ===== LOAD UI BATTLE DATA =====
+        async function loadUIBattleData() {
+            try {
+                console.log('🎨 Loading UI Battle registrations...');
+                // Query registrations collection where event = 'uibattle'
+                const regsRef = collection(db, 'registrations');
+                const q = query(regsRef, where('event', '==', 'uibattle'), orderBy('registeredAt', 'desc'));
+                const snapshot = await getDocs(q);
+
+                const tbody = document.getElementById('uibattle-tbody');
+                if (snapshot.empty) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-muted);">No UI Battle registrations yet</td></tr>';
+                    console.log('📭 No UI Battle registrations found');
+                    return;
+                }
+
+                let i = 1;
+                tbody.innerHTML = '';
+                snapshot.forEach(docSnap => {
+                    const d = docSnap.data();
+                    const docId = docSnap.id;
+                    tbody.innerHTML += `
+                        <tr data-team="${docId}">
+                            <td><span class="team-badge">${i++}</span></td>
+                            <td><strong>${d.teamName || '—'}</strong></td>
+                            <td><div class="member-info"><span class="name">${d.member1?.name || '-'}</span><span class="detail">${d.member1?.usn || ''} • ${d.member1?.dept || ''}</span></div></td>
+                            <td><div class="member-info"><span class="name">${d.member2?.name || '-'}</span><span class="detail">${d.member2?.usn || ''} • ${d.member2?.dept || ''}</span></div></td>
+                            <td><div class="member-info"><span class="name">${d.member3?.name || '-'}</span><span class="detail">${d.member3?.usn || ''} • ${d.member3?.dept || ''}</span></div></td>
+                            <td><span class="status-pill clickable ${(d.status || 'Pending').toLowerCase()}" onclick="toggleUIBattleStatus('${docId}', '${d.status || 'Pending'}')" title="Click to toggle status">${d.status || 'Pending'}</span></td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="action-btn verify" title="${(d.status || 'Pending') === 'Verified' ? 'Mark as Pending' : 'Mark as Verified'}" onclick="toggleUIBattleStatus('${docId}', '${d.status || 'Pending'}')">✓</button>
+                                    <button class="action-btn delete" title="Delete" onclick="openDeleteUIBattleModal('${docId}', '${(d.teamName || 'Team ' + i).replace(/'/g, "\\'")}')">🗑️</button>
+                                </div>
+                            </td>
+                        </tr>`;
+                });
+                console.log(`✅ Loaded ${snapshot.size} UI Battle registrations`);
+            } catch (err) {
+                console.error('❌ Error loading UI Battle data:', err);
+                const tbody = document.getElementById('uibattle-tbody');
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--accent-warning);">⚠️ Error loading data (check Firestore permissions or create index)</td></tr>';
+                }
+            }
+        }
+
+        // Refresh UI Battle data
+        window.refreshUIBattleData = async function () {
+            const btn = document.getElementById('uibattleRefreshBtn');
+            if (btn) btn.classList.add('spinning');
+            await loadUIBattleData();
+            if (btn) btn.classList.remove('spinning');
+            showToast('🎨 UI Battle data refreshed!');
+        };
+
+        // Toggle status for UI Battle registrations
+        async function toggleUIBattleStatus(docId, currentStatus) {
+            const newStatus = currentStatus === 'Verified' ? 'Pending' : 'Verified';
+            try {
+                if (window.updateInFirestore) {
+                    // Use registrations collection (same as other events, differentiated by 'event' field)
+                    const success = await window.updateInFirestore('registrations', docId, { status: newStatus });
+                    if (success) {
+                        const row = document.querySelector(`tr[data-team="${docId}"]`);
+                        if (row) {
+                            const statusPill = row.querySelector('.status-pill');
+                            if (statusPill) {
+                                statusPill.textContent = newStatus;
+                                statusPill.className = `status-pill clickable ${newStatus.toLowerCase()}`;
+                                statusPill.setAttribute('onclick', `toggleUIBattleStatus('${docId}', '${newStatus}')`);
+                            }
+                        }
+                        showToast(`✅ Status changed to ${newStatus}`);
+                    }
+                }
+            } catch (err) {
+                console.error('Status update failed:', err);
+                showToast('⚠️ Failed to update status');
+            }
+        }
+
+        // Delete modal for UI Battle (uses same registrations collection)
+        function openDeleteUIBattleModal(docId, name) {
+            document.getElementById('deleteTeamId').value = docId;
+            document.getElementById('deleteTeamName').textContent = name;
+            // Uses registrations collection (same as Testing)
+            window.deleteFromCollection = 'registrations';
+            document.getElementById('deleteModal').classList.add('active');
+        }
+
         // Initialize data on page load
         window.addEventListener('DOMContentLoaded', async () => {
             // Load Firestore data
@@ -2549,6 +2667,9 @@
 
             // Load Testing data
             await loadTestingData();
+
+            // Load UI Battle data
+            await loadUIBattleData();
 
             // Update stats
             document.querySelector('.overview-card.purple .number').textContent = promptquestData.length;
