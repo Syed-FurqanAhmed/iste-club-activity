@@ -49,6 +49,26 @@
             opacity: 0 !important;
         }
 
+        /* ACCESSIBILITY: Skip Link for keyboard users */
+        .skip-link {
+            position: absolute;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent-1);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            z-index: 9999;
+            text-decoration: none;
+            transition: top 0.3s ease;
+        }
+
+        .skip-link:focus {
+            top: 20px;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -1487,6 +1507,9 @@
         <div class="bg-orb bg-orb-3"></div>
     </div>
 
+    <!-- ACCESSIBILITY: Skip to main content link -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
     <!-- NAVBAR -->
     <nav id="navbar">
         <a href="#" class="logo">
@@ -1504,7 +1527,8 @@
             <a href="#gallery">Gallery</a>
             <a href="admin.html" class="nav-cta">Admin</a>
         </div>
-        <div class="hamburger" id="hamburger" onclick="toggleNav()">
+        <div class="hamburger" id="hamburger" onclick="toggleNav()" aria-label="Toggle navigation menu" role="button"
+            tabindex="0">
             <span></span>
             <span></span>
             <span></span>
@@ -1512,7 +1536,7 @@
     </nav>
 
     <!-- HERO SECTION -->
-    <section class="hero">
+    <section class="hero" id="main-content">
         <div class="hero-content">
             <div class="hero-text">
                 <div class="hero-badge">🚀 Now Accepting Registrations</div>
@@ -1622,25 +1646,23 @@
             <h2 class="section-title">Our <span class="gradient-text">Champions</span></h2>
             <p class="section-subtitle">Winners of Quick Draw UI Battle</p>
         </div>
-        <div class="winners-grid">
-            <div class="winner-card gold">
+        <!-- Dynamic Winners Grid - Populated from Firestore -->
+        <div class="winners-grid" id="winnersGrid">
+            <!-- Fallback static content (shown while loading or if no winners set) -->
+            <div class="winner-card gold" id="winner-1">
                 <div class="winner-medal">🥇</div>
-                <h3>Team Dual Entropy</h3>
-                <span class="event">Harini SD</span><br>
-                <span class="event">Sinchana SD</span><br>
+                <h3 id="winner-1-name">Loading...</h3>
+                <span class="event" id="winner-1-members"></span>
             </div>
-            <div class="winner-card silver">
+            <div class="winner-card silver" id="winner-2">
                 <div class="winner-medal">🥈</div>
-                <h3>Team Log 1</h3>
-                <span class="event">Lokesh</span><br>
-                <span class="event">Shalini R</span><br>
-                <span class="event">Tharun V</span><br>
+                <h3 id="winner-2-name">Loading...</h3>
+                <span class="event" id="winner-2-members"></span>
             </div>
-            <div class="winner-card bronze">
+            <div class="winner-card bronze" id="winner-3">
                 <div class="winner-medal">🥉</div>
-                <h3>Team Symbiote</h3>
-                <span class="event">Rishaban MP</span><br>
-                <span class="event">Andhani Gowda G</span><br>
+                <h3 id="winner-3-name">Loading...</h3>
+                <span class="event" id="winner-3-members"></span>
             </div>
         </div>
     </section>
@@ -1992,6 +2014,62 @@
             document.body.style.overflow = '';
         }
 
+        // ===== DYNAMIC WINNERS LOADING =====
+        async function loadWinners() {
+            try {
+                console.log('[Winners] Loading winners from Firestore...');
+
+                // Query all winners ordered by position
+                const winnersSnapshot = await db.collection('registrations')
+                    .where('isWinner', '==', true)
+                    .orderBy('winnerPosition', 'asc')
+                    .limit(3)
+                    .get();
+
+                if (winnersSnapshot.empty) {
+                    console.log('[Winners] No winners found, using placeholder');
+                    document.getElementById('winner-1-name').textContent = 'TBA';
+                    document.getElementById('winner-2-name').textContent = 'TBA';
+                    document.getElementById('winner-3-name').textContent = 'TBA';
+                    return;
+                }
+
+                winnersSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    const position = data.winnerPosition;
+
+                    // Get member names
+                    const members = [];
+                    if (data.member1?.name) members.push(data.member1.name);
+                    if (data.member2?.name) members.push(data.member2.name);
+                    if (data.member3?.name) members.push(data.member3.name);
+
+                    // Update the winner card
+                    const nameEl = document.getElementById(`winner-${position}-name`);
+                    const membersEl = document.getElementById(`winner-${position}-members`);
+
+                    if (nameEl) {
+                        nameEl.textContent = data.teamName || 'Winner';
+                    }
+                    if (membersEl) {
+                        membersEl.innerHTML = members.map(m => `${m}`).join('<br>');
+                    }
+
+                    console.log(`[Winners] Loaded position ${position}: ${data.teamName}`);
+                });
+
+            } catch (err) {
+                console.error('[Winners] Error loading winners:', err);
+                // Keep placeholder text on error
+            }
+        }
+
+        // Load winners on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            // Small delay to ensure Firebase is ready
+            setTimeout(loadWinners, 1000);
+        });
+
         // Close modals with Escape key
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') {
@@ -2141,10 +2219,22 @@
                 }
 
                 // SECURITY: Save sanitized data to Firestore
+                // Dynamic routing: Read active event from config
+                let activeEvent = 'testing'; // Default fallback
+                try {
+                    const configDoc = await db.collection('config').doc('registration').get();
+                    if (configDoc.exists && configDoc.data().activeEvent) {
+                        activeEvent = configDoc.data().activeEvent;
+                        console.log('[Routing] Registering to event:', activeEvent);
+                    }
+                } catch (configErr) {
+                    console.log('[Routing] Using default event: testing');
+                }
+
                 await db.collection('registrations').add({
                     teamName: formData.teamName,
                     email: formData.teamEmail,
-                    event: 'Quick Draw UI Battle',
+                    event: activeEvent,  // Dynamic routing from admin config
                     member1: {
                         name: formData.member1Name,
                         usn: formData.member1USN,
