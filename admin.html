@@ -250,6 +250,9 @@
         }
 
         /* ===== LOGIN PAGE ===== */
+
+
+
         .login-container {
             min-height: calc(100vh - 140px);
             display: flex;
@@ -1248,6 +1251,466 @@
             font-size: 14px;
         }
 
+        /* ===== EVENT SELECTION GRID ===== */
+        .event-selector-view {
+            display: block;
+        }
+
+        .event-selector-view.hidden {
+            display: none;
+        }
+
+        .event-detail-view {
+            display: none;
+        }
+
+        .event-detail-view.active {
+            display: block;
+        }
+
+        .event-selector-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-top: 24px;
+        }
+
+        .event-select-card {
+            background: var(--bg-card);
+            border: 2px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 32px 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .event-select-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-primary);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .event-select-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-glow);
+            border-color: var(--accent-1);
+        }
+
+        .event-select-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .event-select-card .icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .event-select-card h4 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .event-select-card .count {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--gradient-soft);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent-1);
+            margin-top: 8px;
+        }
+
+        .back-to-events {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: transparent;
+            border: 2px solid var(--glass-border);
+            padding: 10px 20px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-secondary);
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .back-to-events:hover {
+            border-color: var(--accent-1);
+            color: var(--accent-1);
+            transform: translateX(-4px);
+        }
+
+        /* ===== WINNER BADGE IN TABLE ===== */
+        .winner-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: linear-gradient(135deg, #fef3c7, #fde047);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #92400e;
+            border: 1px solid rgba(234, 179, 8, 0.3);
+        }
+
+        .winner-badge.gold {
+            background: linear-gradient(135deg, #fef3c7, #fde047);
+            color: #92400e;
+        }
+
+        .winner-badge.silver {
+            background: linear-gradient(135deg, #f1f5f9, #cbd5e1);
+            color: #475569;
+        }
+
+        .winner-badge.bronze {
+            background: linear-gradient(135deg, #fed7aa, #fdba74);
+            color: #9a3412;
+        }
+
+        /* ===== SET WINNER BUTTON ===== */
+        .action-btn.winner {
+            background: transparent;
+        }
+
+        .action-btn.winner:hover {
+            background: rgba(234, 179, 8, 0.15);
+        }
+
+        /* ===== WINNER MODAL ===== */
+        .winner-position-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .winner-position-btn {
+            background: var(--bg-input);
+            border: 2px solid transparent;
+            border-radius: var(--radius-md);
+            padding: 24px 16px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .winner-position-btn:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .winner-position-btn.gold:hover,
+        .winner-position-btn.gold.selected {
+            background: linear-gradient(135deg, #fef3c7, #fde047);
+            border-color: #f59e0b;
+        }
+
+        .winner-position-btn.silver:hover,
+        .winner-position-btn.silver.selected {
+            background: linear-gradient(135deg, #f1f5f9, #cbd5e1);
+            border-color: #94a3b8;
+        }
+
+        .winner-position-btn.bronze:hover,
+        .winner-position-btn.bronze.selected {
+            background: linear-gradient(135deg, #fed7aa, #fdba74);
+            border-color: #f97316;
+        }
+
+        .winner-position-btn .medal {
+            font-size: 36px;
+            margin-bottom: 8px;
+        }
+
+        .winner-position-btn .label {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        /* ===== ROUTING CONFIG CARD ===== */
+        .routing-config-card {
+            background: var(--bg-card);
+            border: 2px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .routing-config-card h4 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .routing-select {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-input);
+            border: 2px solid transparent;
+            border-radius: var(--radius-sm);
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2'%3E%3Cpolyline points='6,9 12,15 18,9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 18px;
+        }
+
+        .routing-select:focus {
+            outline: none;
+            border-color: var(--accent-1);
+            background-color: #fff;
+        }
+
+        .routing-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+            font-size: 13px;
+            color: var(--accent-green);
+            font-weight: 600;
+        }
+
+        .routing-status .dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        /* ===== CREATE EVENT MODAL ===== */
+        .create-event-form .emoji-picker {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .emoji-option {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            background: var(--bg-input);
+            border: 2px solid transparent;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .emoji-option:hover {
+            transform: scale(1.1);
+            border-color: var(--accent-1);
+        }
+
+        .emoji-option.selected {
+            background: var(--gradient-soft);
+            border-color: var(--accent-1);
+        }
+
+        /* ===== CUSTOM DROPDOWN (Lightswind-inspired) ===== */
+        .custom-select {
+            position: relative;
+            width: 100%;
+        }
+
+        .select-trigger {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 12px 16px;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .select-trigger:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+        }
+
+        .select-trigger:focus {
+            outline: none;
+            border-color: var(--accent-1);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .select-trigger .selected-value {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .select-trigger .chevron {
+            width: 16px;
+            height: 16px;
+            color: #64748b;
+            transition: transform 0.2s ease;
+        }
+
+        .custom-select.open .select-trigger .chevron {
+            transform: rotate(180deg);
+        }
+
+        .select-content {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            width: 100%;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-shadow:
+                0 10px 38px -10px rgba(22, 23, 24, 0.35),
+                0 10px 20px -15px rgba(22, 23, 24, 0.2);
+            padding: 4px;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-8px) scale(0.96);
+            transition: all 0.15s ease;
+        }
+
+        .custom-select.open .select-content {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1);
+        }
+
+        .select-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .select-item:hover {
+            background: #f1f5f9;
+        }
+
+        .select-item.selected {
+            background: rgba(99, 102, 241, 0.08);
+            color: var(--accent-1);
+        }
+
+        .select-item .icon {
+            font-size: 16px;
+        }
+
+        .select-item .check {
+            margin-left: auto;
+            opacity: 0;
+            color: var(--accent-1);
+            font-weight: 700;
+        }
+
+        .select-item.selected .check {
+            opacity: 1;
+        }
+
+        /* Routing Config Card Styling */
+        .routing-config-card {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.03), rgba(139, 92, 246, 0.03));
+            border: 1px solid rgba(99, 102, 241, 0.15);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .routing-config-card h4 {
+            margin: 0 0 14px 0;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .routing-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 14px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .routing-status .dot {
+            width: 8px;
+            height: 8px;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.6;
+                transform: scale(1.15);
+            }
+        }
+
+        .routing-status strong {
+            color: var(--accent-1);
+            font-weight: 700;
+        }
+
         /* Toast Notification */
         .toast {
             position: fixed;
@@ -1607,7 +2070,99 @@
         </div>
     </div>
 
-    <!-- NAVBAR -->
+    <!-- Winner Modal -->
+    <div class="modal-overlay" id="winnerModal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">🏆 Set Winner</span>
+                <button class="modal-close" onclick="closeModal('winnerModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="winnerTeamId">
+                <input type="hidden" id="winnerEventCode">
+                <p style="text-align: center; margin-bottom: 8px;">Setting winner for:</p>
+                <p style="text-align: center; font-weight: 700; font-size: 18px; color: var(--text-primary);"
+                    id="winnerTeamName">Team Name</p>
+
+                <div class="winner-position-grid">
+                    <button type="button" class="winner-position-btn gold" onclick="selectWinnerPosition(1, this)">
+                        <div class="medal">🥇</div>
+                        <div class="label">1st Place</div>
+                    </button>
+                    <button type="button" class="winner-position-btn silver" onclick="selectWinnerPosition(2, this)">
+                        <div class="medal">🥈</div>
+                        <div class="label">2nd Place</div>
+                    </button>
+                    <button type="button" class="winner-position-btn bronze" onclick="selectWinnerPosition(3, this)">
+                        <div class="medal">🥉</div>
+                        <div class="label">3rd Place</div>
+                    </button>
+                </div>
+                <input type="hidden" id="selectedWinnerPosition" value="">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('winnerModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="confirmSetWinner()" id="confirmWinnerBtn">Set as
+                    Winner</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Event Modal -->
+    <div class="modal-overlay" id="createEventModal">
+        <div class="modal" style="max-width: 520px;">
+            <div class="modal-header">
+                <span class="modal-title">➕ Create New Event</span>
+                <button class="modal-close" onclick="closeModal('createEventModal')">&times;</button>
+            </div>
+            <div class="modal-body create-event-form">
+                <div class="form-group">
+                    <label>Event Name</label>
+                    <input type="text" id="newEventName" placeholder="e.g. Code Sprint 2.0">
+                </div>
+                <div class="form-group">
+                    <label>Event Code (lowercase, no spaces)</label>
+                    <input type="text" id="newEventCode" placeholder="e.g. codesprint" pattern="[a-z0-9_]+"
+                        oninput="this.value = this.value.toLowerCase().replace(/[^a-z0-9_]/g, '')">
+                </div>
+                <div class="form-group">
+                    <label>Select Icon</label>
+                    <div class="emoji-picker" id="emojiPicker">
+                        <button type="button" class="emoji-option selected" data-emoji="🎯"
+                            onclick="selectEventEmoji('🎯', this)">🎯</button>
+                        <button type="button" class="emoji-option" data-emoji="💻"
+                            onclick="selectEventEmoji('💻', this)">💻</button>
+                        <button type="button" class="emoji-option" data-emoji="🎨"
+                            onclick="selectEventEmoji('🎨', this)">🎨</button>
+                        <button type="button" class="emoji-option" data-emoji="🚀"
+                            onclick="selectEventEmoji('🚀', this)">🚀</button>
+                        <button type="button" class="emoji-option" data-emoji="⚡"
+                            onclick="selectEventEmoji('⚡', this)">⚡</button>
+                        <button type="button" class="emoji-option" data-emoji="🔥"
+                            onclick="selectEventEmoji('🔥', this)">🔥</button>
+                        <button type="button" class="emoji-option" data-emoji="🧪"
+                            onclick="selectEventEmoji('🧪', this)">🧪</button>
+                        <button type="button" class="emoji-option" data-emoji="🎮"
+                            onclick="selectEventEmoji('🎮', this)">🎮</button>
+                        <button type="button" class="emoji-option" data-emoji="📱"
+                            onclick="selectEventEmoji('📱', this)">📱</button>
+                        <button type="button" class="emoji-option" data-emoji="🤖"
+                            onclick="selectEventEmoji('🤖', this)">🤖</button>
+                        <button type="button" class="emoji-option" data-emoji="🎪"
+                            onclick="selectEventEmoji('🎪', this)">🎪</button>
+                        <button type="button" class="emoji-option" data-emoji="🏆"
+                            onclick="selectEventEmoji('🏆', this)">🏆</button>
+                    </div>
+                    <input type="hidden" id="selectedEventEmoji" value="🎯">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('createEventModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="createNewEvent()">Create Event</button>
+            </div>
+        </div>
+    </div>
+
     <nav id="navbar">
         <a href="index.html" class="logo">
             <img src="images/download.png" alt="ISTE Logo" />
@@ -1723,247 +2278,339 @@
                         <h3>📋 Event Management</h3>
                     </div>
 
-                    <!-- Main Event Tabs -->
-                    <div class="event-tabs">
-                        <button class="event-tab active" onclick="switchEvent('testing', this)">🧪
-                            Testing</button>
-                        <button class="event-tab" onclick="switchEvent('promptquest', this)">🎯
-                            PromptQuest</button>
-                        <button class="event-tab" onclick="switchEvent('uibattle', this)">🎨 UI Battle</button>
-                        <button class="event-tab" onclick="switchEvent('hackathon', this)">💻 Hackathon</button>
-                    </div>
+                    <!-- Event Selector View (shown first) -->
+                    <div id="event-selector-view" class="event-selector-view">
+                        <!-- Routing Config Card -->
+                        <div class="routing-config-card">
+                            <h4>🎯 Registration Routing</h4>
 
-                    <!-- Testing Content (New registrations from index.html) -->
-                    <div id="testing-content" class="event-content active">
-                        <div class="sub-tabs">
-                            <button class="sub-tab active" onclick="switchSubTab('testing', 'reg', this)">📝
-                                Registration</button>
-                            <button class="sub-tab" onclick="switchSubTab('testing', 'winners', this)">🏆
-                                Winners</button>
-                            <button class="sub-tab" onclick="switchSubTab('testing', 'images', this)">📸
-                                Images</button>
-                        </div>
-
-                        <!-- Registration Sub-content -->
-                        <div id="testing-reg" class="sub-content active">
-                            <div class="data-table-wrapper">
-                                <div class="data-table-header">
-                                    <span class="data-table-title">📋 Participants</span>
-                                    <div class="data-table-controls">
-                                        <!-- Refresh Button (Lightswind-style: minimal, unobtrusive) -->
-                                        <button class="table-refresh-btn" id="refreshTableBtn"
-                                            onclick="refreshTableData()" title="Refresh data">
-                                            <span class="refresh-icon">↻</span>
-                                        </button>
-                                        <div class="search-wrapper">
-                                            <span class="search-icon">🔍</span>
-                                            <input type="text" class="table-search-input" id="testing-search"
-                                                placeholder="Search..."
-                                                onkeyup="handleTableSearch('testing', this.value)">
-                                        </div>
+                            <!-- Custom Dropdown (Lightswind-inspired) -->
+                            <div class="custom-select" id="routingDropdown">
+                                <button type="button" class="select-trigger" onclick="toggleDropdown()">
+                                    <span class="selected-value">
+                                        <span class="icon">🧪</span>
+                                        <span id="selectedEventText">Testing (Sandbox)</span>
+                                    </span>
+                                    <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <polyline points="6 9 12 15 18 9"></polyline>
+                                    </svg>
+                                </button>
+                                <div class="select-content">
+                                    <div class="select-item selected" data-value="testing" onclick="selectOption(this)">
+                                        <span class="icon">🧪</span>
+                                        <span>Testing (Sandbox)</span>
+                                        <span class="check">✓</span>
+                                    </div>
+                                    <div class="select-item" data-value="promptquest" onclick="selectOption(this)">
+                                        <span class="icon">🎯</span>
+                                        <span>PromptQuest</span>
+                                        <span class="check">✓</span>
+                                    </div>
+                                    <div class="select-item" data-value="uibattle" onclick="selectOption(this)">
+                                        <span class="icon">🎨</span>
+                                        <span>UI Battle</span>
+                                        <span class="check">✓</span>
+                                    </div>
+                                    <div class="select-item" data-value="hackathon" onclick="selectOption(this)">
+                                        <span class="icon">💻</span>
+                                        <span>Hackathon</span>
+                                        <span class="check">✓</span>
                                     </div>
                                 </div>
-                                <table class="data-table" id="testing-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Team</th>
-                                            <th>Team Name</th>
-                                            <th>Member 1</th>
-                                            <th>Member 2</th>
-                                            <th>Member 3</th>
-                                            <th>Email</th>
-                                            <th>Status</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="testing-tbody"></tbody>
-                                </table>
                             </div>
-                            <div class="pagination" id="testing-pagination"></div>
-                        </div>
 
-                        <!-- Winners Sub-content -->
-                        <div id="testing-winners" class="sub-content">
-                            <div class="placeholder-box">
-                                <div class="icon">🏆</div>
-                                <h4>Winners Coming Soon!</h4>
-                                <p>Testing winners will be announced after the event.</p>
+                            <div class="routing-status" id="routingStatus">
+                                <span class="dot"></span>
+                                <span>New registrations → <strong id="activeEventName">Testing</strong></span>
                             </div>
                         </div>
 
-                        <!-- Images Sub-content -->
-                        <div id="testing-images" class="sub-content">
-                            <div class="placeholder-box">
-                                <div class="icon">📷</div>
-                                <h4>Event Photos Coming Soon!</h4>
-                                <p>Photos will be uploaded after the event.</p>
+                        <!-- Event Cards Grid -->
+                        <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Select an event to
+                            manage:</p>
+                        <div class="event-selector-grid" id="eventSelectorGrid">
+                            <div class="event-select-card" onclick="openEventView('testing')">
+                                <div class="icon">🧪</div>
+                                <h4>Testing</h4>
+                                <span class="count" id="testing-count">👥 0 teams</span>
                             </div>
+                            <div class="event-select-card" onclick="openEventView('promptquest')">
+                                <div class="icon">🎯</div>
+                                <h4>PromptQuest</h4>
+                                <span class="count" id="promptquest-count">👥 0 teams</span>
+                            </div>
+                            <div class="event-select-card" onclick="openEventView('uibattle')">
+                                <div class="icon">🎨</div>
+                                <h4>UI Battle</h4>
+                                <span class="count" id="uibattle-count">👥 0 teams</span>
+                            </div>
+                            <div class="event-select-card" onclick="openEventView('hackathon')">
+                                <div class="icon">💻</div>
+                                <h4>Hackathon</h4>
+                                <span class="count" id="hackathon-count">👥 0 teams</span>
+                            </div>
+                        </div>
+
+                        <!-- Create Event Button -->
+                        <div style="text-align: center; margin-top: 24px;">
+                            <button class="btn btn-secondary" onclick="openCreateEventModal()"
+                                style="display: inline-flex; align-items: center; gap: 8px;">
+                                ➕ Create New Event
+                            </button>
                         </div>
                     </div>
 
-                    <!-- PromptQuest Content -->
-                    <div id="promptquest-content" class="event-content">
-                        <div class="sub-tabs">
-                            <button class="sub-tab active" onclick="switchSubTab('promptquest', 'reg', this)">📝
-                                Registration</button>
-                            <button class="sub-tab" onclick="switchSubTab('promptquest', 'winners', this)">🏆
-                                Winners</button>
-                            <button class="sub-tab" onclick="switchSubTab('promptquest', 'images', this)">📸
-                                Images</button>
+                    <!-- Event Detail View (hidden by default) -->
+                    <div id="event-detail-view" class="event-detail-view">
+                        <button class="back-to-events" onclick="backToEventSelector()">← Back to Events</button>
+
+                        <!-- Main Event Tabs -->
+                        <div class="event-tabs">
+                            <button class="event-tab active" onclick="switchEvent('testing', this)"
+                                data-event="testing">🧪
+                                Testing</button>
+                            <button class="event-tab" onclick="switchEvent('promptquest', this)"
+                                data-event="promptquest">🎯
+                                PromptQuest</button>
+                            <button class="event-tab" onclick="switchEvent('uibattle', this)" data-event="uibattle">🎨
+                                UI Battle</button>
+                            <button class="event-tab" onclick="switchEvent('hackathon', this)" data-event="hackathon">💻
+                                Hackathon</button>
                         </div>
 
-                        <!-- Registration Sub-content -->
-                        <div id="promptquest-reg" class="sub-content active">
-                            <div class="data-table-wrapper">
-                                <table class="data-table" id="promptquest-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Team</th>
-                                            <th>Member 1</th>
-                                            <th>Member 2</th>
-                                            <th>Member 3</th>
-                                            <th>Email</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="promptquest-tbody"></tbody>
-                                </table>
+                        <!-- Testing Content (New registrations from index.html) -->
+                        <div id="testing-content" class="event-content active">
+                            <div class="sub-tabs">
+                                <button class="sub-tab active" onclick="switchSubTab('testing', 'reg', this)">📝
+                                    Registration</button>
+                                <button class="sub-tab" onclick="switchSubTab('testing', 'winners', this)">🏆
+                                    Winners</button>
+                                <button class="sub-tab" onclick="switchSubTab('testing', 'images', this)">📸
+                                    Images</button>
                             </div>
-                            <div class="pagination" id="promptquest-pagination"></div>
-                        </div>
 
-                        <!-- Winners Sub-content -->
-                        <div id="promptquest-winners" class="sub-content">
-                            <div class="placeholder-box">
-                                <div class="icon">🏆</div>
-                                <h4>Winners Coming Soon!</h4>
-                                <p>PromptQuest winners will be announced after the event.</p>
-                            </div>
-                        </div>
-
-                        <!-- Images Sub-content -->
-                        <div id="promptquest-images" class="sub-content">
-                            <div class="placeholder-box">
-                                <div class="icon">📷</div>
-                                <h4>Event Photos Coming Soon!</h4>
-                                <p>Photos will be uploaded after the event.</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- UI Battle Content -->
-                    <div id="uibattle-content" class="event-content">
-                        <div class="sub-tabs">
-                            <button class="sub-tab active" onclick="switchSubTab('uibattle', 'reg', this)">📝
-                                Registration</button>
-                            <button class="sub-tab" onclick="switchSubTab('uibattle', 'winners', this)">🏆
-                                Winners</button>
-                            <button class="sub-tab" onclick="switchSubTab('uibattle', 'images', this)">📸
-                                Images</button>
-                        </div>
-
-                        <!-- Registration Sub-content -->
-                        <div id="uibattle-reg" class="sub-content active">
-                            <div class="data-table-wrapper">
-                                <div class="data-table-header">
-                                    <span class="data-table-title">🎨 UI Battle Participants</span>
-                                    <div class="data-table-controls">
-                                        <button class="table-refresh-btn" id="uibattleRefreshBtn"
-                                            onclick="refreshUIBattleData()" title="Refresh data">
-                                            <span class="refresh-icon">↻</span>
-                                        </button>
-                                        <div class="search-wrapper">
-                                            <span class="search-icon">🔍</span>
-                                            <input type="text" class="table-search-input" id="uibattle-search"
-                                                placeholder="Search..."
-                                                onkeyup="handleTableSearch('uibattle', this.value)">
+                            <!-- Registration Sub-content -->
+                            <div id="testing-reg" class="sub-content active">
+                                <div class="data-table-wrapper">
+                                    <div class="data-table-header">
+                                        <span class="data-table-title">📋 Participants</span>
+                                        <div class="data-table-controls">
+                                            <!-- Refresh Button (Lightswind-style: minimal, unobtrusive) -->
+                                            <button class="table-refresh-btn" id="refreshTableBtn"
+                                                onclick="refreshTableData()" title="Refresh data">
+                                                <span class="refresh-icon">↻</span>
+                                            </button>
+                                            <div class="search-wrapper">
+                                                <span class="search-icon">🔍</span>
+                                                <input type="text" class="table-search-input" id="testing-search"
+                                                    placeholder="Search..."
+                                                    onkeyup="handleTableSearch('testing', this.value)">
+                                            </div>
                                         </div>
                                     </div>
+                                    <table class="data-table" id="testing-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Team</th>
+                                                <th>Team Name</th>
+                                                <th>Member 1</th>
+                                                <th>Member 2</th>
+                                                <th>Member 3</th>
+                                                <th>Email</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="testing-tbody"></tbody>
+                                    </table>
                                 </div>
-                                <table class="data-table" id="uibattle-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Team</th>
-                                            <th>Team Name</th>
-                                            <th>Member 1</th>
-                                            <th>Member 2</th>
-                                            <th>Member 3</th>
-                                            <th>Status</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="uibattle-tbody"></tbody>
-                                </table>
+                                <div class="pagination" id="testing-pagination"></div>
                             </div>
-                            <div class="pagination" id="uibattle-pagination"></div>
-                        </div>
 
-                        <!-- Winners Sub-content -->
-                        <div id="uibattle-winners" class="sub-content">
-                            <div class="winners-grid">
-                                <div class="winner-mini-card">
-                                    <div class="medal">🥇</div>
-                                    <h4>Harini SD</h4>
-                                    <p>1st Place</p>
+                            <!-- Winners Sub-content -->
+                            <div id="testing-winners" class="sub-content">
+                                <div class="placeholder-box">
+                                    <div class="icon">🏆</div>
+                                    <h4>Winners Coming Soon!</h4>
+                                    <p>Testing winners will be announced after the event.</p>
                                 </div>
-                                <div class="winner-mini-card">
-                                    <div class="medal">🥈</div>
-                                    <h4>Sinchana SD</h4>
-                                    <p>2nd Place</p>
-                                </div>
-                                <div class="winner-mini-card">
-                                    <div class="medal">🥉</div>
-                                    <h4>Lokesh</h4>
-                                    <p>3rd Place</p>
+                            </div>
+
+                            <!-- Images Sub-content -->
+                            <div id="testing-images" class="sub-content">
+                                <div class="placeholder-box">
+                                    <div class="icon">📷</div>
+                                    <h4>Event Photos Coming Soon!</h4>
+                                    <p>Photos will be uploaded after the event.</p>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Images Sub-content -->
-                        <div id="uibattle-images" class="sub-content">
-                            <div class="placeholder-box">
-                                <div class="icon">📷</div>
-                                <h4>Event Photos Coming Soon!</h4>
-                                <p>Photos will be uploaded after the event.</p>
+                        <!-- PromptQuest Content -->
+                        <div id="promptquest-content" class="event-content">
+                            <div class="sub-tabs">
+                                <button class="sub-tab active" onclick="switchSubTab('promptquest', 'reg', this)">📝
+                                    Registration</button>
+                                <button class="sub-tab" onclick="switchSubTab('promptquest', 'winners', this)">🏆
+                                    Winners</button>
+                                <button class="sub-tab" onclick="switchSubTab('promptquest', 'images', this)">📸
+                                    Images</button>
+                            </div>
+
+                            <!-- Registration Sub-content -->
+                            <div id="promptquest-reg" class="sub-content active">
+                                <div class="data-table-wrapper">
+                                    <table class="data-table" id="promptquest-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Team</th>
+                                                <th>Member 1</th>
+                                                <th>Member 2</th>
+                                                <th>Member 3</th>
+                                                <th>Email</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="promptquest-tbody"></tbody>
+                                    </table>
+                                </div>
+                                <div class="pagination" id="promptquest-pagination"></div>
+                            </div>
+
+                            <!-- Winners Sub-content -->
+                            <div id="promptquest-winners" class="sub-content">
+                                <div class="placeholder-box">
+                                    <div class="icon">🏆</div>
+                                    <h4>Winners Coming Soon!</h4>
+                                    <p>PromptQuest winners will be announced after the event.</p>
+                                </div>
+                            </div>
+
+                            <!-- Images Sub-content -->
+                            <div id="promptquest-images" class="sub-content">
+                                <div class="placeholder-box">
+                                    <div class="icon">📷</div>
+                                    <h4>Event Photos Coming Soon!</h4>
+                                    <p>Photos will be uploaded after the event.</p>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Hackathon Content -->
-                    <div id="hackathon-content" class="event-content">
-                        <div class="sub-tabs">
-                            <button class="sub-tab active" onclick="switchSubTab('hackathon', 'reg', this)">📝
-                                Registration</button>
-                            <button class="sub-tab" onclick="switchSubTab('hackathon', 'winners', this)">🏆
-                                Winners</button>
-                            <button class="sub-tab" onclick="switchSubTab('hackathon', 'images', this)">📸
-                                Images</button>
-                        </div>
+                        <!-- UI Battle Content -->
+                        <div id="uibattle-content" class="event-content">
+                            <div class="sub-tabs">
+                                <button class="sub-tab active" onclick="switchSubTab('uibattle', 'reg', this)">📝
+                                    Registration</button>
+                                <button class="sub-tab" onclick="switchSubTab('uibattle', 'winners', this)">🏆
+                                    Winners</button>
+                                <button class="sub-tab" onclick="switchSubTab('uibattle', 'images', this)">📸
+                                    Images</button>
+                            </div>
 
-                        <div id="hackathon-reg" class="sub-content active">
-                            <div class="placeholder-box">
-                                <div class="icon">🚀</div>
-                                <h4>Coming Soon!</h4>
-                                <p>Hackathon registrations will open shortly.</p>
+                            <!-- Registration Sub-content -->
+                            <div id="uibattle-reg" class="sub-content active">
+                                <div class="data-table-wrapper">
+                                    <div class="data-table-header">
+                                        <span class="data-table-title">🎨 UI Battle Participants</span>
+                                        <div class="data-table-controls">
+                                            <button class="table-refresh-btn" id="uibattleRefreshBtn"
+                                                onclick="refreshUIBattleData()" title="Refresh data">
+                                                <span class="refresh-icon">↻</span>
+                                            </button>
+                                            <div class="search-wrapper">
+                                                <span class="search-icon">🔍</span>
+                                                <input type="text" class="table-search-input" id="uibattle-search"
+                                                    placeholder="Search..."
+                                                    onkeyup="handleTableSearch('uibattle', this.value)">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <table class="data-table" id="uibattle-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Team</th>
+                                                <th>Team Name</th>
+                                                <th>Member 1</th>
+                                                <th>Member 2</th>
+                                                <th>Member 3</th>
+                                                <th>Status</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="uibattle-tbody"></tbody>
+                                    </table>
+                                </div>
+                                <div class="pagination" id="uibattle-pagination"></div>
+                            </div>
+
+                            <!-- Winners Sub-content -->
+                            <div id="uibattle-winners" class="sub-content">
+                                <div class="winners-grid">
+                                    <div class="winner-mini-card">
+                                        <div class="medal">🥇</div>
+                                        <h4>Harini SD</h4>
+                                        <p>1st Place</p>
+                                    </div>
+                                    <div class="winner-mini-card">
+                                        <div class="medal">🥈</div>
+                                        <h4>Sinchana SD</h4>
+                                        <p>2nd Place</p>
+                                    </div>
+                                    <div class="winner-mini-card">
+                                        <div class="medal">🥉</div>
+                                        <h4>Lokesh</h4>
+                                        <p>3rd Place</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Images Sub-content -->
+                            <div id="uibattle-images" class="sub-content">
+                                <div class="placeholder-box">
+                                    <div class="icon">📷</div>
+                                    <h4>Event Photos Coming Soon!</h4>
+                                    <p>Photos will be uploaded after the event.</p>
+                                </div>
                             </div>
                         </div>
 
-                        <div id="hackathon-winners" class="sub-content">
-                            <div class="placeholder-box">
-                                <div class="icon">🏆</div>
-                                <h4>Winners Coming Soon!</h4>
-                                <p>Hackathon winners will be announced after the event.</p>
+                        <!-- Hackathon Content -->
+                        <div id="hackathon-content" class="event-content">
+                            <div class="sub-tabs">
+                                <button class="sub-tab active" onclick="switchSubTab('hackathon', 'reg', this)">📝
+                                    Registration</button>
+                                <button class="sub-tab" onclick="switchSubTab('hackathon', 'winners', this)">🏆
+                                    Winners</button>
+                                <button class="sub-tab" onclick="switchSubTab('hackathon', 'images', this)">📸
+                                    Images</button>
                             </div>
-                        </div>
 
-                        <div id="hackathon-images" class="sub-content">
-                            <div class="placeholder-box">
-                                <div class="icon">📷</div>
-                                <h4>Event Photos Coming Soon!</h4>
-                                <p>Photos will be uploaded after the event.</p>
+                            <div id="hackathon-reg" class="sub-content active">
+                                <div class="placeholder-box">
+                                    <div class="icon">🚀</div>
+                                    <h4>Coming Soon!</h4>
+                                    <p>Hackathon registrations will open shortly.</p>
+                                </div>
+                            </div>
+
+                            <div id="hackathon-winners" class="sub-content">
+                                <div class="placeholder-box">
+                                    <div class="icon">🏆</div>
+                                    <h4>Winners Coming Soon!</h4>
+                                    <p>Hackathon winners will be announced after the event.</p>
+                                </div>
+                            </div>
+
+                            <div id="hackathon-images" class="sub-content">
+                                <div class="placeholder-box">
+                                    <div class="icon">📷</div>
+                                    <h4>Event Photos Coming Soon!</h4>
+                                    <p>Photos will be uploaded after the event.</p>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
+                    </div><!-- End event-detail-view -->
+                </div><!-- End event-tabs-container -->
 
                 <!-- Sidebar -->
                 <div class="sidebar">
@@ -2042,6 +2689,265 @@
             document.getElementById('deleteTeamId').value = teamId;
             document.getElementById('deleteTeamName').textContent = teamName;
             document.getElementById('deleteModal').classList.add('active');
+        }
+
+        // ===== EVENT NAVIGATION FUNCTIONS =====
+        // Open an event's detail view
+        function openEventView(eventCode) {
+            // Hide the event selector
+            document.getElementById('event-selector-view').classList.add('hidden');
+            // Show the event detail view
+            document.getElementById('event-detail-view').classList.add('active');
+
+            // Activate the correct tab
+            const tabs = document.querySelectorAll('.event-tab[data-event]');
+            tabs.forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.dataset.event === eventCode) {
+                    tab.classList.add('active');
+                }
+            });
+
+            // Show correct content
+            switchEvent(eventCode);
+            console.log(`[Nav] Opened event view: ${eventCode}`);
+        }
+
+        // Go back to event selector
+        function backToEventSelector() {
+            // Hide event detail view
+            document.getElementById('event-detail-view').classList.remove('active');
+            // Show event selector
+            document.getElementById('event-selector-view').classList.remove('hidden');
+            console.log('[Nav] Returned to event selector');
+        }
+
+        // ===== WINNER MODAL FUNCTIONS =====
+        function openWinnerModal(teamId, teamName, eventCode) {
+            document.getElementById('winnerTeamId').value = teamId;
+            document.getElementById('winnerTeamName').textContent = teamName;
+            document.getElementById('winnerEventCode').value = eventCode;
+            document.getElementById('selectedWinnerPosition').value = '';
+
+            // Reset position button selections
+            document.querySelectorAll('.winner-position-btn').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+
+            document.getElementById('winnerModal').classList.add('active');
+        }
+
+        function selectWinnerPosition(position, btn) {
+            // Store the selected position
+            document.getElementById('selectedWinnerPosition').value = position;
+
+            // Update button visuals
+            document.querySelectorAll('.winner-position-btn').forEach(b => {
+                b.classList.remove('selected');
+            });
+            btn.classList.add('selected');
+        }
+
+        async function confirmSetWinner() {
+            const teamId = document.getElementById('winnerTeamId').value;
+            const position = parseInt(document.getElementById('selectedWinnerPosition').value);
+            const eventCode = document.getElementById('winnerEventCode').value;
+
+            if (!position) {
+                showToast('⚠️ Please select a position');
+                return;
+            }
+
+            try {
+                if (window.updateInFirestore) {
+                    const success = await window.updateInFirestore('registrations', teamId, {
+                        isWinner: true,
+                        winnerPosition: position
+                    });
+
+                    if (success) {
+                        showToast(`🏆 Winner set to position ${position}!`);
+                        closeModal('winnerModal');
+                        // Refresh data
+                        if (window.reloadFirestoreData) {
+                            await window.reloadFirestoreData();
+                        }
+                    } else {
+                        showToast('⚠️ Failed to set winner (permission denied)');
+                    }
+                } else {
+                    showToast('⚠️ Firestore not ready');
+                }
+            } catch (err) {
+                console.error('Set winner error:', err);
+                showToast('❌ Error setting winner');
+            }
+        }
+
+        // Remove winner status
+        async function removeWinner(teamId) {
+            try {
+                if (window.updateInFirestore) {
+                    const success = await window.updateInFirestore('registrations', teamId, {
+                        isWinner: false,
+                        winnerPosition: null
+                    });
+
+                    if (success) {
+                        showToast('✅ Winner status removed');
+                        if (window.reloadFirestoreData) {
+                            await window.reloadFirestoreData();
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('Remove winner error:', err);
+            }
+        }
+
+        // ===== REGISTRATION ROUTING FUNCTIONS =====
+        async function updateRegistrationRouting(eventCode) {
+            const eventNames = {
+                'testing': 'Testing',
+                'promptquest': 'PromptQuest',
+                'uibattle': 'UI Battle',
+                'hackathon': 'Hackathon'
+            };
+
+            // Update UI immediately
+            document.getElementById('activeEventName').textContent = eventNames[eventCode] || eventCode;
+
+            // Save to Firestore config
+            try {
+                if (window.setDoc && window.doc && window.db) {
+                    await window.setDoc(window.doc(window.db, 'config', 'registration'), {
+                        activeEvent: eventCode,
+                        updatedAt: new Date()
+                    }, { merge: true });
+                    showToast(`✅ Registrations now go to ${eventNames[eventCode]}`);
+                    console.log(`[Routing] Updated to: ${eventCode}`);
+                }
+            } catch (err) {
+                console.error('Routing config error:', err);
+                showToast('⚠️ Config saved locally only');
+            }
+        }
+
+        async function loadRegistrationConfig() {
+            try {
+                if (window.getDoc && window.doc && window.db) {
+                    const configDoc = await window.getDoc(window.doc(window.db, 'config', 'registration'));
+                    if (configDoc.exists()) {
+                        const activeEvent = configDoc.data().activeEvent || 'testing';
+                        document.getElementById('activeEventSelect').value = activeEvent;
+                        const eventNames = {
+                            'testing': 'Testing',
+                            'promptquest': 'PromptQuest',
+                            'uibattle': 'UI Battle',
+                            'hackathon': 'Hackathon'
+                        };
+                        document.getElementById('activeEventName').textContent = eventNames[activeEvent] || activeEvent;
+                        console.log('[Routing] Loaded config:', activeEvent);
+                    }
+                }
+            } catch (err) {
+                console.log('[Routing] Using default config');
+            }
+        }
+
+        // ===== CREATE EVENT FUNCTIONS =====
+        function openCreateEventModal() {
+            // Reset form
+            document.getElementById('newEventName').value = '';
+            document.getElementById('newEventCode').value = '';
+            document.getElementById('selectedEventEmoji').value = '🎯';
+
+            // Reset emoji selection
+            document.querySelectorAll('.emoji-option').forEach(opt => {
+                opt.classList.remove('selected');
+                if (opt.dataset.emoji === '🎯') {
+                    opt.classList.add('selected');
+                }
+            });
+
+            document.getElementById('createEventModal').classList.add('active');
+        }
+
+        function selectEventEmoji(emoji, btn) {
+            document.getElementById('selectedEventEmoji').value = emoji;
+            document.querySelectorAll('.emoji-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            btn.classList.add('selected');
+        }
+
+        async function createNewEvent() {
+            const name = document.getElementById('newEventName').value.trim();
+            const code = document.getElementById('newEventCode').value.trim();
+            const icon = document.getElementById('selectedEventEmoji').value;
+
+            if (!name || !code) {
+                showToast('⚠️ Please fill in all fields');
+                return;
+            }
+
+            // Validate code format
+            if (!/^[a-z0-9_]+$/.test(code)) {
+                showToast('⚠️ Code must be lowercase letters, numbers, or underscores');
+                return;
+            }
+
+            try {
+                // Create event metadata in Firestore
+                if (window.setDoc && window.doc && window.db) {
+                    await window.setDoc(window.doc(window.db, 'events', code), {
+                        name: name,
+                        code: code,
+                        icon: icon,
+                        isActive: true,
+                        createdAt: new Date(),
+                        registrationCount: 0
+                    });
+
+                    showToast(`✅ Event "${name}" created!`);
+                    closeModal('createEventModal');
+
+                    // Add new event card to the grid
+                    addEventCardToGrid(code, name, icon);
+
+                    // Add to routing dropdown
+                    const select = document.getElementById('activeEventSelect');
+                    const option = document.createElement('option');
+                    option.value = code;
+                    option.textContent = `${icon} ${name}`;
+                    select.appendChild(option);
+
+                    console.log(`[Events] Created: ${code}`);
+                } else {
+                    showToast('⚠️ Firestore not ready');
+                }
+            } catch (err) {
+                console.error('Create event error:', err);
+                showToast('❌ Error creating event');
+            }
+        }
+
+        function addEventCardToGrid(code, name, icon) {
+            const grid = document.getElementById('eventSelectorGrid');
+            const card = document.createElement('div');
+            card.className = 'event-select-card';
+            card.setAttribute('onclick', `openEventView('${code}')`);
+            card.innerHTML = `
+                <div class="icon">${icon}</div>
+                <h4>${name}</h4>
+                <span class="count" id="${code}-count">👥 0 teams</span>
+            `;
+            grid.appendChild(card);
+        }
+
+        // Update handleAddEvent to open modal
+        function handleAddEvent() {
+            openCreateEventModal();
         }
 
         // ===== STATUS TOGGLE =====
@@ -2159,6 +3065,62 @@
                 document.querySelectorAll('.modal-overlay.active').forEach(modal => {
                     modal.classList.remove('active');
                 });
+                // Also close custom dropdowns
+                document.querySelectorAll('.custom-select.open').forEach(dropdown => {
+                    dropdown.classList.remove('open');
+                });
+            }
+        });
+
+        // ===== CUSTOM DROPDOWN FUNCTIONS =====
+        function toggleDropdown() {
+            const dropdown = document.getElementById('routingDropdown');
+            dropdown.classList.toggle('open');
+        }
+
+        function selectOption(item) {
+            const dropdown = document.getElementById('routingDropdown');
+            const value = item.dataset.value;
+            const icon = item.querySelector('.icon').textContent;
+            const text = item.querySelector('span:nth-child(2)').textContent;
+
+            // Update selected state
+            dropdown.querySelectorAll('.select-item').forEach(i => i.classList.remove('selected'));
+            item.classList.add('selected');
+
+            // Update trigger display
+            document.querySelector('.select-trigger .icon').textContent = icon;
+            document.getElementById('selectedEventText').textContent = text;
+
+            // Update routing status
+            document.getElementById('activeEventName').textContent = text.split(' ')[0]; // First word
+
+            // Close dropdown
+            dropdown.classList.remove('open');
+
+            // Call the routing update function
+            updateRegistrationRouting(value);
+        }
+
+        async function updateRegistrationRouting(eventCode) {
+            try {
+                if (window.updateInFirestore) {
+                    await window.updateInFirestore('config', 'registration', { activeEvent: eventCode });
+                    showToast('✅ Registration routing updated!');
+                } else {
+                    showToast('✅ Routing updated (local only)');
+                }
+            } catch (error) {
+                console.error('Failed to update routing:', error);
+                showToast('⚠️ Failed to update routing');
+            }
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            const dropdown = document.getElementById('routingDropdown');
+            if (dropdown && !dropdown.contains(e.target)) {
+                dropdown.classList.remove('open');
             }
         });
 
@@ -2239,8 +3201,18 @@
         function switchEvent(eventName, btn) {
             document.querySelectorAll(".event-tab").forEach(tab => tab.classList.remove("active"));
             document.querySelectorAll(".event-content").forEach(content => content.classList.remove("active"));
-            btn.classList.add("active");
-            document.getElementById(eventName + "-content").classList.add("active");
+
+            // Handle case when btn is not provided (called from openEventView)
+            if (btn) {
+                btn.classList.add("active");
+            } else {
+                // Find the tab that matches the eventName
+                const targetTab = document.querySelector(`.event-tab[data-event="${eventName}"]`);
+                if (targetTab) targetTab.classList.add("active");
+            }
+
+            const content = document.getElementById(eventName + "-content");
+            if (content) content.classList.add("active");
         }
 
         // Sub Tabs
@@ -2401,7 +3373,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-        import { getFirestore, collection, getDocs, doc, deleteDoc, updateDoc, orderBy, query, where } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, doc, deleteDoc, updateDoc, setDoc, getDoc, orderBy, query, where } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
         /**
          * SECURITY: Firebase Configuration
@@ -2470,6 +3442,12 @@
             }
         };
 
+        // ===== EXPOSE ADDITIONAL FIRESTORE FUNCTIONS FOR ROUTING/EVENTS =====
+        window.db = db;
+        window.doc = doc;
+        window.setDoc = setDoc;
+        window.getDoc = getDoc;
+
         // Load data from Firestore
         async function loadFromFirestore() {
             try {
@@ -2511,6 +3489,9 @@
                 const q = query(regsRef, where('event', '==', 'testing'), orderBy('registeredAt', 'desc'));
                 const snapshot = await getDocs(q);
 
+                // Expose count for event selector
+                window.testingDataCount = snapshot.size;
+
                 const tbody = document.getElementById('testing-tbody');
                 if (snapshot.empty) {
                     tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-muted);">No test registrations yet</td></tr>';
@@ -2521,10 +3502,20 @@
                 snapshot.forEach(doc => {
                     const d = doc.data();
                     const docId = doc.id;
+
+                    // Winner badge HTML
+                    const winnerBadge = d.isWinner ?
+                        `<span class="winner-badge ${d.winnerPosition === 1 ? 'gold' : d.winnerPosition === 2 ? 'silver' : 'bronze'}">🏆 ${d.winnerPosition === 1 ? '1st' : d.winnerPosition === 2 ? '2nd' : '3rd'}</span>` : '';
+
+                    // Winner button - shows remove option if already winner
+                    const winnerBtn = d.isWinner ?
+                        `<button class="action-btn winner" title="Remove Winner Status" onclick="removeWinner('${docId}')">❌</button>` :
+                        `<button class="action-btn winner" title="Set as Winner" onclick="openWinnerModal('${docId}', '${(d.teamName || 'Team').replace(/'/g, "\\'")}', 'testing')">🏆</button>`;
+
                     tbody.innerHTML += `
                         <tr data-team="${docId}">
                             <td><span class="team-badge">${i++}</span></td>
-                            <td><strong>${d.teamName || '—'}</strong></td>
+                            <td><strong>${d.teamName || '—'}</strong>${winnerBadge}</td>
                             <td><div class="member-info"><span class="name">${d.member1?.name || '-'}</span><span class="detail">${d.member1?.usn || ''} • ${d.member1?.dept || ''}</span></div></td>
                             <td><div class="member-info"><span class="name">${d.member2?.name || '-'}</span><span class="detail">${d.member2?.usn || ''} • ${d.member2?.dept || ''}</span></div></td>
                             <td><div class="member-info"><span class="name">${d.member3?.name || '-'}</span><span class="detail">${d.member3?.usn || ''} • ${d.member3?.dept || ''}</span></div></td>
@@ -2532,6 +3523,7 @@
                             <td><span class="status-pill clickable ${(d.status || 'Pending').toLowerCase()}" onclick="toggleStatus('${docId}', '${d.status || 'Pending'}')" title="Click to toggle status">${d.status || 'Pending'}</span></td>
                             <td>
                                 <div class="action-buttons">
+                                    ${winnerBtn}
                                     <button class="action-btn verify" title="${(d.status || 'Pending') === 'Verified' ? 'Mark as Pending' : 'Mark as Verified'}" onclick="toggleStatus('${docId}', '${d.status || 'Pending'}')">✓</button>
                                     <button class="action-btn edit" title="Edit" onclick="openEditModal('${docId}', '${(d.teamName || '').replace(/'/g, "\\'")}', '${(d.member1?.name || '').replace(/'/g, "\\'")}', '${d.member1?.usn || ''} • ${d.member1?.dept || ''}', '${(d.member2?.name || '').replace(/'/g, "\\'")}', '${d.member2?.usn || ''} • ${d.member2?.dept || ''}', '${(d.member3?.name || '').replace(/'/g, "\\'")}', '${d.member3?.usn || ''} • ${d.member3?.dept || ''}', '${d.email}')">✏️</button>
                                     <button class="action-btn delete" title="Delete" onclick="openDeleteModal('${docId}', '${(d.teamName || 'Team ' + i).replace(/'/g, "\\'")}')">🗑️</button>
@@ -2547,7 +3539,7 @@
                 if (tbody) {
                     const mockData = [];
                     tbody.innerHTML = mockData.map(d => `
-                        <tr data-team="${d.team}">
+                < tr data - team="${d.team}" >
                             <td><span class="team-badge">${d.team}</span></td>
                             <td><strong>${d.teamName}</strong></td>
                             <td><div class="member-info"><span class="name">${d.m1}</span><span class="detail">${d.m1d}</span></div></td>
@@ -2562,8 +3554,8 @@
                                     <button class="action-btn delete" title="Delete" onclick="openDeleteModal('${d.team}', '${d.teamName}')">🗑️</button>
                                 </div>
                             </td>
-                        </tr>
-                    `).join('');
+                        </tr >
+                `).join('');
                     console.log('⚠️ Loaded fallback mock data (Firestore permission denied)');
                 }
             }
@@ -2591,7 +3583,7 @@
                     const d = docSnap.data();
                     const docId = docSnap.id;
                     tbody.innerHTML += `
-                        <tr data-team="${docId}">
+                < tr data - team="${docId}" >
                             <td><span class="team-badge">${i++}</span></td>
                             <td><strong>${d.teamName || '—'}</strong></td>
                             <td><div class="member-info"><span class="name">${d.member1?.name || '-'}</span><span class="detail">${d.member1?.usn || ''} • ${d.member1?.dept || ''}</span></div></td>
@@ -2603,8 +3595,8 @@
                                     <button class="action-btn verify" title="${(d.status || 'Pending') === 'Verified' ? 'Mark as Pending' : 'Mark as Verified'}" onclick="toggleUIBattleStatus('${docId}', '${d.status || 'Pending'}')">✓</button>
                                     <button class="action-btn delete" title="Delete" onclick="openDeleteUIBattleModal('${docId}', '${(d.teamName || 'Team ' + i).replace(/'/g, "\\'")}')">🗑️</button>
                                 </div>
-                            </td>
-                        </tr>`;
+                            </td >
+                        </tr > `;
                 });
                 console.log(`✅ Loaded ${snapshot.size} UI Battle registrations`);
             } catch (err) {
@@ -2633,16 +3625,16 @@
                     // Use registrations collection (same as other events, differentiated by 'event' field)
                     const success = await window.updateInFirestore('registrations', docId, { status: newStatus });
                     if (success) {
-                        const row = document.querySelector(`tr[data-team="${docId}"]`);
+                        const row = document.querySelector(`tr[data - team= "${docId}"]`);
                         if (row) {
                             const statusPill = row.querySelector('.status-pill');
                             if (statusPill) {
                                 statusPill.textContent = newStatus;
-                                statusPill.className = `status-pill clickable ${newStatus.toLowerCase()}`;
+                                statusPill.className = `status - pill clickable ${newStatus.toLowerCase()} `;
                                 statusPill.setAttribute('onclick', `toggleUIBattleStatus('${docId}', '${newStatus}')`);
                             }
                         }
-                        showToast(`✅ Status changed to ${newStatus}`);
+                        showToast(`✅ Status changed to ${newStatus} `);
                     }
                 }
             } catch (err) {
@@ -2676,9 +3668,23 @@
             // Load UI Battle data
             await loadUIBattleData();
 
+            // Load registration routing config
+            if (typeof loadRegistrationConfig === 'function') {
+                await loadRegistrationConfig();
+            }
+
             // Update stats
             document.querySelector('.overview-card.purple .number').textContent = promptquestData.length;
             document.querySelector('.overview-card.green .number').textContent = promptquestData.length * 3;
+
+            // Update event selector counts
+            const testingCount = document.getElementById('testing-count');
+            const promptquestCount = document.getElementById('promptquest-count');
+            const uibattleCount = document.getElementById('uibattle-count');
+
+            if (testingCount) testingCount.textContent = `👥 ${window.testingDataCount || 0} teams`;
+            if (promptquestCount) promptquestCount.textContent = `👥 ${promptquestData.length} teams`;
+            if (uibattleCount) uibattleCount.textContent = `👥 ${window.uibattleDataCount || 0} teams`;
 
             // Render table
             renderTable(1);
@@ -2731,12 +3737,12 @@
 
                 if (!rateResult.allowed) {
                     errorMessage.style.display = "block";
-                    errorMessage.textContent = `⏳ ${rateResult.message}`;
+                    errorMessage.textContent = `⏳ ${rateResult.message} `;
                     console.warn('[Security] Login rate limit triggered:', rateResult.message);
                     return;
                 }
 
-                console.log(`[Security] Login attempt. Remaining: ${rateResult.tokens}/${rateResult.maxTokens}`);
+                console.log(`[Security] Login attempt.Remaining: ${rateResult.tokens}/${rateResult.maxTokens}`);
             }
 
             // SECURITY: Button debouncing
