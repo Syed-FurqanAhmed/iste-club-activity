@@ -32,10 +32,10 @@ const SECURITY_CONFIG = {
             cooldownMs: 60000       // 60-second cooldown between submissions
         },
         login: {
-            maxTokens: 3,           // Maximum login attempts
+            maxTokens: 10,          // Maximum login attempts
             refillRate: 1,          // Tokens added per interval
-            refillInterval: 300000, // 5 minutes in ms
-            lockoutMs: 900000       // 15-minute lockout
+            refillInterval: 60000,  // 1 minute in ms
+            lockoutMs: 60000        // 1 minute lockout
         }
     },
 
@@ -103,8 +103,9 @@ class RateLimiter {
         this.refillRate = config.refillRate;
         this.refillInterval = config.refillInterval;
         this.cooldownMs = config.cooldownMs || 0;
-        this.storageKey = `iste_ratelimit_${config.name || 'default'}`;
+        this.storageKey = `iste_ratelimit_v2_${config.name || 'default'}`;
         this.lastSubmitKey = `iste_lastsubmit_${config.name || 'default'}`;
+        this.errorCountKey = `iste_errorcount_${config.name || 'default'}`;
 
         this._loadState();
         this._startRefillTimer();
@@ -183,8 +184,13 @@ class RateLimiter {
 
         try {
             const lastSubmit = parseInt(localStorage.getItem(this.lastSubmitKey) || '0');
+            const errorCount = parseInt(localStorage.getItem(this.errorCountKey) || '0');
+            
+            // Use 10 seconds for first 3 errors, then full cooldown
+            const activeCooldown = errorCount < 3 ? 10000 : this.cooldownMs;
+            
             const elapsed = Date.now() - lastSubmit;
-            const remaining = this.cooldownMs - elapsed;
+            const remaining = activeCooldown - elapsed;
 
             if (remaining > 0) {
                 return { allowed: false, remainingMs: remaining };
@@ -202,6 +208,29 @@ class RateLimiter {
     recordSubmission() {
         try {
             localStorage.setItem(this.lastSubmitKey, Date.now().toString());
+        } catch (e) {
+            // Silently fail
+        }
+    }
+
+    /**
+     * Increment error counter for dynamic cooldown
+     */
+    incrementErrorCount() {
+        try {
+            const errorCount = parseInt(localStorage.getItem(this.errorCountKey) || '0');
+            localStorage.setItem(this.errorCountKey, (errorCount + 1).toString());
+        } catch (e) {
+            // Silently fail
+        }
+    }
+
+    /**
+     * Reset error counter (on successful submission)
+     */
+    resetErrorCount() {
+        try {
+            localStorage.removeItem(this.errorCountKey);
         } catch (e) {
             // Silently fail
         }
@@ -1051,6 +1080,8 @@ class SecurityManager {
         document.querySelectorAll('.validation-error').forEach(el => el.remove());
         document.querySelectorAll('.input-error').forEach(el => el.classList.remove('input-error'));
 
+        let firstErrorField = null;
+
         for (const [fieldId, message] of Object.entries(errors)) {
             const field = document.getElementById(fieldId);
             if (field) {
@@ -1061,7 +1092,24 @@ class SecurityManager {
                 errorEl.className = 'validation-error';
                 errorEl.textContent = message;
                 field.parentNode.appendChild(errorEl);
+
+                // Track first error field for scrolling
+                if (!firstErrorField) {
+                    firstErrorField = field;
+                }
             }
+        }
+
+        // Scroll to first error field with smooth animation
+        if (firstErrorField) {
+            firstErrorField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Focus the field after scrolling
+            setTimeout(() => firstErrorField.focus(), 300);
+        }
+
+        // Increment error count for dynamic cooldown
+        if (this.registrationLimiter) {
+            this.registrationLimiter.incrementErrorCount();
         }
     }
 
