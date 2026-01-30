@@ -471,7 +471,16 @@
                     // Team name already exists
                     teamNameError.style.display = 'block';
                     teamNameInput.style.borderColor = '#ef4444';
-                    teamNameInput.focus();
+                    
+                    // Scroll to error field
+                    teamNameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    setTimeout(() => teamNameInput.focus(), 300);
+                    
+                    // Increment error count for dynamic cooldown
+                    if (window.ISTESecurity && window.ISTESecurity.registrationLimiter) {
+                        window.ISTESecurity.registrationLimiter.incrementErrorCount();
+                    }
+                    
                     if (window.ButtonDebouncer) {
                         ButtonDebouncer.restoreFromLoading(btn);
                     } else {
@@ -497,13 +506,14 @@
                 await db.collection('registrations').add({
                     teamName: formData.teamName,
                     email: formData.teamEmail,
-                    event: activeEvent,  // Dynamic routing from admin config
+                    eventCode: activeEvent,  // Dynamic routing from admin config (must be 'eventCode' per firestore.rules)
                     member1: {
                         name: formData.member1Name,
                         usn: formData.member1USN,
                         dept: formData.member1Dept,
                         semester: formData.member1Sem
                     },
+                    member1Name: formData.member1Name,  // Required by firestore.rules
                     member2: {
                         name: formData.member2Name || null,
                         usn: formData.member2USN || null,
@@ -517,12 +527,17 @@
                         semester: formData.member3Sem || null
                     },
                     registeredAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    status: 'pending'
+                    status: 'Pending'  // Must be 'Pending' with capital P per firestore.rules
                 });
 
                 document.getElementById('registrationForm').style.display = 'none';
                 document.getElementById('formSuccess').classList.add('show');
                 console.log('[App] Registration successful for team:', formData.teamName);
+
+                // Reset error count on successful registration
+                if (window.ISTESecurity && window.ISTESecurity.registrationLimiter) {
+                    window.ISTESecurity.registrationLimiter.resetErrorCount();
+                }
 
                 // Count members
                 let memberCount = 1;
@@ -537,6 +552,11 @@
 
             } catch (err) {
                 console.error('[App] Registration error:', err);
+
+                // Increment error count
+                if (window.ISTESecurity && window.ISTESecurity.registrationLimiter) {
+                    window.ISTESecurity.registrationLimiter.incrementErrorCount();
+                }
 
                 // SECURITY: Show user-friendly error (don't expose internal details)
                 if (window.ISTESecurity) {
