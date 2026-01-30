@@ -1,57 +1,69 @@
-# 🎓 ISTE Club Tech Activity Website
+# ISTE Club Admin Portal
 
-Official event website for **ISTE Club – Tech Activity**, created to showcase event details and collect registrations smoothly using Google Forms.
+A modern web-based admin dashboard for managing ISTE club events, registrations, and participants.
+
+## Features
+
+- 🔐 Secure Firebase Authentication
+- 📊 Dashboard with event statistics
+- 👥 Team registration management
+- ✅ Bulk actions (verify, delete, email)
+- 🗑️ Soft delete with trash recovery
+- 📱 Responsive design
+- 🔒 Rate limiting & input sanitization
+
+## Tech Stack
+
+- **Frontend**: HTML5, CSS3, Vanilla JavaScript
+- **Backend**: Firebase (Firestore, Authentication)
+- **Security**: Client-side rate limiting, XSS protection
+
+## Setup
+
+1. Clone the repository
+2. Configure Firebase Security Rules (see below)
+3. Open `admin.html` in a web browser or serve via local server
+
+## Firebase Security Rules
+
+Ensure your Firestore has proper security rules:
+
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Only authenticated admins can read/write
+    match /registrations/{docId} {
+      allow read, write: if request.auth != null;
+    }
+    match /trash/{docId} {
+      allow read, write: if request.auth != null;
+    }
+    match /auditLogs/{docId} {
+      allow create: if request.auth != null;
+      allow read: if request.auth != null;
+    }
+  }
+}
+```
+
+## Security
+
+- Firebase API keys are client-safe by design
+- All inputs are sanitized before rendering
+- Rate limiting prevents abuse
+- Session timeout for inactivity
+
+## License
+
+MIT License - See [LICENSE](LICENSE) file
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Submit a pull request
 
 ---
 
-## 🌐 Live Website
-🔗 https://syed-furqanahmed.github.io/iste-club-activity/  
-*(Update the link if your repo name is different)*
-
----
-
-## 📌 Project Overview
-This is a **static, responsive website** built for the **ISTE Club** to promote and manage registrations for an upcoming club activity.
-
-The site is:
-- Fully responsive (desktop & mobile)
-- Hosted for free using GitHub Pages
-- Secure (no backend, no data storage)
-- Easy to share with students and faculty
-
----
-
-## 🎯 Event Details
-- **Event Name:** Quick Draw UI Battle  
-- **Organized By:** ISTE Club  
-- **Department:** Information Science & Engineering, TOCE  
-- **Date:** 17 December 2025  
-- **Time:** 2:30 PM  
-- **Venue:** N408  
-
----
-
-## 🛠️ Technologies Used
-- HTML5  
-- CSS3  
-- JavaScript (Vanilla)  
-- Google Forms (Registration)  
-- GitHub Pages (Hosting)
-
----
-
-## ✨ Key Features
-- Clean and modern UI
-- Sticky navigation bar
-- Smooth scrolling navigation
-- Scroll-triggered reveal animations
-- Event poster with gentle floating animation
-- Mobile-friendly hamburger menu
-- Google Form opens inside a modal popup
-- Manual submission confirmation button
-- Success confirmation popup
-- Free and secure hosting
-
----
-
-## 📁 Folder Structure
+Made with ❤️ by ISTE Club
