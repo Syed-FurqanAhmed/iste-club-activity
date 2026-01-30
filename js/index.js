@@ -244,11 +244,9 @@
             try {
                 console.log('[Winners] Loading winners from Firestore...');
 
-                // Query all winners ordered by position
+                // Query all winners (without orderBy to avoid composite index requirement)
                 const winnersSnapshot = await db.collection('registrations')
                     .where('isWinner', '==', true)
-                    .orderBy('winnerPosition', 'asc')
-                    .limit(3)
                     .get();
 
                 if (winnersSnapshot.empty) {
@@ -263,31 +261,40 @@
                     return;
                 }
 
+                // Sort winners by position and limit to top 3
+                const winners = [];
+                winnersSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    if (data.winnerPosition && data.winnerPosition <= 3) {
+                        winners.push({ id: doc.id, ...data });
+                    }
+                });
+                winners.sort((a, b) => a.winnerPosition - b.winnerPosition);
+
                 // Hide empty state when winners exist
                 document.getElementById('winnersEmpty').style.display = 'none';
 
-                winnersSnapshot.forEach(doc => {
-                    const data = doc.data();
-                    const position = data.winnerPosition;
+                winners.forEach(winner => {
+                    const position = winner.winnerPosition;
 
                     // Get member names
                     const members = [];
-                    if (data.member1?.name) members.push(data.member1.name);
-                    if (data.member2?.name) members.push(data.member2.name);
-                    if (data.member3?.name) members.push(data.member3.name);
+                    if (winner.member1?.name) members.push(winner.member1.name);
+                    if (winner.member2?.name) members.push(winner.member2.name);
+                    if (winner.member3?.name) members.push(winner.member3.name);
 
                     // Update the winner card
                     const nameEl = document.getElementById(`winner-${position}-name`);
                     const membersEl = document.getElementById(`winner-${position}-members`);
 
                     if (nameEl) {
-                        nameEl.textContent = data.teamName || 'Winner';
+                        nameEl.textContent = winner.teamName || 'Winner';
                     }
                     if (membersEl) {
                         membersEl.innerHTML = members.map(m => `${m}`).join('<br>');
                     }
 
-                    console.log(`[Winners] Loaded position ${position}: ${data.teamName}`);
+                    console.log(`[Winners] Loaded position ${position}: ${winner.teamName}`);
                 });
 
                 // Hide skeletons and show winner cards after loading
