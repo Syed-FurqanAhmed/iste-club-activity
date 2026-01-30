@@ -4,266 +4,54 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- SECURITY: Prevent MIME type sniffing attacks (OWASP) -->
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
-    <meta http-equiv="X-Frame-Options" content="DENY" />
-    <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+    <!-- SECURITY: Content Security Policy (OWASP A05:2021) -->
     <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.google.com https://www.gstatic.com https://cdn.sheetjs.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com wss://*.firebaseio.com https://firestore.googleapis.com; frame-src https://www.google.com;" />
+        content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com wss://*.firebaseio.com; frame-src https://www.google.com;" />
+    <!-- SECURITY: Referrer Policy (OWASP) -->
     <meta name="referrer" content="strict-origin-when-cross-origin" />
-    <title>ISTE Admin Portal</title>
-    <meta name="description" content="ISTE Club Admin Portal - Manage events, registrations, and winners." />
-    <script src="https://www.google.com/recaptcha/api.js?render=6LeeoD8sAAAAAGKAdRH9D4ca5FHGsip-XXGcXOzM"></script>
+    <title>ISTE Club | Tech Activity Hub</title>
+    <meta name="description"
+        content="ISTE Club - Indian Society for Technical Education. Explore tech workshops, coding events, and join our vibrant tech community." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap"
         rel="stylesheet" />
-    <link rel="stylesheet" href="css/admin.css" />
+    <!-- SECURITY: reCAPTCHA v3 for invisible bot protection -->
+    <script src="https://www.google.com/recaptcha/api.js?render=6LeeoD8sAAAAAGKAdRH9D4ca5FHGsip-XXGcXOzM"></script>
+    <link rel="stylesheet" href="css/index.css">
 </head>
 
+
 <body>
+    <!-- Animated Background -->
     <div class="bg-animation">
         <div class="bg-orb bg-orb-1"></div>
         <div class="bg-orb bg-orb-2"></div>
         <div class="bg-orb bg-orb-3"></div>
     </div>
 
-    <div class="toast" id="toast">Action completed!</div>
+    <!-- ACCESSIBILITY: Skip to main content link -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
 
-    <div class="bulk-action-bar" id="bulkActionBar">
-        <span class="bulk-count" id="bulkCount">0 selected</span>
-        <div class="bulk-actions">
-            <button class="bulk-btn verify" onclick="bulkUpdateStatus('verified')">✓ Verify</button>
-            <button class="bulk-btn delete" onclick="bulkDeleteSelected()">🗑️ Delete</button>
-            <button class="bulk-btn cancel" onclick="clearBulkSelection()">Cancel</button>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="editModal">
-        <div class="modal" style="max-width: 600px;">
-            <div class="modal-header">
-                <span class="modal-title">✏️ Edit Team</span>
-                <button class="modal-close" onclick="closeModal('editModal')">&times;</button>
-            </div>
-            <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
-                <input type="hidden" id="editTeamId">
-                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px;">🏷️ Team Info</p>
-                <div class="form-group">
-                    <label>Team Name</label>
-                    <input type="text" id="editTeamName" placeholder="e.g. Code Crushers">
-                </div>
-                <p style="font-size: 12px; color: var(--text-muted); margin: 20px 0 16px; text-transform: uppercase; letter-spacing: 1px;">👤 Member 1</p>
-                <div class="form-group">
-                    <label>Name</label>
-                    <input type="text" id="editM1Name" placeholder="Enter name">
-                </div>
-                <div class="form-group">
-                    <label>Details (USN • Dept)</label>
-                    <input type="text" id="editM1Detail" placeholder="1CR23CS001 • CSE">
-                </div>
-                <p style="font-size: 12px; color: var(--text-muted); margin: 20px 0 16px; text-transform: uppercase; letter-spacing: 1px;">👤 Member 2</p>
-                <div class="form-group">
-                    <label>Name</label>
-                    <input type="text" id="editM2Name" placeholder="Enter name">
-                </div>
-                <div class="form-group">
-                    <label>Details (USN • Dept)</label>
-                    <input type="text" id="editM2Detail" placeholder="1CR23CS002 • CSE">
-                </div>
-                <p style="font-size: 12px; color: var(--text-muted); margin: 20px 0 16px; text-transform: uppercase; letter-spacing: 1px;">👤 Member 3</p>
-                <div class="form-group">
-                    <label>Name</label>
-                    <input type="text" id="editM3Name" placeholder="Enter name (optional)">
-                </div>
-                <div class="form-group">
-                    <label>Details (USN • Dept)</label>
-                    <input type="text" id="editM3Detail" placeholder="1CR23CS003 • CSE">
-                </div>
-                <p style="font-size: 12px; color: var(--text-muted); margin: 20px 0 16px; text-transform: uppercase; letter-spacing: 1px;">📧 Contact</p>
-                <div class="form-group">
-                    <label>Team Email</label>
-                    <input type="email" id="editEmail" placeholder="team@example.com">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal('editModal')">Cancel</button>
-                <button class="btn btn-primary" onclick="saveEdit()">Save Changes</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="deleteModal">
-        <div class="modal">
-            <div class="modal-header">
-                <span class="modal-title">🗑️ Delete Team</span>
-                <button class="modal-close" onclick="closeModal('deleteModal')">&times;</button>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="deleteTeamId">
-                <div class="delete-warning">
-                    <div class="icon">⚠️</div>
-                    <p>Are you sure you want to delete</p>
-                    <p><strong id="deleteTeamName">Team 1</strong>?</p>
-                    <p style="color: var(--accent-red); font-size: 12px; margin-top: 12px;">This action cannot be undone.</p>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal('deleteModal')">Cancel</button>
-                <button class="btn btn-danger" onclick="confirmDelete()">Delete</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="winnerModal">
-        <div class="modal">
-            <div class="modal-header">
-                <span class="modal-title">🏆 Set Winner</span>
-                <button class="modal-close" onclick="closeModal('winnerModal')">&times;</button>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="winnerTeamId">
-                <input type="hidden" id="winnerEventCode">
-                <p style="text-align: center; margin-bottom: 8px;">Setting winner for:</p>
-                <p style="text-align: center; font-weight: 700; font-size: 18px; color: var(--text-primary);" id="winnerTeamName">Team Name</p>
-                <div class="winner-position-grid">
-                    <button type="button" class="winner-position-btn gold" onclick="selectWinnerPosition(1, this)">
-                        <div class="medal">🥇</div>
-                        <div class="label">1st Place</div>
-                    </button>
-                    <button type="button" class="winner-position-btn silver" onclick="selectWinnerPosition(2, this)">
-                        <div class="medal">🥈</div>
-                        <div class="label">2nd Place</div>
-                    </button>
-                    <button type="button" class="winner-position-btn bronze" onclick="selectWinnerPosition(3, this)">
-                        <div class="medal">🥉</div>
-                        <div class="label">3rd Place</div>
-                    </button>
-                </div>
-                <input type="hidden" id="selectedWinnerPosition" value="">
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal('winnerModal')">Cancel</button>
-                <button class="btn btn-primary" onclick="confirmSetWinner()" id="confirmWinnerBtn">Set as Winner</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="createEventModal">
-        <div class="modal" style="max-width: 520px;">
-            <div class="modal-header">
-                <span class="modal-title">➕ Create New Event</span>
-                <button class="modal-close" onclick="closeModal('createEventModal')">&times;</button>
-            </div>
-            <div class="modal-body create-event-form">
-                <div class="form-group">
-                    <label>Event Name</label>
-                    <input type="text" id="newEventName" placeholder="e.g. Code Sprint 2.0">
-                </div>
-                <div class="form-group">
-                    <label>Event Code (lowercase, no spaces)</label>
-                    <input type="text" id="newEventCode" placeholder="e.g. codesprint" pattern="[a-z0-9_]+"
-                        oninput="this.value = this.value.toLowerCase().replace(/[^a-z0-9_]/g, '')">
-                </div>
-                <div class="form-group">
-                    <label>Select Icon</label>
-                    <div class="emoji-picker" id="emojiPicker">
-                        <button type="button" class="emoji-option selected" data-emoji="🎯"
-                            onclick="selectEventEmoji('🎯', this)">🎯</button>
-                        <button type="button" class="emoji-option" data-emoji="💻"
-                            onclick="selectEventEmoji('💻', this)">💻</button>
-                        <button type="button" class="emoji-option" data-emoji="🎨"
-                            onclick="selectEventEmoji('🎨', this)">🎨</button>
-                        <button type="button" class="emoji-option" data-emoji="🚀"
-                            onclick="selectEventEmoji('🚀', this)">🚀</button>
-                        <button type="button" class="emoji-option" data-emoji="⚡"
-                            onclick="selectEventEmoji('⚡', this)">⚡</button>
-                        <button type="button" class="emoji-option" data-emoji="🔥"
-                            onclick="selectEventEmoji('🔥', this)">🔥</button>
-                        <button type="button" class="emoji-option" data-emoji="🧪"
-                            onclick="selectEventEmoji('🧪', this)">🧪</button>
-                        <button type="button" class="emoji-option" data-emoji="🎮"
-                            onclick="selectEventEmoji('🎮', this)">🎮</button>
-                        <button type="button" class="emoji-option" data-emoji="📱"
-                            onclick="selectEventEmoji('📱', this)">📱</button>
-                        <button type="button" class="emoji-option" data-emoji="🤖"
-                            onclick="selectEventEmoji('🤖', this)">🤖</button>
-                        <button type="button" class="emoji-option" data-emoji="🎪"
-                            onclick="selectEventEmoji('🎪', this)">🎪</button>
-                        <button type="button" class="emoji-option" data-emoji="🏆"
-                            onclick="selectEventEmoji('🏆', this)">🏆</button>
-                    </div>
-                    <input type="hidden" id="selectedEventEmoji" value="🎯">
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeModal('createEventModal')">Cancel</button>
-                <button class="btn btn-primary" onclick="createNewEvent()">Create Event</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Team Detail Drawer -->
-    <div class="drawer-overlay" id="teamDrawerOverlay">
-        <div class="team-drawer" id="teamDrawer">
-            <div class="drawer-header">
-                <h3>📋 Team Details</h3>
-                <button class="drawer-close" onclick="closeTeamDrawer()">&times;</button>
-            </div>
-            <div class="drawer-body">
-                <div class="drawer-section">
-                    <h4>Team Information</h4>
-                    <div class="drawer-info-item">
-                        <span class="drawer-info-label">Team Name</span>
-                        <span class="drawer-info-value" id="drawerTeamName">—</span>
-                    </div>
-                    <div class="drawer-info-item">
-                        <span class="drawer-info-label">Status</span>
-                        <span class="drawer-info-value" id="drawerStatus">—</span>
-                    </div>
-                    <div class="drawer-info-item">
-                        <span class="drawer-info-label">Email</span>
-                        <span class="drawer-info-value" id="drawerEmail">—</span>
-                    </div>
-                    <div class="drawer-info-item">
-                        <span class="drawer-info-label">Registered</span>
-                        <span class="drawer-info-value" id="drawerRegisteredAt">—</span>
-                    </div>
-                </div>
-
-                <div class="drawer-section">
-                    <h4>Team Members</h4>
-                    <div id="drawerMembers">
-                        <!-- Members will be populated dynamically -->
-                    </div>
-                </div>
-
-                <div class="drawer-section">
-                    <h4>Quick Actions</h4>
-                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                        <button class="btn btn-primary" id="drawerEditBtn" onclick="editFromDrawer()" style="flex: 1;">✏️ Edit</button>
-                        <button class="btn btn-secondary" id="drawerVerifyBtn" onclick="verifyFromDrawer()" style="flex: 1;">✓ Verify</button>
-                        <button class="btn btn-danger" id="drawerDeleteBtn" onclick="deleteFromDrawer()" style="flex: 1;">🗑️ Delete</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
+    <!-- NAVBAR -->
     <nav id="navbar">
-        <a href="index.html" class="logo">
+        <a href="#" class="logo">
             <img src="images/download.png" alt="ISTE Logo" />
             <div class="logo-text">
                 <span>ISTE</span>
-                <small>Admin Portal</small>
+                <small>Indian Society for Technical Education</small>
             </div>
         </a>
         <div class="nav-links" id="navLinks">
-            <a href="index.html">Home</a>
-            <a href="index.html#about">About</a>
-            <a href="index.html#activity">Events</a>
-            <a href="index.html#winners">Winners</a>
-            <a href="index.html#gallery">Gallery</a>
-            <a href="#" class="active">Admin</a>
+            <a href="#" class="active">Home</a>
+            <a href="#about">About</a>
+            <a href="#activity">Events</a>
+            <a href="#winners">Winners</a>
+            <a href="#gallery">Gallery</a>
+            <a href="admin.html" class="nav-cta">Admin</a>
         </div>
         <div class="hamburger" id="hamburger" onclick="toggleNav()" aria-label="Toggle navigation menu" role="button"
             tabindex="0">
@@ -273,262 +61,500 @@
         </div>
     </nav>
 
-    <div class="admin-wrapper">
-        <div id="login-page" class="login-container">
-            <div class="login-box">
-                <h2>🔐 Admin Login</h2>
-                <form id="loginForm" onsubmit="handleLogin(event); return false;" autocomplete="on">
-                    <div class="form-group">
-                        <label for="username">👤 Email Address</label>
-                        <input type="email" id="username" name="username" placeholder="Enter your email" 
-                            required maxlength="254" minlength="5"
-                            autocomplete="email" 
-                            pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-                            title="Please enter a valid email address" />
-                    </div>
-                    <div class="form-group">
-                        <label for="password">🔒 Password</label>
-                        <div class="password-input-wrapper">
-                            <input type="password" id="password" name="password" placeholder="Enter password" 
-                                required minlength="8" maxlength="128"
-                                autocomplete="current-password" />
-                            <button type="button" class="password-toggle" id="passwordToggle"
-                                onclick="togglePasswordVisibility()" aria-label="Toggle password visibility">
-                                <svg class="eye-open" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                    <circle cx="12" cy="12" r="3"></circle>
-                                </svg>
-                                <svg class="eye-closed" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round" style="display: none;">
-                                    <path
-                                        d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
-                                    </path>
-                                    <line x1="1" y1="1" x2="23" y2="23"></line>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="error-message" id="errorMessage" role="alert" aria-live="polite">❌ Invalid email or password</div>
-                    <button type="submit" class="btn" id="loginBtn">Sign In</button>
-                </form>
+    <!-- HERO SECTION -->
+    <section class="hero" id="main-content">
+        <div class="hero-content">
+            <div class="hero-text">
+                <h1>Welcome to <br><span class="gradient-text">ISTE Tech Hub</span></h1>
+                <p class="hero-description">Join the most vibrant technical community. Participate in workshops,
+                    hackathons, and coding challenges to level up your skills.</p>
+                <div class="hero-buttons">
+                    <a href="#activity" class="btn btn-primary">Explore Events ✨</a>
+                    <a href="#about" class="btn btn-secondary">Learn More</a>
+                </div>
+            </div>
+            <div class="hero-image">
+                <div class="hero-glow"></div>
+                <div class="hero-shapes">
+                    <div class="shape shape-1"></div>
+                    <div class="shape shape-2"></div>
+                    <div class="shape shape-3"></div>
+                </div>
+                <img src="images/hero_light.png" alt="ISTE Tech Hub" />
             </div>
         </div>
+    </section>
 
-        <div id="admin-dashboard" class="dashboard">
-            <div class="dashboard-header">
-                <div class="dashboard-header-left">
-                    <h2>📊 Dashboard Overview</h2>
-                    <p>Welcome back! Here's what's happening with your events.</p>
-                </div>
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <div class="settings-wrapper">
-                        <button class="settings-btn" onclick="toggleSettingsDropdown()">⚙️ Settings</button>
-                        <div class="settings-dropdown" id="settingsDropdown">
-                            <h4>⚙️ Admin Settings</h4>
-                            <div class="settings-item">
-                                <div class="settings-item-label">
-                                    <span>📧 Email Notifications</span>
-                                    <small>Send email alerts for new registrations</small>
-                                </div>
-                                <label class="settings-toggle">
-                                    <input type="checkbox" id="emailNotifications" onchange="saveSettings()">
-                                    <span class="settings-toggle-slider"></span>
-                                </label>
-                            </div>
-                            <div class="settings-item">
-                                <div class="settings-item-label">
-                                    <span>📝 Registration Open</span>
-                                    <small>Allow new team registrations</small>
-                                </div>
-                                <label class="settings-toggle">
-                                    <input type="checkbox" id="registrationOpen" checked onchange="saveSettings()">
-                                    <span class="settings-toggle-slider"></span>
-                                </label>
-                            </div>
-                            <div class="settings-item">
-                                <div class="settings-item-label">
-                                    <span>🔧 Maintenance Mode</span>
-                                    <small>Show maintenance page to visitors</small>
-                                </div>
-                                <label class="settings-toggle">
-                                    <input type="checkbox" id="maintenanceMode" onchange="saveSettings()">
-                                    <span class="settings-toggle-slider"></span>
-                                </label>
-                            </div>
-                        </div>
+    <!-- STATS BAR -->
+    <section class="stats-bar reveal">
+        <div class="stat-item">
+            <div class="stat-number">500+</div>
+            <div class="stat-label">Active Members</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">25+</div>
+            <div class="stat-label">Events Hosted</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">15+</div>
+            <div class="stat-label">Workshops</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">100%</div>
+            <div class="stat-label">Fun Guaranteed</div>
+        </div>
+    </section>
+
+    <!-- ABOUT SECTION -->
+    <section class="about reveal" id="about">
+        <div class="section-header">
+            <span class="section-tag">About Us</span>
+            <h2 class="section-title">Why <span class="gradient-text">ISTE?</span></h2>
+            <p class="section-subtitle">Empowering students through technology, innovation, and hands-on learning
+                experiences.</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">💡</div>
+                <h3>Innovation Hub</h3>
+                <p>Explore cutting-edge technologies and develop innovative solutions to real-world problems.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <h3>Skill Development</h3>
+                <p>Enhance your technical skills through workshops, bootcamps, and hands-on projects.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🤝</div>
+                <h3>Community</h3>
+                <p>Connect with like-minded peers, mentors, and industry professionals.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ACTIVITY SECTION -->
+    <section class="activity reveal" id="activity">
+        <div class="activity-content">
+            <div class="activity-info">
+                <span class="section-tag">Upcoming Event</span>
+                <h2>Sketch Your App - <span class="gradient-text">Quick Draw UI Battle</span></h2>
+                <div class="activity-details">
+                    <div class="activity-detail">
+                        <div class="activity-detail-icon">📅</div>
+                        <span>December 17, 2025 (Wednesday)</span>
                     </div>
-                    <button id="logoutBtn" class="logout-btn" onclick="handleLogout()">Logout</button>
+                    <div class="activity-detail">
+                        <div class="activity-detail-icon">🕐</div>
+                        <span>2:30 PM</span>
+                    </div>
+                    <div class="activity-detail">
+                        <div class="activity-detail-icon">📍</div>
+                        <span>N408, Department of ISE, TOCE</span>
+                    </div>
+                    <div class="activity-detail">
+                        <div class="activity-detail-icon">👥</div>
+                        <span>Team Size: 2-3 Members</span>
+                    </div>
+                </div>
+                <div class="register-btn-wrapper">
+                    <span class="event-status-badge open" id="eventStatusBadge">🟢 Open</span>
+                    <button class="btn btn-primary" onclick="openModal()" id="registerBtn">Register Now 🎉</button>
                 </div>
             </div>
+            <div class="activity-poster">
+                <img src="images/IMG-20251216-WA0008.jpg" alt="PromptQuest Event Poster" />
+            </div>
+        </div>
+    </section>
 
-            <div class="overview-grid">
-                <div class="overview-card purple">
-                    <div class="overview-card-icon">👥</div>
-                    <h3>Total Teams</h3>
-                    <div class="number">18</div>
-                    <div class="change positive">↑ 3 new this week</div>
+    <!-- WINNERS SECTION -->
+    <section class="winners reveal" id="winners">
+        <div class="section-header">
+            <span class="section-tag">Hall of Fame</span>
+            <h2 class="section-title">Our <span class="gradient-text">Champions</span></h2>
+            <p class="section-subtitle">Winners of Quick Draw UI Battle</p>
+        </div>
+        <!-- Dynamic Winners Grid - Populated from Firestore -->
+        <div class="winners-grid" id="winnersGrid">
+            <!-- Skeleton Loading States -->
+            <div class="skeleton-wrapper" id="skeleton-1">
+                <div class="skeleton skeleton-medal"></div>
+                <div class="skeleton skeleton-text title" style="width: 80%;"></div>
+                <div class="skeleton skeleton-text" style="width: 60%;"></div>
+            </div>
+            <div class="skeleton-wrapper" id="skeleton-2">
+                <div class="skeleton skeleton-medal"></div>
+                <div class="skeleton skeleton-text title" style="width: 80%;"></div>
+                <div class="skeleton skeleton-text" style="width: 60%;"></div>
+            </div>
+            <div class="skeleton-wrapper" id="skeleton-3">
+                <div class="skeleton skeleton-medal"></div>
+                <div class="skeleton skeleton-text title" style="width: 80%;"></div>
+                <div class="skeleton skeleton-text" style="width: 60%;"></div>
+            </div>
+            <!-- Actual Winner Cards (hidden until loaded) -->
+            <div class="winner-card gold" id="winner-1" style="display: none;">
+                <div class="winner-medal">🥇</div>
+                <h3 id="winner-1-name"></h3>
+                <span class="event" id="winner-1-members"></span>
+            </div>
+            <div class="winner-card silver" id="winner-2" style="display: none;">
+                <div class="winner-medal">🥈</div>
+                <h3 id="winner-2-name"></h3>
+                <span class="event" id="winner-2-members"></span>
+            </div>
+            <div class="winner-card bronze" id="winner-3" style="display: none;">
+                <div class="winner-medal">🥉</div>
+                <h3 id="winner-3-name"></h3>
+                <span class="event" id="winner-3-members"></span>
+            </div>
+            <!-- Empty State -->
+            <div class="empty-state" id="winnersEmpty" style="display: none;">
+                <div class="empty-state-icon">🏆</div>
+                <h3>No Winners Yet</h3>
+                <p>Winners will be announced after the event concludes. Check back soon!</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- GALLERY SECTION -->
+    <section class="gallery reveal" id="gallery">
+        <div class="section-header">
+            <span class="section-tag">Gallery</span>
+            <h2 class="section-title">Event <span class="gradient-text">Highlights</span></h2>
+            <p class="section-subtitle">Relive the excitement from our past events.</p>
+        </div>
+
+        <div class="gallery-container">
+            <button class="gallery-arrow gallery-arrow-left" id="galleryPrev" aria-label="Previous images">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+            </button>
+            <div class="gallery-scroll" id="galleryScroll">
+                <div class="gallery-item" onclick="openImage(this)">
+                    <img src="images/Gallery.jpg" alt="Event Highlights" />
+                    <div class="gallery-overlay">
+                        <span>Event Highlights</span>
+                    </div>
                 </div>
-                <div class="overview-card green">
-                    <div class="overview-card-icon">🎯</div>
-                    <h3>Participants</h3>
-                    <div class="number">48</div>
-                    <div class="change positive">↑ 12 registered today</div>
+                <div class="gallery-item" onclick="openImage(this)">
+                    <img src="images/Gallery0.jpg" alt="Quick UI Battle" />
+                    <div class="gallery-overlay">
+                        <span>Quick UI Battle</span>
+                    </div>
                 </div>
-                <div class="overview-card orange">
-                    <div class="overview-card-icon">🏆</div>
-                    <h3>Events</h3>
-                    <div class="number">3</div>
-                    <div class="change info">Active events</div>
+                <div class="gallery-item" onclick="openImage(this)">
+                    <img src="images/Gallery1.jpg" alt="Tech Workshop" />
+                    <div class="gallery-overlay">
+                        <span>Tech Workshop</span>
+                    </div>
                 </div>
-                <div class="overview-card pink">
-                    <div class="overview-card-icon">📸</div>
-                    <h3>Gallery Photos</h3>
-                    <div class="number">24</div>
-                    <div class="change info">Uploaded</div>
+                <div class="gallery-item" onclick="openImage(this)">
+                    <img src="images/Gallery2.jpg" alt="Team Activities" />
+                    <div class="gallery-overlay">
+                        <span>Team Activities</span>
+                    </div>
+                </div>
+                <div class="gallery-item" onclick="openImage(this)">
+                    <img src="images/IMG-20251217-WA0028.jpg" alt="PromptQuest 2024" />
+                    <div class="gallery-overlay">
+                        <span>PromptQuest 2024</span>
+                    </div>
+                </div>
+                <div class="gallery-item" onclick="openImage(this)">
+                    <img src="images/IMG-20251217-WA0030.jpg" alt="Winners Ceremony" />
+                    <div class="gallery-overlay">
+                        <span>Winners Ceremony</span>
+                    </div>
+                </div>
+                <!-- Empty State -->
+                <div class="empty-state" id="galleryEmpty" style="display: none;">
+                    <div class="empty-state-icon">📸</div>
+                    <h3>Gallery Coming Soon</h3>
+                    <p>Event photos and highlights will be added here after the event.</p>
                 </div>
             </div>
+            <button class="gallery-arrow gallery-arrow-right" id="galleryNext" aria-label="Next images">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+            </button>
+        </div>
+    </section>
 
-            <div class="content-grid">
-                <div class="event-tabs-container">
-                    <div class="event-tabs-header">
-                        <h3>📋 Event Management</h3>
-                    </div>
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>ISTE TOCE</h4>
+                <p>Indian Society for Technical Education - The Oxford College of Engineering Chapter</p>
+            </div>
+            <div class="footer-section">
+                <h4>Quick Links</h4>
+                <a href="#about">About Us</a>
+                <a href="#activity">Events</a>
+                <a href="#winners">Winners</a>
+                <a href="#gallery">Gallery</a>
+            </div>
+            <div class="footer-section">
+                <h4>Contact</h4>
+                <p>📧 ISTE.TOCE@gmail.com</p>
+                <p>📍 The Oxford College of Engineering, Bangalore</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2024 ISTE TOCE. Made with 💜 by the Tech Team</p>
+        </div>
+    </footer>
 
-                    <div id="event-selector-view" class="event-selector-view">
-                        <div class="routing-config-card">
-                            <h4>🎯 Registration Routing</h4>
-                            <div class="custom-select" id="routingDropdown">
-                                <button type="button" class="select-trigger" onclick="toggleDropdown()">
-                                    <span class="selected-value">
-                                        <span class="icon">🧪</span>
-                                        <span id="selectedEventText">Testing (Sandbox)</span>
-                                    </span>
-                                    <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                        stroke-width="2">
-                                        <polyline points="6 9 12 15 18 9"></polyline>
-                                    </svg>
-                                </button>
-                                <div class="select-content">
-                                    <div class="select-item selected" data-value="testing" onclick="selectOption(this)">
-                                        <span class="icon">🧪</span>
-                                        <span>Testing (Sandbox)</span>
-                                        <span class="check">✓</span>
-                                    </div>
-                                    <div class="select-item" data-value="promptquest" onclick="selectOption(this)">
-                                        <span class="icon">🎯</span>
-                                        <span>PromptQuest</span>
-                                        <span class="check">✓</span>
-                                    </div>
-                                    <div class="select-item" data-value="uibattle" onclick="selectOption(this)">
-                                        <span class="icon">🎨</span>
-                                        <span>UI Battle</span>
-                                        <span class="check">✓</span>
-                                    </div>
-                                    <div class="select-item" data-value="hackathon" onclick="selectOption(this)">
-                                        <span class="icon">💻</span>
-                                        <span>Hackathon</span>
-                                        <span class="check">✓</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="routing-status" id="routingStatus">
-                                <span class="dot"></span>
-                                <span>New registrations → <strong id="activeEventName">Testing</strong></span>
-                            </div>
-                        </div>
+    <!-- IMAGE MODAL -->
+    <div class="image-modal" id="imageModal">
+        <button class="modal-close" onclick="closeImageModal()">✕</button>
+        <img src="" alt="Full View" id="modalImage" />
+    </div>
 
-                        <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Select an event to
-                            manage:</p>
-                        <div class="event-selector-grid" id="eventSelectorGrid">
-                            <!-- Event cards will be dynamically generated -->
-                            <div class="event-loading" id="eventCardsLoader">
-                                <div class="spinner"></div>
-                                <p>Loading events...</p>
-                            </div>
-                        </div>
+    <!-- SUCCESS MODAL WITH CONFETTI -->
+    <div class="success-modal-overlay" id="successModal">
+        <div class="success-modal">
+            <div class="success-icon">🎉</div>
+            <h2>Registration Successful!</h2>
+            <div class="success-summary">
+                <p><strong>Team:</strong> <span id="successTeamName">Code Crushers</span></p>
+                <p><strong>Event:</strong> <span id="successEventName">Quick Draw UI Battle</span></p>
+                <p><strong>Members:</strong> <span id="successMemberCount">3 members registered</span></p>
+            </div>
+            <p class="success-note">📧 A confirmation email will be sent to your team email.</p>
+            <button class="btn btn-primary" onclick="closeSuccessModal()">Done ✓</button>
+        </div>
+    </div>
+    <div class="confetti-container" id="confettiContainer"></div>
 
-                        <div style="text-align: center; margin-top: 24px;">
-                            <button class="btn btn-secondary" onclick="openCreateEventModal()"
-                                style="display: inline-flex; align-items: center; gap: 8px;">
-                                ➕ Create New Event
-                            </button>
-                        </div>
-                    </div>
-
-                    <div id="event-detail-view" class="event-detail-view">
-                        <button class="back-to-events" onclick="backToEventSelector()">← Back to Events</button>
-
-                        <div class="event-tabs" id="dynamicEventTabs">
-                            <!-- Event tabs will be dynamically generated -->
-                        </div>
-
-                        <!-- Dynamic Event Content Container -->
-                        <div id="dynamicEventContents">
-                            <!-- Event content sections will be dynamically generated -->
-                        </div>
-                    </div>
+    <!-- REGISTRATION MODAL -->
+    <div class="modal" id="formModal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">🎯 Event Registration</h3>
+                <button onclick="closeModal()" aria-label="Close modal">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-success" id="formSuccess">
+                    <div class="success-icon">🎉</div>
+                    <h4>Registration Successful!</h4>
+                    <p>Your team has been registered. We'll contact you soon!</p>
                 </div>
+                <form class="reg-form" id="registrationForm">
+                    <!-- SECURITY: Rate limiting is active but hidden from users to avoid confusion -->
+                    <div class="form-section">
+                        <div class="form-section-title">📧 Team Contact</div>
+                        <div class="form-row single">
+                            <div class="form-group">
+                                <label>Team Email <span class="required">*</span></label>
+                                <!-- SECURITY: maxlength prevents buffer overflow, pattern validates format -->
+                                <input type="email" id="teamEmail" placeholder="team@email.com" required maxlength="100"
+                                    autocomplete="email">
+                                <span class="field-error" id="teamEmailError" style="display: none;">⚠️ This email is
+                                    already registered for this event</span>
+                            </div>
+                        </div>
+                        <div class="form-row single">
+                            <div class="form-group">
+                                <label>Team Name <span class="required">*</span></label>
+                                <!-- SECURITY: pattern restricts to alphanumeric + spaces only -->
+                                <input type="text" id="teamName" placeholder="e.g. Code Crushers" required
+                                    maxlength="50" pattern="[A-Za-z0-9 ]+"
+                                    title="Only letters, numbers, and spaces allowed">
+                                <small id="teamNameError" style="color: #ef4444; font-size: 12px; display: none;">This
+                                    team name is already taken!</small>
+                            </div>
+                        </div>
+                    </div>
 
-                <div class="sidebar">
-                    <div class="sidebar-card">
-                        <h3>⚡ Quick Actions</h3>
-                        <div class="quick-action" onclick="handleExport()">
-                            <div class="quick-action-icon purple">📥</div>
-                            <div class="quick-action-text">
-                                <h4>Export Data</h4>
-                                <p>Download as Excel</p>
+                    <div class="form-section">
+                        <div class="form-section-title"><span class="member-badge">1</span> Team Member 1 <span
+                                class="required">*</span></div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Name <span class="required">*</span></label>
+                                <!-- SECURITY: pattern allows letters and spaces only -->
+                                <input type="text" id="member1Name" placeholder="Full Name" required maxlength="50"
+                                    pattern="[A-Za-z ]+" title="Only letters and spaces allowed">
                             </div>
-                        </div>
-                        <div class="quick-action" onclick="handleAddEvent()">
-                            <div class="quick-action-icon green">➕</div>
-                            <div class="quick-action-text">
-                                <h4>Add Event</h4>
-                                <p>Create new event</p>
+                            <div class="form-group">
+                                <label>USN / Roll No <span class="required">*</span></label>
+                                <!-- SECURITY: USN format validation -->
+                                <input type="text" id="member1USN" placeholder="1OX00XX000" required maxlength="15"
+                                    pattern="1[A-Za-z]{2}[0-9]{2}[A-Za-z]{2}[0-9]{3}"
+                                    title="Format: 1XX00XX000 (e.g., 1CR23CS001)" style="text-transform: uppercase;">
+                                <span class="field-error" id="member1USNError" style="display: none;">⚠️ This USN is
+                                    already registered for this event</span>
                             </div>
-                        </div>
-                        <div class="quick-action" onclick="handleSendEmail()">
-                            <div class="quick-action-icon orange">📧</div>
-                            <div class="quick-action-text">
-                                <h4>Send Emails</h4>
-                                <p>Notify participants</p>
+                            <div class="form-group">
+                                <label>Department <span class="required">*</span></label>
+                                <select id="member1Dept" required>
+                                    <option value="">Select Dept</option>
+                                    <option value="ISE">ISE</option>
+                                    <option value="CSE">CSE</option>
+                                    <option value="AIML">AIML</option>
+                                    <option value="AI&DS">AI&DS</option>
+                                    <option value="ECE">ECE</option>
+                                    <option value="EEE">EEE</option>
+                                    <option value="CV">CV</option>
+                                    <option value="ME">ME</option>
+                                    <option value="Mechatronics">Mechatronics</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Semester <span class="required">*</span></label>
+                                <select id="member1Sem" required>
+                                    <option value="">Select Sem</option>
+                                    <option value="1">1st Sem</option>
+                                    <option value="2">2nd Sem</option>
+                                    <option value="3">3rd Sem</option>
+                                    <option value="4">4th Sem</option>
+                                    <option value="5">5th Sem</option>
+                                    <option value="6">6th Sem</option>
+                                    <option value="7">7th Sem</option>
+                                    <option value="8">8th Sem</option>
+                                </select>
                             </div>
                         </div>
                     </div>
 
-                    <div class="sidebar-card">
-                        <h3>🕐 Recent Activity</h3>
-                        <div class="activity-item">
-                            <div class="activity-dot purple"></div>
-                            <div class="activity-info">
-                                <h4>New registration</h4>
-                                <p>Team 18 joined PromptQuest</p>
+                    <div class="form-section">
+                        <div class="form-section-title"><span class="member-badge">2</span> Team Member 2</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Name</label>
+                                <input type="text" id="member2Name" placeholder="Full Name" maxlength="50"
+                                    pattern="[A-Za-z ]*" title="Only letters and spaces allowed">
                             </div>
-                        </div>
-                        <div class="activity-item">
-                            <div class="activity-dot green"></div>
-                            <div class="activity-info">
-                                <h4>Winners announced</h4>
-                                <p>UI Battle results published</p>
+                            <div class="form-group">
+                                <label>USN / Roll No</label>
+                                <input type="text" id="member2USN" placeholder="1OX00XX000" maxlength="15"
+                                    pattern="(1[A-Za-z]{2}[0-9]{2}[A-Za-z]{2}[0-9]{3})?" title="Format: 1XX00XX000"
+                                    style="text-transform: uppercase;">
+                                <span class="field-error" id="member2USNError" style="display: none;">⚠️ This USN is
+                                    already registered for this event</span>
                             </div>
-                        </div>
-                        <div class="activity-item">
-                            <div class="activity-dot orange"></div>
-                            <div class="activity-info">
-                                <h4>Photos uploaded</h4>
-                                <p>6 new gallery images</p>
+                            <div class="form-group">
+                                <label>Department</label>
+                                <select id="member2Dept">
+                                    <option value="">Select Dept</option>
+                                    <option value="ISE">ISE</option>
+                                    <option value="CSE">CSE</option>
+                                    <option value="AIML">AIML</option>
+                                    <option value="AI&DS">AI&DS</option>
+                                    <option value="ECE">ECE</option>
+                                    <option value="EEE">EEE</option>
+                                    <option value="CV">CV</option>
+                                    <option value="ME">ME</option>
+                                    <option value="Mechatronics">Mechatronics</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Semester</label>
+                                <select id="member2Sem">
+                                    <option value="">Select Sem</option>
+                                    <option value="1">1st Sem</option>
+                                    <option value="2">2nd Sem</option>
+                                    <option value="3">3rd Sem</option>
+                                    <option value="4">4th Sem</option>
+                                    <option value="5">5th Sem</option>
+                                    <option value="6">6th Sem</option>
+                                    <option value="7">7th Sem</option>
+                                    <option value="8">8th Sem</option>
+                                </select>
                             </div>
                         </div>
                     </div>
-                </div>
+
+                    <div class="form-section">
+                        <div class="form-section-title"><span class="member-badge">3</span> Team Member 3</div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Name</label>
+                                <input type="text" id="member3Name" placeholder="Full Name" maxlength="50"
+                                    pattern="[A-Za-z ]*" title="Only letters and spaces allowed">
+                            </div>
+                            <div class="form-group">
+                                <label>USN / Roll No</label>
+                                <input type="text" id="member3USN" placeholder="1OX00XX000" maxlength="15"
+                                    pattern="(1[A-Za-z]{2}[0-9]{2}[A-Za-z]{2}[0-9]{3})?" title="Format: 1XX00XX000"
+                                    style="text-transform: uppercase;">
+                                <span class="field-error" id="member3USNError" style="display: none;">⚠️ This USN is
+                                    already registered for this event</span>
+                            </div>
+                            <div class="form-group">
+                                <label>Department</label>
+                                <select id="member3Dept">
+                                    <option value="">Select Dept</option>
+                                    <option value="ISE">ISE</option>
+                                    <option value="CSE">CSE</option>
+                                    <option value="AIML">AIML</option>
+                                    <option value="AI&DS">AI&DS</option>
+                                    <option value="ECE">ECE</option>
+                                    <option value="EEE">EEE</option>
+                                    <option value="CV">CV</option>
+                                    <option value="ME">ME</option>
+                                    <option value="Mechatronics">Mechatronics</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Semester</label>
+                                <select id="member3Sem">
+                                    <option value="">Select Sem</option>
+                                    <option value="1">1st Sem</option>
+                                    <option value="2">2nd Sem</option>
+                                    <option value="3">3rd Sem</option>
+                                    <option value="4">4th Sem</option>
+                                    <option value="5">5th Sem</option>
+                                    <option value="6">6th Sem</option>
+                                    <option value="7">7th Sem</option>
+                                    <option value="8">8th Sem</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Consent Checkbox -->
+                    <div class="consent-wrapper">
+                        <label class="consent-checkbox">
+                            <input type="checkbox" id="consentCheck" required>
+                            <span class="consent-checkmark"></span>
+                        </label>
+                        <span class="consent-text">
+                            I agree to the <a href="#" onclick="return false;">event rules</a> and understand that my
+                            team's information
+                            will be used for registration purposes only.
+                        </span>
+                    </div>
+
+                    <button type="submit" class="submit-btn" id="submitBtn">
+                        <span class="btn-text">Register Team 🚀</span>
+                        <div class="spinner"></div>
+                    </button>
+                </form>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    <script src="config.js"></script>
+    <!-- SECURITY: Security module with rate limiting, validation, sanitization -->
     <script src="security.js"></script>
-    <script src="js/admin.js" type="module"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+    <script src="config.js"></script>
+    <script src="security.js"></script>
+    <script src="js/index.js"></script>
 </body>
+
 </html>
