@@ -96,15 +96,20 @@ body {
 }
 
 @keyframes float {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: translate(0, 0) scale(1);
     }
+
     25% {
         transform: translate(30px, 30px) scale(1.05);
     }
+
     50% {
         transform: translate(-20px, 50px) scale(0.95);
     }
+
     75% {
         transform: translate(25px, -25px) scale(1.02);
     }
@@ -616,9 +621,12 @@ nav {
 }
 
 @keyframes iconBounce {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: scale(1);
     }
+
     50% {
         transform: scale(1.15);
     }
@@ -843,6 +851,7 @@ nav {
         opacity: 0;
         transform: translateY(10px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -1149,6 +1158,23 @@ nav {
     box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 }
 
+/* ===== ATTENDANCE CHECKBOX ===== */
+.attended-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--accent-green);
+    transition: transform 0.2s ease;
+}
+
+.attended-checkbox:hover {
+    transform: scale(1.15);
+}
+
+.attended-checkbox:checked {
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+}
+
 .grecaptcha-badge {
     visibility: hidden !important;
     opacity: 0 !important;
@@ -1188,6 +1214,7 @@ nav {
     from {
         transform: rotate(0deg);
     }
+
     to {
         transform: rotate(360deg);
     }
@@ -1205,10 +1232,13 @@ nav {
 }
 
 @keyframes pulseGlow {
-    0%, 100% {
+
+    0%,
+    100% {
         opacity: 0.2;
         filter: blur(6px);
     }
+
     50% {
         opacity: 0.5;
         filter: blur(10px);
@@ -1238,6 +1268,7 @@ nav {
     0% {
         background-position: 200% 0;
     }
+
     100% {
         background-position: -200% 0;
     }
@@ -1267,6 +1298,7 @@ nav {
     0% {
         left: -100%;
     }
+
     100% {
         left: 200%;
     }
@@ -1819,7 +1851,9 @@ nav {
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .event-loading p {
@@ -2003,10 +2037,13 @@ nav {
 }
 
 @keyframes pulse {
-    0%, 100% {
+
+    0%,
+    100% {
         opacity: 1;
         transform: scale(1);
     }
+
     50% {
         opacity: 0.6;
         transform: scale(1.15);
@@ -2353,6 +2390,7 @@ nav {
         transform: translateX(-50%) translateY(100%);
         opacity: 0;
     }
+
     to {
         transform: translateX(-50%) translateY(0);
         opacity: 1;
