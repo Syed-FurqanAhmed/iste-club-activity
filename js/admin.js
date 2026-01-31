@@ -12,7 +12,7 @@ const SecurityUtils = {
         div.textContent = String(str);
         return div.innerHTML;
     },
-    
+
     // Strict email validation
     isValidEmail(email) {
         if (!email || typeof email !== 'string') return false;
@@ -20,27 +20,27 @@ const SecurityUtils = {
         const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
         return emailRegex.test(email);
     },
-    
+
     // Sanitize string input with length limit
     sanitizeString(str, maxLength = 255) {
         if (str === null || str === undefined) return '';
         return String(str).trim().slice(0, maxLength);
     },
-    
+
     // Validate and sanitize team name
     sanitizeTeamName(name) {
         const sanitized = this.sanitizeString(name, 100);
         // Remove potentially dangerous characters but allow common ones
         return sanitized.replace(/[<>\"'`]/g, '');
     },
-    
+
     // Validate USN format (adjust pattern as needed)
     isValidUSN(usn) {
         if (!usn) return true; // Optional field
         const usnRegex = /^[A-Za-z0-9]{6,15}$/;
         return usnRegex.test(usn);
     },
-    
+
     // Sanitize object - remove unexpected fields
     sanitizeObject(obj, allowedFields) {
         if (!obj || typeof obj !== 'object') return {};
@@ -52,7 +52,7 @@ const SecurityUtils = {
         }
         return sanitized;
     },
-    
+
     // Validate document ID format (Firestore)
     isValidDocId(id) {
         if (!id || typeof id !== 'string') return false;
@@ -70,7 +70,7 @@ class ClientRateLimiter {
         this.attempts = new Map();
         this.blocked = new Map();
     }
-    
+
     isBlocked(key) {
         const blockUntil = this.blocked.get(key);
         if (blockUntil && Date.now() < blockUntil) {
@@ -79,28 +79,28 @@ class ClientRateLimiter {
         if (blockUntil) this.blocked.delete(key);
         return false;
     }
-    
+
     recordAttempt(key) {
         if (this.isBlocked(key)) {
             return { allowed: false, retryAfter: Math.ceil((this.blocked.get(key) - Date.now()) / 1000) };
         }
-        
+
         const now = Date.now();
         const windowStart = now - this.windowMs;
-        
+
         let attempts = this.attempts.get(key) || [];
         attempts = attempts.filter(t => t > windowStart);
         attempts.push(now);
         this.attempts.set(key, attempts);
-        
+
         if (attempts.length > this.maxAttempts) {
             this.blocked.set(key, now + this.blockDurationMs);
             return { allowed: false, retryAfter: Math.ceil(this.blockDurationMs / 1000) };
         }
-        
+
         return { allowed: true, remaining: this.maxAttempts - attempts.length };
     }
-    
+
     reset(key) {
         this.attempts.delete(key);
         this.blocked.delete(key);
@@ -212,38 +212,38 @@ async function logAdminAction(action, details = {}) {
 window.logAdminAction = logAdminAction;
 
 // ===== FIRESTORE OPERATIONS (SECURED) =====
-window.deleteFromFirestore = async function(collectionPath, docId, teamName = 'Unknown') {
+window.deleteFromFirestore = async function (collectionPath, docId, teamName = 'Unknown') {
     // Input validation
     if (!SecurityUtils.isValidDocId(docId)) {
         console.error('Invalid document ID');
         return { success: false, error: 'Invalid document ID' };
     }
-    
+
     // Rate limiting
     const rateCheck = rateLimiters.delete.recordAttempt('delete_' + (auth.currentUser?.uid || 'anon'));
     if (!rateCheck.allowed) {
         showToast(`⏳ Too many requests. Try again in ${rateCheck.retryAfter}s`);
         return { success: false, error: 'Rate limited' };
     }
-    
+
     // Sanitize inputs
     const sanitizedCollection = SecurityUtils.sanitizeString(collectionPath, 100);
     const sanitizedTeamName = SecurityUtils.sanitizeTeamName(teamName);
-    
+
     try {
         const docRef = doc(db, sanitizedCollection, docId);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
             const teamData = docSnap.data();
             await setDoc(doc(db, 'trash', docId), {
-                ...teamData, 
+                ...teamData,
                 originalCollection: sanitizedCollection,
                 deletedAt: serverTimestamp(),
                 deletedBy: auth.currentUser?.email || 'unknown'
             });
             await deleteDoc(docRef);
-            await logAdminAction('SOFT_DELETE', { 
-                teamId: docId, 
+            await logAdminAction('SOFT_DELETE', {
+                teamId: docId,
                 teamName: SecurityUtils.escapeHtml(teamData.teamName || sanitizedTeamName)
             });
             return { success: true, deletedData: teamData };
@@ -255,23 +255,23 @@ window.deleteFromFirestore = async function(collectionPath, docId, teamName = 'U
     }
 };
 
-window.updateInFirestore = async function(collectionPath, docId, data) {
+window.updateInFirestore = async function (collectionPath, docId, data) {
     // Input validation
     if (!SecurityUtils.isValidDocId(docId)) {
         console.error('Invalid document ID');
         return false;
     }
-    
+
     // Rate limiting
     const rateCheck = rateLimiters.update.recordAttempt('update_' + (auth.currentUser?.uid || 'anon'));
     if (!rateCheck.allowed) {
         showToast(`⏳ Too many requests. Try again in ${rateCheck.retryAfter}s`);
         return false;
     }
-    
+
     // Sanitize collection path
     const sanitizedCollection = SecurityUtils.sanitizeString(collectionPath, 100);
-    
+
     // Whitelist allowed fields for updates
     const allowedFields = [
         'teamName', 'email', 'status', 'isWinner', 'winnerPosition',
@@ -279,25 +279,25 @@ window.updateInFirestore = async function(collectionPath, docId, data) {
         'member3Name', 'member3Detail', 'member1', 'member2', 'member3'
     ];
     const sanitizedData = SecurityUtils.sanitizeObject(data, allowedFields);
-    
+
     // Sanitize string values
     for (const key in sanitizedData) {
         if (typeof sanitizedData[key] === 'string') {
             sanitizedData[key] = SecurityUtils.sanitizeString(sanitizedData[key], 255);
         }
     }
-    
+
     try {
         await updateDoc(doc(db, sanitizedCollection, docId), sanitizedData);
         await logAdminAction('UPDATE', { teamId: docId, changes: Object.keys(sanitizedData) });
         return true;
-    } catch (error) { 
-        console.error('Error updating:', error); 
-        return false; 
+    } catch (error) {
+        console.error('Error updating:', error);
+        return false;
     }
 };
 
-window.undoDelete = async function(docId) {
+window.undoDelete = async function (docId) {
     try {
         const trashRef = doc(db, 'trash', docId);
         const trashSnap = await getDoc(trashRef);
@@ -320,7 +320,7 @@ function openEditModal(teamId, teamName, m1Name, m1Detail, m2Name, m2Detail, m3N
         showToast('⚠️ Invalid team ID');
         return;
     }
-    
+
     // Sanitize all inputs before setting values
     document.getElementById('editTeamId').value = SecurityUtils.sanitizeString(teamId, 100);
     document.getElementById('editTeamName').value = SecurityUtils.sanitizeTeamName(teamName);
@@ -341,7 +341,7 @@ function openDeleteModal(teamId, teamName) {
         showToast('⚠️ Invalid team ID');
         return;
     }
-    
+
     document.getElementById('deleteTeamId').value = SecurityUtils.sanitizeString(teamId, 100);
     // Use textContent (safe) instead of innerHTML
     document.getElementById('deleteTeamName').textContent = SecurityUtils.sanitizeTeamName(teamName);
@@ -357,34 +357,34 @@ window.closeModal = closeModal;
 
 async function saveEdit() {
     const teamId = document.getElementById('editTeamId').value;
-    
+
     // Validate document ID
     if (!SecurityUtils.isValidDocId(teamId)) {
         showToast('⚠️ Invalid team ID');
         return;
     }
-    
+
     // Get and sanitize all inputs
     const teamName = SecurityUtils.sanitizeTeamName(document.getElementById('editTeamName').value);
     const email = SecurityUtils.sanitizeString(document.getElementById('editEmail').value, 254);
     const m1Name = SecurityUtils.sanitizeString(document.getElementById('editM1Name').value, 100);
 
     // Validation
-    if (!teamName || teamName.length < 2) { 
-        showToast('⚠️ Team name must be at least 2 characters'); 
-        return; 
+    if (!teamName || teamName.length < 2) {
+        showToast('⚠️ Team name must be at least 2 characters');
+        return;
     }
     if (teamName.length > 100) {
         showToast('⚠️ Team name too long (max 100 characters)');
         return;
     }
-    if (!m1Name || m1Name.length < 2) { 
-        showToast('⚠️ Member 1 name must be at least 2 characters'); 
-        return; 
+    if (!m1Name || m1Name.length < 2) {
+        showToast('⚠️ Member 1 name must be at least 2 characters');
+        return;
     }
-    if (email && !SecurityUtils.isValidEmail(email)) { 
-        showToast('⚠️ Invalid email format'); 
-        return; 
+    if (email && !SecurityUtils.isValidEmail(email)) {
+        showToast('⚠️ Invalid email format');
+        return;
     }
 
     const data = {
@@ -431,12 +431,12 @@ function openTeamDrawer(teamId, teamData) {
         showToast('⚠️ Invalid team data');
         return;
     }
-    
+
     currentDrawerTeamId = teamId;
     currentDrawerTeamData = teamData;
 
     const el = (id) => document.getElementById(id);
-    
+
     // Use textContent for safe rendering (prevents XSS)
     el('drawerTeamName').textContent = SecurityUtils.sanitizeTeamName(teamData.teamName) || '—';
     el('drawerEmail').textContent = SecurityUtils.sanitizeString(teamData.email, 254) || '—';
@@ -450,14 +450,14 @@ function openTeamDrawer(teamId, teamData) {
         try {
             const date = teamData.registeredAt.toDate ? teamData.registeredAt.toDate() : new Date(teamData.registeredAt.seconds * 1000);
             regText = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-        } catch (e) {}
+        } catch (e) { }
     }
     el('drawerRegisteredAt').textContent = regText;
     if (el('drawerUpdatedAt')) el('drawerUpdatedAt').textContent = regText;
 
     const membersContainer = el('drawerMembers');
     membersContainer.innerHTML = '';
-    
+
     // Safely render members
     [teamData.member1, teamData.member2, teamData.member3].forEach(m => {
         if (m?.name) {
@@ -471,7 +471,7 @@ function openTeamDrawer(teamId, teamData) {
             membersContainer.appendChild(memberDiv);
         }
     });
-    
+
     if (!membersContainer.innerHTML) {
         membersContainer.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px;">No members</p>';
     }
@@ -524,10 +524,10 @@ function handleRowClick(event, teamId, teamDataStr) {
         showToast('⚠️ Invalid team ID');
         return;
     }
-    
+
     if (event.target.closest('.row-checkbox, .status-pill, a.email-link')) return;
     if (event.target.closest('.action-buttons') && !event.target.closest('.action-btn.view')) return;
-    
+
     try {
         const teamData = JSON.parse(decodeURIComponent(teamDataStr));
         // Basic validation of parsed data
@@ -535,9 +535,9 @@ function handleRowClick(event, teamId, teamDataStr) {
             throw new Error('Invalid data format');
         }
         openTeamDrawer(teamId, teamData);
-    } catch (e) { 
+    } catch (e) {
         console.error('Error parsing team data:', e);
-        showToast('⚠️ Could not load details'); 
+        showToast('⚠️ Could not load details');
     }
 }
 window.handleRowClick = handleRowClick;
@@ -549,7 +549,7 @@ async function toggleStatus(teamId, currentStatus) {
         showToast('⚠️ Invalid team ID');
         return;
     }
-    
+
     // Validate status value
     const validStatuses = ['Pending', 'Verified'];
     const sanitizedStatus = SecurityUtils.sanitizeString(currentStatus, 20);
@@ -557,10 +557,10 @@ async function toggleStatus(teamId, currentStatus) {
         showToast('⚠️ Invalid status');
         return;
     }
-    
+
     const newStatus = sanitizedStatus === 'Verified' ? 'Pending' : 'Verified';
     const success = await window.updateInFirestore('registrations', teamId, { status: newStatus });
-    
+
     if (success) {
         const row = document.querySelector(`tr[data-team="${CSS.escape(teamId)}"]`);
         if (row) {
@@ -583,19 +583,19 @@ async function bulkUpdateStatus(newStatus) {
         showToast('⚠️ Invalid status');
         return;
     }
-    
+
     // Rate limiting
     const rateCheck = rateLimiters.bulkAction.recordAttempt('bulk_' + (auth.currentUser?.uid || 'anon'));
     if (!rateCheck.allowed) {
         showToast(`⏳ Too many bulk actions. Try again in ${rateCheck.retryAfter}s`);
         return;
     }
-    
+
     const selected = document.querySelectorAll('.row-checkbox:checked');
     if (selected.length === 0) { showToast('No teams selected'); return; }
     if (selected.length > 50) { showToast('⚠️ Maximum 50 teams at once'); return; }
     if (!confirm(`Update ${selected.length} team(s) to "${newStatus}"?`)) return;
-    
+
     let count = 0;
     for (const cb of selected) {
         const teamId = cb.dataset.teamId;
@@ -616,12 +616,12 @@ async function bulkDeleteSelected() {
         showToast(`⏳ Too many bulk actions. Try again in ${rateCheck.retryAfter}s`);
         return;
     }
-    
+
     const selected = document.querySelectorAll('.row-checkbox:checked');
     if (selected.length === 0) { showToast('No teams selected'); return; }
     if (selected.length > 20) { showToast('⚠️ Maximum 20 deletions at once'); return; }
     if (!confirm(`Delete ${selected.length} team(s)? This moves them to trash.`)) return;
-    
+
     let count = 0;
     for (const cb of selected) {
         const teamId = cb.dataset.teamId;
@@ -734,20 +734,20 @@ window.switchSubTab = switchSubTab;
 // ===== DATA LOADERS (SECURED) =====
 async function loadTestingData() {
     try {
-        const snapshot = await getDocs(query(collection(db, 'registrations'), where('event', '==', 'testing'), orderBy('registeredAt', 'desc')));
+        const snapshot = await getDocs(query(collection(db, 'registrations'), where('eventCode', '==', 'testing'), orderBy('registeredAt', 'desc')));
         window.testingDataCount = snapshot.size;
         const tbody = document.getElementById('testing-tbody');
         if (!tbody) return;
-        if (snapshot.empty) { 
-            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-muted);">No registrations</td></tr>'; 
-            return; 
+        if (snapshot.empty) {
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-muted);">No registrations</td></tr>';
+            return;
         }
         tbody.innerHTML = '';
         let i = 1;
         snapshot.forEach(docSnap => {
             const d = docSnap.data();
             const docId = docSnap.id;
-            
+
             // Sanitize all data before rendering
             const safeTeamName = SecurityUtils.escapeHtml(SecurityUtils.sanitizeTeamName(d.teamName));
             const safeEmail = SecurityUtils.escapeHtml(SecurityUtils.sanitizeString(d.email, 254));
@@ -758,10 +758,10 @@ async function loadTestingData() {
             const safeM3Name = SecurityUtils.escapeHtml(SecurityUtils.sanitizeString(d.member3?.name, 100) || '-');
             const safeM3Detail = SecurityUtils.escapeHtml(`${SecurityUtils.sanitizeString(d.member3?.usn, 20) || ''} • ${SecurityUtils.sanitizeString(d.member3?.dept, 50) || ''}`);
             const safeStatus = ['Pending', 'Verified'].includes(d.status) ? d.status : 'Pending';
-            
+
             // Safely encode team data for onclick
             const teamDataStr = encodeURIComponent(JSON.stringify(d));
-            
+
             tbody.innerHTML += `<tr data-team="${SecurityUtils.escapeHtml(docId)}" class="clickable-row" onclick="handleRowClick(event,'${SecurityUtils.escapeHtml(docId)}','${teamDataStr}')">
                 <td onclick="event.stopPropagation()"><input type="checkbox" class="row-checkbox" data-team-id="${SecurityUtils.escapeHtml(docId)}" onchange="toggleRowSelection()"></td>
                 <td><span class="team-badge">${i++}</span></td>
@@ -774,33 +774,33 @@ async function loadTestingData() {
                 <td onclick="event.stopPropagation()"><div class="action-buttons">
                     <button class="action-btn view" onclick="handleRowClick(event,'${SecurityUtils.escapeHtml(docId)}','${teamDataStr}')">👁️</button>
                     <button class="action-btn verify" onclick="toggleStatus('${SecurityUtils.escapeHtml(docId)}','${safeStatus}')">✓</button>
-                    <button class="action-btn edit" onclick="openEditModal('${SecurityUtils.escapeHtml(docId)}','${safeTeamName.replace(/'/g,"\\'")}','${safeM1Name.replace(/'/g,"\\'")}','${safeM1Detail.replace(/'/g,"\\'")}','${safeM2Name.replace(/'/g,"\\'")}','${safeM2Detail.replace(/'/g,"\\'")}','${safeM3Name.replace(/'/g,"\\'")}','${safeM3Detail.replace(/'/g,"\\'")}','${safeEmail}')">✏️</button>
-                    <button class="action-btn delete" onclick="openDeleteModal('${SecurityUtils.escapeHtml(docId)}','${safeTeamName.replace(/'/g,"\\'")}')">🗑️</button>
+                    <button class="action-btn edit" onclick="openEditModal('${SecurityUtils.escapeHtml(docId)}','${safeTeamName.replace(/'/g, "\\'")}','${safeM1Name.replace(/'/g, "\\'")}','${safeM1Detail.replace(/'/g, "\\'")}','${safeM2Name.replace(/'/g, "\\'")}','${safeM2Detail.replace(/'/g, "\\'")}','${safeM3Name.replace(/'/g, "\\'")}','${safeM3Detail.replace(/'/g, "\\'")}','${safeEmail}')">✏️</button>
+                    <button class="action-btn delete" onclick="openDeleteModal('${SecurityUtils.escapeHtml(docId)}','${safeTeamName.replace(/'/g, "\\'")}')">🗑️</button>
                 </div></td></tr>`;
         });
         setTimeout(() => checkForDuplicates('testing'), 100);
-    } catch (err) { 
-        console.error('Error loading testing data:', err); 
+    } catch (err) {
+        console.error('Error loading testing data:', err);
         showToast('⚠️ Error loading data');
     }
 }
 
 async function loadUIBattleData() {
     try {
-        const snapshot = await getDocs(query(collection(db, 'registrations'), where('event', '==', 'uibattle'), orderBy('registeredAt', 'desc')));
+        const snapshot = await getDocs(query(collection(db, 'registrations'), where('eventCode', '==', 'uibattle'), orderBy('registeredAt', 'desc')));
         window.uibattleDataCount = snapshot.size;
         const tbody = document.getElementById('uibattle-tbody');
         if (!tbody) return;
-        if (snapshot.empty) { 
-            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-muted);">No registrations</td></tr>'; 
-            return; 
+        if (snapshot.empty) {
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-muted);">No registrations</td></tr>';
+            return;
         }
         tbody.innerHTML = '';
         let i = 1;
         snapshot.forEach(docSnap => {
             const d = docSnap.data();
             const docId = docSnap.id;
-            
+
             // Sanitize all data before rendering
             const safeTeamName = SecurityUtils.escapeHtml(SecurityUtils.sanitizeTeamName(d.teamName));
             const safeEmail = SecurityUtils.escapeHtml(SecurityUtils.sanitizeString(d.email, 254));
@@ -811,10 +811,10 @@ async function loadUIBattleData() {
             const safeM3Name = SecurityUtils.escapeHtml(SecurityUtils.sanitizeString(d.member3?.name, 100) || '-');
             const safeM3Detail = SecurityUtils.escapeHtml(`${SecurityUtils.sanitizeString(d.member3?.usn, 20) || ''} • ${SecurityUtils.sanitizeString(d.member3?.dept, 50) || ''}`);
             const safeStatus = ['Pending', 'Verified'].includes(d.status) ? d.status : 'Pending';
-            
+
             // Safely encode team data for onclick
             const teamDataStr = encodeURIComponent(JSON.stringify(d));
-            
+
             tbody.innerHTML += `<tr data-team="${SecurityUtils.escapeHtml(docId)}" class="clickable-row" onclick="handleRowClick(event,'${SecurityUtils.escapeHtml(docId)}','${teamDataStr}')">
                 <td onclick="event.stopPropagation()"><input type="checkbox" class="row-checkbox" data-team-id="${SecurityUtils.escapeHtml(docId)}" onchange="toggleRowSelection()"></td>
                 <td><span class="team-badge">${i++}</span></td>
@@ -827,13 +827,13 @@ async function loadUIBattleData() {
                 <td onclick="event.stopPropagation()"><div class="action-buttons">
                     <button class="action-btn view" onclick="handleRowClick(event,'${SecurityUtils.escapeHtml(docId)}','${teamDataStr}')">👁️</button>
                     <button class="action-btn verify" onclick="toggleStatus('${SecurityUtils.escapeHtml(docId)}','${safeStatus}')">✓</button>
-                    <button class="action-btn edit" onclick="openEditModal('${SecurityUtils.escapeHtml(docId)}','${safeTeamName.replace(/'/g,"\\'")}','${safeM1Name.replace(/'/g,"\\'")}','${safeM1Detail.replace(/'/g,"\\'")}','${safeM2Name.replace(/'/g,"\\'")}','${safeM2Detail.replace(/'/g,"\\'")}','${safeM3Name.replace(/'/g,"\\'")}','${safeM3Detail.replace(/'/g,"\\'")}','${safeEmail}')">✏️</button>
-                    <button class="action-btn delete" onclick="openDeleteModal('${SecurityUtils.escapeHtml(docId)}','${safeTeamName.replace(/'/g,"\\'")}')">🗑️</button>
+                    <button class="action-btn edit" onclick="openEditModal('${SecurityUtils.escapeHtml(docId)}','${safeTeamName.replace(/'/g, "\\'")}','${safeM1Name.replace(/'/g, "\\'")}','${safeM1Detail.replace(/'/g, "\\'")}','${safeM2Name.replace(/'/g, "\\'")}','${safeM2Detail.replace(/'/g, "\\'")}','${safeM3Name.replace(/'/g, "\\'")}','${safeM3Detail.replace(/'/g, "\\'")}','${safeEmail}')">✏️</button>
+                    <button class="action-btn delete" onclick="openDeleteModal('${SecurityUtils.escapeHtml(docId)}','${safeTeamName.replace(/'/g, "\\'")}')">🗑️</button>
                 </div></td></tr>`;
         });
         setTimeout(() => checkForDuplicates('uibattle'), 100);
-    } catch (err) { 
-        console.error('Error loading UI Battle data:', err); 
+    } catch (err) {
+        console.error('Error loading UI Battle data:', err);
         showToast('⚠️ Error loading data');
     }
 }
@@ -869,7 +869,7 @@ async function loadAllEvents() {
     try {
         const eventsSnapshot = await getDocs(query(collection(db, 'events'), orderBy('createdAt', 'desc')));
         allEvents = [];
-        
+
         eventsSnapshot.forEach(docSnap => {
             const eventData = docSnap.data();
             allEvents.push({
@@ -880,7 +880,7 @@ async function loadAllEvents() {
                 createdAt: eventData.createdAt
             });
         });
-        
+
         // If no events in Firestore, use default events (backward compatibility)
         if (allEvents.length === 0) {
             allEvents = [
@@ -890,7 +890,7 @@ async function loadAllEvents() {
                 { code: 'hackathon', name: 'Hackathon', emoji: '💻', isActive: true }
             ];
         }
-        
+
         return allEvents;
     } catch (error) {
         console.error('Error loading events:', error);
@@ -910,36 +910,36 @@ window.loadAllEvents = loadAllEvents;
 async function generateEventCards() {
     const grid = document.getElementById('eventSelectorGrid');
     if (!grid) return;
-    
+
     // Show loading
     grid.innerHTML = `<div class="event-loading" id="eventCardsLoader">
         <div class="spinner"></div>
         <p>Loading events...</p>
     </div>`;
-    
+
     await loadAllEvents();
-    
+
     // Clear grid and generate cards
     grid.innerHTML = '';
-    
+
     for (const event of allEvents) {
         if (!event.isActive) continue;
-        
+
         // Get registration count for this event
         let count = 0;
         try {
-            const countQuery = query(collection(db, 'registrations'), where('event', '==', event.code));
+            const countQuery = query(collection(db, 'registrations'), where('eventCode', '==', event.code));
             const countSnapshot = await getDocs(countQuery);
             count = countSnapshot.size;
             window[`${event.code}DataCount`] = count;
         } catch (e) {
             console.warn(`Could not count registrations for ${event.code}`, e);
         }
-        
+
         const safeCode = SecurityUtils.escapeHtml(event.code);
         const safeName = SecurityUtils.escapeHtml(event.name);
         const safeEmoji = SecurityUtils.escapeHtml(event.emoji);
-        
+
         grid.innerHTML += `
             <div class="event-select-card" onclick="openEventView('${safeCode}')">
                 <button class="event-delete-btn" onclick="event.stopPropagation(); openDeleteEventModal('${safeCode}', '${safeName}')" title="Delete Event">🗑️</button>
@@ -955,18 +955,18 @@ window.generateEventCards = generateEventCards;
 function generateEventTabs() {
     const tabsContainer = document.getElementById('dynamicEventTabs');
     if (!tabsContainer) return;
-    
+
     tabsContainer.innerHTML = '';
-    
+
     allEvents.forEach((event, index) => {
         if (!event.isActive) return;
-        
+
         const safeCode = SecurityUtils.escapeHtml(event.code);
         const safeName = SecurityUtils.escapeHtml(event.name);
         const safeEmoji = SecurityUtils.escapeHtml(event.emoji);
-        
+
         const isFirst = index === 0;
-        
+
         tabsContainer.innerHTML += `
             <button class="event-tab ${isFirst ? 'active' : ''}" onclick="switchEvent('${safeCode}', this)" data-event="${safeCode}">
                 ${safeEmoji} ${safeName}
@@ -979,18 +979,18 @@ window.generateEventTabs = generateEventTabs;
 function generateEventContents() {
     const container = document.getElementById('dynamicEventContents');
     if (!container) return;
-    
+
     container.innerHTML = '';
-    
+
     allEvents.forEach((event, index) => {
         if (!event.isActive) return;
-        
+
         const safeCode = SecurityUtils.escapeHtml(event.code);
         const safeName = SecurityUtils.escapeHtml(event.name);
         const safeEmoji = SecurityUtils.escapeHtml(event.emoji);
-        
+
         const isFirst = index === 0;
-        
+
         container.innerHTML += `
             <div id="${safeCode}-content" class="event-content ${isFirst ? 'active' : ''}">
                 <div class="sub-tabs">
@@ -1105,7 +1105,7 @@ function generateEventContents() {
                 </div>
             </div>`;
     });
-    
+
     // Setup status filter listeners for each event
     setupEventFilterListeners();
 }
@@ -1115,7 +1115,7 @@ window.generateEventContents = generateEventContents;
 function setupEventFilterListeners() {
     allEvents.forEach(event => {
         if (!event.isActive) return;
-        
+
         document.querySelectorAll(`input[name="statusFilter-${event.code}"]`).forEach(radio => {
             radio.addEventListener('change', (e) => {
                 applyStatusFilter(e.target.value, event.code);
@@ -1128,28 +1128,28 @@ function setupEventFilterListeners() {
 async function loadEventData(eventCode) {
     try {
         const snapshot = await getDocs(query(
-            collection(db, 'registrations'), 
-            where('event', '==', eventCode), 
+            collection(db, 'registrations'),
+            where('eventCode', '==', eventCode),
             orderBy('registeredAt', 'desc')
         ));
-        
+
         window[`${eventCode}DataCount`] = snapshot.size;
-        
+
         const tbody = document.getElementById(`${eventCode}-tbody`);
         if (!tbody) return;
-        
-        if (snapshot.empty) { 
-            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-muted);">No registrations</td></tr>'; 
-            return; 
+
+        if (snapshot.empty) {
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-muted);">No registrations</td></tr>';
+            return;
         }
-        
+
         tbody.innerHTML = '';
         let i = 1;
-        
+
         snapshot.forEach(docSnap => {
             const d = docSnap.data();
             const docId = docSnap.id;
-            
+
             // Sanitize all data before rendering
             const safeTeamName = SecurityUtils.escapeHtml(SecurityUtils.sanitizeTeamName(d.teamName));
             const safeEmail = SecurityUtils.escapeHtml(SecurityUtils.sanitizeString(d.email, 254));
@@ -1160,19 +1160,19 @@ async function loadEventData(eventCode) {
             const safeM3Name = SecurityUtils.escapeHtml(SecurityUtils.sanitizeString(d.member3?.name, 100) || '-');
             const safeM3Detail = SecurityUtils.escapeHtml(`${SecurityUtils.sanitizeString(d.member3?.usn, 20) || ''} • ${SecurityUtils.sanitizeString(d.member3?.dept, 50) || ''}`);
             const safeStatus = ['Pending', 'Verified'].includes(d.status) ? d.status : 'Pending';
-            
+
             // Winner badge HTML
             const winnerBadge = d.isWinner ?
                 `<span class="winner-badge ${d.winnerPosition === 1 ? 'gold' : d.winnerPosition === 2 ? 'silver' : 'bronze'}">🏆 ${d.winnerPosition === 1 ? '1st' : d.winnerPosition === 2 ? '2nd' : '3rd'}</span>` : '';
-            
+
             // Winner button - shows remove option if already winner
             const winnerBtn = d.isWinner ?
                 `<button class="action-btn winner" title="Remove Winner Status" onclick="removeWinner('${SecurityUtils.escapeHtml(docId)}', '${eventCode}')">❌</button>` :
-                `<button class="action-btn winner" title="Set as Winner" onclick="openWinnerModal('${SecurityUtils.escapeHtml(docId)}', '${safeTeamName.replace(/'/g,"\\'")}', '${eventCode}')">🏆</button>`;
-            
+                `<button class="action-btn winner" title="Set as Winner" onclick="openWinnerModal('${SecurityUtils.escapeHtml(docId)}', '${safeTeamName.replace(/'/g, "\\'")}', '${eventCode}')">🏆</button>`;
+
             // Safely encode team data for onclick
             const teamDataStr = encodeURIComponent(JSON.stringify(d));
-            
+
             tbody.innerHTML += `<tr data-team="${SecurityUtils.escapeHtml(docId)}" class="clickable-row" onclick="handleRowClick(event,'${SecurityUtils.escapeHtml(docId)}','${teamDataStr}')">
                 <td onclick="event.stopPropagation()"><input type="checkbox" class="row-checkbox" data-team-id="${SecurityUtils.escapeHtml(docId)}" onchange="toggleRowSelection()"></td>
                 <td><span class="team-badge">${i++}</span></td>
@@ -1186,18 +1186,18 @@ async function loadEventData(eventCode) {
                     <button class="action-btn view" onclick="handleRowClick(event,'${SecurityUtils.escapeHtml(docId)}','${teamDataStr}')">👁️</button>
                     ${winnerBtn}
                     <button class="action-btn verify" onclick="toggleStatus('${SecurityUtils.escapeHtml(docId)}','${safeStatus}')">✓</button>
-                    <button class="action-btn edit" onclick="openEditModal('${SecurityUtils.escapeHtml(docId)}','${safeTeamName.replace(/'/g,"\\'")}','${safeM1Name.replace(/'/g,"\\'")}','${safeM1Detail.replace(/'/g,"\\'")}','${safeM2Name.replace(/'/g,"\\'")}','${safeM2Detail.replace(/'/g,"\\'")}','${safeM3Name.replace(/'/g,"\\'")}','${safeM3Detail.replace(/'/g,"\\'")}','${safeEmail}')">✏️</button>
-                    <button class="action-btn delete" onclick="openDeleteModal('${SecurityUtils.escapeHtml(docId)}','${safeTeamName.replace(/'/g,"\\'")}')">🗑️</button>
+                    <button class="action-btn edit" onclick="openEditModal('${SecurityUtils.escapeHtml(docId)}','${safeTeamName.replace(/'/g, "\\'")}','${safeM1Name.replace(/'/g, "\\'")}','${safeM1Detail.replace(/'/g, "\\'")}','${safeM2Name.replace(/'/g, "\\'")}','${safeM2Detail.replace(/'/g, "\\'")}','${safeM3Name.replace(/'/g, "\\'")}','${safeM3Detail.replace(/'/g, "\\'")}','${safeEmail}')">✏️</button>
+                    <button class="action-btn delete" onclick="openDeleteModal('${SecurityUtils.escapeHtml(docId)}','${safeTeamName.replace(/'/g, "\\'")}')">🗑️</button>
                 </div></td></tr>`;
         });
-        
+
         // Update count badge
         const countEl = document.getElementById(`${eventCode}-count`);
         if (countEl) countEl.textContent = `👥 ${snapshot.size} teams`;
-        
+
         setTimeout(() => checkForDuplicates(eventCode), 100);
-    } catch (err) { 
-        console.error(`Error loading ${eventCode} data:`, err); 
+    } catch (err) {
+        console.error(`Error loading ${eventCode} data:`, err);
         const tbody = document.getElementById(`${eventCode}-tbody`);
         if (tbody) {
             tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--accent-red);">Error loading data</td></tr>';
@@ -1228,16 +1228,16 @@ async function initDynamicEvents() {
     try {
         // Generate event selector cards
         await generateEventCards();
-        
+
         // Generate event tabs
         generateEventTabs();
-        
+
         // Generate event content sections
         generateEventContents();
-        
+
         // Load data for all events
         await loadAllEventData();
-        
+
         console.log('Dynamic event system initialized with', allEvents.length, 'events');
     } catch (error) {
         console.error('Error initializing dynamic events:', error);
@@ -1246,7 +1246,7 @@ async function initDynamicEvents() {
 }
 window.initDynamicEvents = initDynamicEvents;
 
-window.reloadFirestoreData = async function() {
+window.reloadFirestoreData = async function () {
     await loadAllEventData();
 };
 
@@ -1279,27 +1279,27 @@ function selectOption(element) {
     const value = element.dataset.value;
     const text = element.querySelector('span:not(.icon):not(.check)').textContent;
     const icon = element.querySelector('.icon').textContent;
-    
+
     // Update selected state
     document.querySelectorAll('.select-item').forEach(item => item.classList.remove('selected'));
     element.classList.add('selected');
-    
+
     // Update trigger button text
     document.getElementById('selectedEventText').textContent = text;
     document.querySelector('.select-trigger .icon').textContent = icon;
-    
+
     // Update routing status
     const activeEventName = document.getElementById('activeEventName');
     if (activeEventName) {
         activeEventName.textContent = text.replace(' (Sandbox)', '');
     }
-    
+
     // Close dropdown
     document.getElementById('routingDropdown')?.classList.remove('open');
-    
+
     // Save to Firestore (routing config)
     saveRoutingConfig(value);
-    
+
     showToast(`✅ Registration routing set to ${text}`);
 }
 window.selectOption = selectOption;
@@ -1325,7 +1325,7 @@ async function loadRoutingConfig() {
         if (configDoc.exists()) {
             const config = configDoc.data();
             const activeEvent = config.activeEvent || 'testing';
-            
+
             // Update UI to reflect saved routing
             const item = document.querySelector(`.select-item[data-value="${activeEvent}"]`);
             if (item) {
@@ -1347,8 +1347,8 @@ document.addEventListener('click', (e) => {
 });
 
 // Alias for openCreateEventModal
-function openCreateEventModal() { 
-    document.getElementById('createEventModal')?.classList.add('active'); 
+function openCreateEventModal() {
+    document.getElementById('createEventModal')?.classList.add('active');
     // Reset form
     document.getElementById('newEventName').value = '';
     document.getElementById('newEventCode').value = '';
@@ -1371,7 +1371,7 @@ async function createNewEvent() {
     const name = document.getElementById('newEventName').value.trim();
     const code = document.getElementById('newEventCode').value.trim().toLowerCase();
     const emoji = document.getElementById('selectedEventEmoji').value || '🎯';
-    
+
     // Validation
     if (!name || name.length < 2) {
         showToast('⚠️ Event name must be at least 2 characters');
@@ -1385,7 +1385,7 @@ async function createNewEvent() {
         showToast('⚠️ Event code can only contain lowercase letters, numbers and underscores');
         return;
     }
-    
+
     try {
         // Check if event code already exists
         const existingEvent = await getDoc(doc(db, 'events', code));
@@ -1393,7 +1393,7 @@ async function createNewEvent() {
             showToast('⚠️ An event with this code already exists');
             return;
         }
-        
+
         // Create event in Firestore
         await setDoc(doc(db, 'events', code), {
             name: SecurityUtils.sanitizeString(name, 100),
@@ -1403,16 +1403,16 @@ async function createNewEvent() {
             createdBy: auth.currentUser?.email || 'unknown',
             isActive: true
         });
-        
+
         await logAdminAction('CREATE_EVENT', { eventCode: code, eventName: name });
         showToast(`✅ Event "${name}" created successfully!`);
         closeModal('createEventModal');
-        
+
         // Dynamically update the UI without page reload
         showToast('🔄 Updating event list...');
         await initDynamicEvents();
         showToast(`🎉 "${name}" is now ready to accept registrations!`);
-        
+
     } catch (error) {
         console.error('Error creating event:', error);
         showToast('⚠️ Failed to create event');
@@ -1426,40 +1426,40 @@ async function deleteEvent(eventCode) {
         showToast('⚠️ Invalid event code');
         return;
     }
-    
+
     const confirmMsg = `⚠️ Are you sure you want to delete the event "${eventCode}"?\n\nThis will permanently delete:\n- The event configuration\n- ALL registrations for this event\n\nThis action cannot be undone!`;
-    
+
     if (!confirm(confirmMsg)) return;
-    
+
     // Double confirmation for safety
     const doubleConfirm = prompt(`Type "${eventCode}" to confirm deletion:`);
     if (doubleConfirm !== eventCode) {
         showToast('❌ Deletion cancelled - event code did not match');
         return;
     }
-    
+
     try {
         showToast('🔄 Deleting event...');
-        
+
         // Delete all registrations for this event
-        const registrationsQuery = query(collection(db, 'registrations'), where('event', '==', eventCode));
+        const registrationsQuery = query(collection(db, 'registrations'), where('eventCode', '==', eventCode));
         const registrationsSnapshot = await getDocs(registrationsQuery);
-        
+
         let deletedCount = 0;
         for (const docSnap of registrationsSnapshot.docs) {
             await deleteDoc(doc(db, 'registrations', docSnap.id));
             deletedCount++;
         }
-        
+
         // Delete the event document
         await deleteDoc(doc(db, 'events', eventCode));
-        
+
         await logAdminAction('DELETE_EVENT', { eventCode, registrationsDeleted: deletedCount });
         showToast(`🗑️ Event "${eventCode}" deleted with ${deletedCount} registrations`);
-        
+
         // Dynamically update the UI without page reload
         await initDynamicEvents();
-        
+
         // Go back to event selector if currently viewing the deleted event
         backToEventSelector();
     } catch (error) {
@@ -1525,7 +1525,7 @@ async function confirmSetWinner() {
         if (success) {
             showToast(`🏆 Winner set to position ${position}!`);
             closeModal('winnerModal');
-            
+
             // Refresh the specific event data
             if (eventCode) {
                 await loadEventData(eventCode);
@@ -1545,7 +1545,7 @@ window.confirmSetWinner = confirmSetWinner;
 // Remove winner status
 async function removeWinner(teamId, eventCode) {
     if (!confirm('Remove winner status from this team?')) return;
-    
+
     try {
         const success = await window.updateInFirestore('registrations', teamId, {
             isWinner: false,
@@ -1554,7 +1554,7 @@ async function removeWinner(teamId, eventCode) {
 
         if (success) {
             showToast('✅ Winner status removed');
-            
+
             // Refresh the specific event data
             if (eventCode) {
                 await loadEventData(eventCode);
@@ -1576,10 +1576,10 @@ function togglePasswordVisibility() {
     const input = document.getElementById('password');
     const toggleBtn = document.getElementById('passwordToggle');
     if (!input || !toggleBtn) return;
-    
+
     const eyeOpen = toggleBtn.querySelector('.eye-open');
     const eyeClosed = toggleBtn.querySelector('.eye-closed');
-    
+
     if (input.type === 'password') {
         input.type = 'text';
         if (eyeOpen) eyeOpen.style.display = 'none';
@@ -1619,23 +1619,23 @@ window.toggleFilterBar = toggleFilterBar;
 function applyStatusFilter(status, eventName = 'testing') {
     const tbody = document.getElementById(`${eventName}-tbody`);
     if (!tbody) return;
-    
+
     const rows = tbody.querySelectorAll('tr');
     let visibleCount = 0;
-    
+
     rows.forEach(row => {
         const statusCell = row.querySelector('.status-pill');
         const rowStatus = statusCell ? statusCell.textContent.toLowerCase().trim() : '';
-        
+
         let showRow = true;
         if (status && status !== 'all') {
             showRow = rowStatus === status.toLowerCase();
         }
-        
+
         row.style.display = showRow ? '' : 'none';
         if (showRow) visibleCount++;
     });
-    
+
     showToast(`🔍 Showing ${visibleCount} of ${rows.length} teams`);
 }
 window.applyStatusFilter = applyStatusFilter;
@@ -1647,10 +1647,10 @@ async function applyFilters(eventName) {
 
     const tbody = document.getElementById(`${eventName}-tbody`);
     if (!tbody) return;
-    
+
     const rows = tbody.querySelectorAll('tr');
     let visibleCount = 0;
-    
+
     rows.forEach(row => {
         const statusCell = row.querySelector('.status-pill');
         const rowStatus = statusCell ? statusCell.textContent.toLowerCase().trim() : '';
@@ -1674,22 +1674,22 @@ window.applyFilters = applyFilters;
 function clearFilters(eventName) {
     const tbody = document.getElementById(`${eventName}-tbody`);
     if (!tbody) return;
-    
+
     tbody.querySelectorAll('tr').forEach(row => row.style.display = '');
-    
+
     // Reset filter inputs
     const statusSelect = document.getElementById(`filterStatus-${eventName}`);
     const dateFrom = document.getElementById(`filterDateFrom-${eventName}`);
     const dateTo = document.getElementById(`filterDateTo-${eventName}`);
-    
+
     if (statusSelect) statusSelect.value = '';
     if (dateFrom) dateFrom.value = '';
     if (dateTo) dateTo.value = '';
-    
+
     // Reset radio buttons for this specific event
     const allRadio = document.querySelector(`input[name="statusFilter-${eventName}"][value="all"]`);
     if (allRadio) allRadio.checked = true;
-    
+
     showToast('🔄 Filters cleared');
 }
 window.clearFilters = clearFilters;
@@ -1703,7 +1703,7 @@ window.toggleRowSelection = toggleRowSelection;
 function toggleSelectAll(checked, eventName = 'testing') {
     const tbody = document.getElementById(`${eventName}-tbody`);
     if (!tbody) return;
-    
+
     tbody.querySelectorAll('.row-checkbox').forEach(cb => {
         cb.checked = checked;
     });
@@ -1727,9 +1727,9 @@ function updateBulkActionBar() {
 window.updateBulkActionBar = updateBulkActionBar;
 
 // ===== LOGIN (SECURED) =====
-window.handleLogin = function(event) {
+window.handleLogin = function (event) {
     event.preventDefault();
-    
+
     // Rate limiting
     const rateCheck = rateLimiters.login.recordAttempt('login');
     if (!rateCheck.allowed) {
@@ -1738,28 +1738,28 @@ window.handleLogin = function(event) {
         errorEl.textContent = `⏳ Too many attempts. Try again in ${rateCheck.retryAfter} seconds`;
         return;
     }
-    
+
     const email = SecurityUtils.sanitizeString(document.getElementById('username').value, 254);
     const password = document.getElementById('password').value;
     const errorEl = document.getElementById('errorMessage');
     const loginBtn = document.getElementById('loginBtn');
 
     errorEl.style.display = 'none';
-    
+
     // Validate email format
     if (!SecurityUtils.isValidEmail(email)) {
         errorEl.style.display = 'block';
         errorEl.textContent = 'Please enter a valid email address';
         return;
     }
-    
+
     // Password length check (Firebase requires 6+, we enforce 8+)
     if (!password || password.length < 8 || password.length > 128) {
         errorEl.style.display = 'block';
         errorEl.textContent = 'Password must be 8-128 characters';
         return;
     }
-    
+
     loginBtn.disabled = true;
     loginBtn.textContent = 'Signing in...';
 
@@ -1802,7 +1802,7 @@ onAuthStateChanged(auth, (user) => { if (user) resetInactivityTimer(); });
 window.addEventListener('DOMContentLoaded', async () => {
     // Initialize the dynamic event system - this replaces hardcoded event loading
     await initDynamicEvents();
-    
+
     // Load routing config
     loadRoutingConfig();
 });
