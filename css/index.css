@@ -1713,7 +1713,10 @@
             padding: 12px 14px;
             border: 1px solid var(--glass-border);
             border-radius: var(--radius-sm);
-            font-size: 14px;
+            font-size: 16px;
+            /* Prevents iOS auto-zoom on focus */
+            min-height: 48px;
+            /* Touch-friendly target size */
             font-family: 'Inter', sans-serif;
             transition: all 0.3s ease;
             background: var(--bg-secondary);
