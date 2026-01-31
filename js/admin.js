@@ -313,7 +313,32 @@ window.undoDelete = async function (docId) {
     } catch (error) { console.error('Error restoring:', error); return false; }
 };
 
-// ===== MODAL FUNCTIONS (SECURED) =====
+// ===== ATTENDANCE TRACKING =====
+async function markAttended(docId, attended, eventCode) {
+    if (!SecurityUtils.isValidDocId(docId)) {
+        showToast('⚠️ Invalid team ID');
+        return false;
+    }
+
+    try {
+        await updateDoc(doc(db, 'registrations', docId), {
+            attended: attended,
+            attendedAt: attended ? Timestamp.now() : null
+        });
+        await logAdminAction('ATTENDANCE', {
+            teamId: docId,
+            eventCode: eventCode,
+            attended: attended
+        });
+        showToast(attended ? '✅ Marked as attended' : '⬜ Marked as not attended');
+        return true;
+    } catch (error) {
+        console.error('Error updating attendance:', error);
+        showToast('⚠️ Error updating attendance');
+        return false;
+    }
+}
+window.markAttended = markAttended;
 function openEditModal(teamId, teamName, m1Name, m1Detail, m2Name, m2Detail, m3Name, m3Detail, email) {
     // Validate document ID
     if (!SecurityUtils.isValidDocId(teamId)) {
@@ -577,9 +602,16 @@ window.toggleStatus = toggleStatus;
 
 // ===== BULK ACTIONS (SECURED) =====
 async function bulkUpdateStatus(newStatus) {
-    // Validate status
-    const validStatuses = ['Pending', 'Verified', 'verified', 'pending'];
-    if (!validStatuses.includes(newStatus)) {
+    // Normalize status to capitalized format
+    const statusMap = {
+        'verified': 'Verified',
+        'pending': 'Pending',
+        'Verified': 'Verified',
+        'Pending': 'Pending'
+    };
+
+    const normalizedStatus = statusMap[newStatus];
+    if (!normalizedStatus) {
         showToast('⚠️ Invalid status');
         return;
     }
@@ -591,15 +623,15 @@ async function bulkUpdateStatus(newStatus) {
         return;
     }
 
-    const selected = document.querySelectorAll('.row-checkbox:checked');
+    const selected = document.querySelectorAll('.row-checkbox:checked[data-team-id]');
     if (selected.length === 0) { showToast('No teams selected'); return; }
     if (selected.length > 50) { showToast('⚠️ Maximum 50 teams at once'); return; }
-    if (!confirm(`Update ${selected.length} team(s) to "${newStatus}"?`)) return;
+    if (!confirm(`Update ${selected.length} team(s) to "${normalizedStatus}"?`)) return;
 
     let count = 0;
     for (const cb of selected) {
         const teamId = cb.dataset.teamId;
-        if (SecurityUtils.isValidDocId(teamId) && await window.updateInFirestore('registrations', teamId, { status: newStatus })) {
+        if (SecurityUtils.isValidDocId(teamId) && await window.updateInFirestore('registrations', teamId, { status: normalizedStatus })) {
             count++;
         }
     }
@@ -1074,11 +1106,12 @@ function generateEventContents() {
                                     <th>Member 3</th>
                                     <th>Email</th>
                                     <th>Status</th>
+                                    <th>Attended</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="${safeCode}-tbody">
-                                <tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-muted);">
+                                <tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text-muted);">
                                     <div class="spinner" style="margin: 0 auto 10px;"></div>
                                     Loading registrations...
                                 </td></tr>
@@ -1139,7 +1172,7 @@ async function loadEventData(eventCode) {
         if (!tbody) return;
 
         if (snapshot.empty) {
-            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-muted);">No registrations</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text-muted);">No registrations</td></tr>';
             return;
         }
 
@@ -1160,6 +1193,7 @@ async function loadEventData(eventCode) {
             const safeM3Name = SecurityUtils.escapeHtml(SecurityUtils.sanitizeString(d.member3?.name, 100) || '-');
             const safeM3Detail = SecurityUtils.escapeHtml(`${SecurityUtils.sanitizeString(d.member3?.usn, 20) || ''} • ${SecurityUtils.sanitizeString(d.member3?.dept, 50) || ''}`);
             const safeStatus = ['Pending', 'Verified'].includes(d.status) ? d.status : 'Pending';
+            const isAttended = d.attended === true;
 
             // Winner badge HTML
             const winnerBadge = d.isWinner ?
@@ -1182,6 +1216,11 @@ async function loadEventData(eventCode) {
                 <td><div class="member-info"><span class="name">${safeM3Name}</span><span class="detail">${safeM3Detail}</span></div></td>
                 <td><a href="mailto:${safeEmail}" class="email-link" onclick="event.stopPropagation()">${safeEmail}</a></td>
                 <td onclick="event.stopPropagation()"><span class="status-pill clickable ${safeStatus.toLowerCase()}" onclick="toggleStatus('${SecurityUtils.escapeHtml(docId)}','${safeStatus}')">${safeStatus}</span></td>
+                <td onclick="event.stopPropagation()" style="text-align:center;">
+                    <input type="checkbox" class="attended-checkbox" ${isAttended ? 'checked' : ''} 
+                        onchange="markAttended('${SecurityUtils.escapeHtml(docId)}', this.checked, '${eventCode}')" 
+                        title="${isAttended ? 'Mark as not attended' : 'Mark as attended'}">
+                </td>
                 <td onclick="event.stopPropagation()"><div class="action-buttons">
                     <button class="action-btn view" onclick="handleRowClick(event,'${SecurityUtils.escapeHtml(docId)}','${teamDataStr}')">👁️</button>
                     ${winnerBtn}
@@ -1200,7 +1239,7 @@ async function loadEventData(eventCode) {
         console.error(`Error loading ${eventCode} data:`, err);
         const tbody = document.getElementById(`${eventCode}-tbody`);
         if (tbody) {
-            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--accent-red);">Error loading data</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--accent-red);">Error loading data</td></tr>';
         }
     }
 }
