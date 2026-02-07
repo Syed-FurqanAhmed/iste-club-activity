@@ -26,6 +26,17 @@
 
 
 <body>
+    <!-- PAGE PRELOADER -->
+    <div class="preloader" id="preloader">
+        <div class="preloader-content">
+            <div class="preloader-spinner"></div>
+            <span>Loading ISTE...</span>
+        </div>
+    </div>
+
+    <!-- SCROLL PROGRESS BAR -->
+    <div class="scroll-progress" id="scrollProgress"></div>
+
     <!-- Animated Background -->
     <div class="bg-animation">
         <div class="bg-orb bg-orb-1"></div>
@@ -234,37 +245,37 @@
             </button>
             <div class="gallery-scroll" id="galleryScroll">
                 <div class="gallery-item" onclick="openImage(this)">
-                    <img src="images/Gallery.jpg" alt="Event Highlights" />
+                    <img src="images/Gallery.jpg" alt="Event Highlights" loading="lazy" />
                     <div class="gallery-overlay">
                         <span>Event Highlights</span>
                     </div>
                 </div>
                 <div class="gallery-item" onclick="openImage(this)">
-                    <img src="images/Gallery0.jpg" alt="Quick UI Battle" />
+                    <img src="images/Gallery0.jpg" alt="Quick UI Battle" loading="lazy" />
                     <div class="gallery-overlay">
                         <span>Quick UI Battle</span>
                     </div>
                 </div>
                 <div class="gallery-item" onclick="openImage(this)">
-                    <img src="images/Gallery1.jpg" alt="Tech Workshop" />
+                    <img src="images/Gallery1.jpg" alt="Tech Workshop" loading="lazy" />
                     <div class="gallery-overlay">
                         <span>Tech Workshop</span>
                     </div>
                 </div>
                 <div class="gallery-item" onclick="openImage(this)">
-                    <img src="images/Gallery2.jpg" alt="Team Activities" />
+                    <img src="images/Gallery2.jpg" alt="Team Activities" loading="lazy" />
                     <div class="gallery-overlay">
                         <span>Team Activities</span>
                     </div>
                 </div>
                 <div class="gallery-item" onclick="openImage(this)">
-                    <img src="images/IMG-20251217-WA0028.jpg" alt="PromptQuest 2024" />
+                    <img src="images/IMG-20251217-WA0028.jpg" alt="PromptQuest 2024" loading="lazy" />
                     <div class="gallery-overlay">
                         <span>PromptQuest 2024</span>
                     </div>
                 </div>
                 <div class="gallery-item" onclick="openImage(this)">
-                    <img src="images/IMG-20251217-WA0030.jpg" alt="Winners Ceremony" />
+                    <img src="images/IMG-20251217-WA0030.jpg" alt="Winners Ceremony" loading="lazy" />
                     <div class="gallery-overlay">
                         <span>Winners Ceremony</span>
                     </div>
@@ -282,6 +293,57 @@
                     <polyline points="9 18 15 12 9 6"></polyline>
                 </svg>
             </button>
+        </div>
+    </section>
+
+    <!-- TESTIMONIALS SECTION -->
+    <section class="testimonials reveal" id="testimonials">
+        <div class="section-header">
+            <span class="section-tag">What Students Say</span>
+            <h2 class="section-title">Student <span class="gradient-text">Testimonials</span></h2>
+            <p class="section-subtitle">Hear from our community members</p>
+        </div>
+        <div class="testimonial-carousel" id="testimonialCarousel">
+            <div class="testimonial-track" id="testimonialTrack">
+                <div class="testimonial-card">
+                    <p class="testimonial-quote">ISTE events helped me discover my passion for UI/UX design. The
+                        workshops are incredibly hands-on and practical!</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">A</div>
+                        <div class="testimonial-info">
+                            <h4>Srinivas R</h4>
+                            <span>2nd Year ISE</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <p class="testimonial-quote">Participating in Quick Draw UI Battle was an amazing experience. It
+                        pushed me to think creatively under pressure.</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">P</div>
+                        <div class="testimonial-info">
+                            <h4>Gaurav Kesari</h4>
+                            <span>2nd Year ISE</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <p class="testimonial-quote">The community at ISTE is so supportive. I've made amazing friends and
+                        learned skills that helped me land my internship!</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">R</div>
+                        <div class="testimonial-info">
+                            <h4>Rahul Menon</h4>
+                            <span>2nd Year ECE</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-dots" id="testimonialDots">
+                <div class="testimonial-dot active" data-index="0"></div>
+                <div class="testimonial-dot" data-index="1"></div>
+                <div class="testimonial-dot" data-index="2"></div>
+            </div>
         </div>
     </section>
 
@@ -306,9 +368,17 @@
             </div>
         </div>
         <div class="footer-bottom">
-            <p>© 2024 ISTE TOCE. Made with 💜 by the Tech Team</p>
+            <p>© 2026 ISTE TOCE. Made with 💜 by the Tech Team</p>
         </div>
     </footer>
+
+    <!-- BACK TO TOP BUTTON -->
+    <button class="back-to-top" id="backToTop" aria-label="Back to top">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="18 15 12 9 6 15"></polyline>
+        </svg>
+    </button>
 
     <!-- IMAGE MODAL -->
     <div class="image-modal" id="imageModal">
@@ -553,4 +623,3 @@
 </body>
 
 </html>
-
