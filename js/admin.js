@@ -1,7 +1,7 @@
 // ===== FIREBASE IMPORTS =====
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-import { getFirestore, collection, getDocs, doc, deleteDoc, updateDoc, setDoc, getDoc, orderBy, query, where, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, deleteDoc, updateDoc, setDoc, getDoc, orderBy, query, where, addDoc, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
 // ===== SECURITY: Input Sanitization =====
 const SecurityUtils = {
@@ -164,30 +164,111 @@ if (window.RateLimiter && window.SECURITY_CONFIG) {
     });
 }
 
-// ===== SESSION TIMEOUT =====
+// ===== SESSION TIMEOUT (ENHANCED) =====
 let inactivityTimer;
-const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
+let countdownInterval;
+let sessionTimeRemaining = 30 * 60; // 30 minutes in seconds
+const SESSION_TIMEOUT_SECONDS = 30 * 60;
+const SESSION_WARNING_SECONDS = 5 * 60; // Show warning at 5 minutes
+
+function formatTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+function updateSessionTimerUI() {
+    const timerElement = document.getElementById('sessionTimeRemaining');
+    const timerContainer = document.getElementById('sessionTimer');
+    const warningBanner = document.getElementById('sessionWarning');
+    const warningCountdown = document.getElementById('warningCountdown');
+
+    if (timerElement) {
+        timerElement.textContent = formatTime(sessionTimeRemaining);
+    }
+
+    // Update timer styling based on time remaining
+    if (timerContainer) {
+        timerContainer.classList.remove('warning', 'critical');
+        if (sessionTimeRemaining <= 60) {
+            timerContainer.classList.add('critical');
+        } else if (sessionTimeRemaining <= SESSION_WARNING_SECONDS) {
+            timerContainer.classList.add('warning');
+        }
+    }
+
+    // Show/hide warning banner
+    if (warningBanner) {
+        if (sessionTimeRemaining <= SESSION_WARNING_SECONDS && sessionTimeRemaining > 0) {
+            warningBanner.classList.add('active');
+            if (warningCountdown) {
+                warningCountdown.textContent = formatTime(sessionTimeRemaining);
+            }
+        } else {
+            warningBanner.classList.remove('active');
+        }
+    }
+}
+
+function startSessionCountdown() {
+    sessionTimeRemaining = SESSION_TIMEOUT_SECONDS;
+    updateSessionTimerUI();
+
+    // Clear existing interval
+    if (countdownInterval) clearInterval(countdownInterval);
+
+    countdownInterval = setInterval(() => {
+        if (auth.currentUser) {
+            sessionTimeRemaining--;
+            updateSessionTimerUI();
+
+            if (sessionTimeRemaining <= 0) {
+                clearInterval(countdownInterval);
+                signOut(auth).then(() => showToast('⏱️ Session expired due to inactivity'));
+            }
+        }
+    }, 1000);
+}
 
 function resetInactivityTimer() {
     clearTimeout(inactivityTimer);
     if (auth.currentUser) {
-        inactivityTimer = setTimeout(() => {
-            signOut(auth).then(() => showToast('Session expired'));
-        }, SESSION_TIMEOUT_MS);
+        sessionTimeRemaining = SESSION_TIMEOUT_SECONDS;
+        updateSessionTimerUI();
     }
 }
 
-['click', 'keypress', 'scroll', 'mousemove'].forEach(event => {
-    document.addEventListener(event, resetInactivityTimer, { passive: true });
-});
+function refreshSession() {
+    sessionTimeRemaining = SESSION_TIMEOUT_SECONDS;
+    updateSessionTimerUI();
+    showToast('✅ Session refreshed!');
+}
+window.refreshSession = refreshSession;
+
+function dismissSessionWarning() {
+    const warningBanner = document.getElementById('sessionWarning');
+    if (warningBanner) warningBanner.classList.remove('active');
+}
+window.dismissSessionWarning = dismissSessionWarning;
+
+function stopSessionTimer() {
+    if (countdownInterval) clearInterval(countdownInterval);
+    clearTimeout(inactivityTimer);
+    sessionTimeRemaining = SESSION_TIMEOUT_SECONDS;
+    updateSessionTimerUI();
+}
+
+// Timer no longer resets on activity - only via "Stay Logged In" button
+// This provides true session timeout behavior
 
 // ===== LOGOUT HANDLER =====
 function handleLogout() {
     signOut(auth)
         .then(() => {
-            clearTimeout(inactivityTimer);
+            stopSessionTimer();
             document.getElementById('admin-dashboard').classList.remove('active');
             document.getElementById('login-page').style.display = 'flex';
+            document.getElementById('sessionWarning')?.classList.remove('active');
             showToast('Logged out successfully');
             console.log('Logout successful');
         })
@@ -735,12 +816,16 @@ function openEventView(eventCode) {
         tab.classList.toggle('active', tab.dataset.event === eventCode);
     });
     switchEvent(eventCode);
+    // Update dashboard stats for this specific event
+    updateDashboardStats(eventCode);
 }
 window.openEventView = openEventView;
 
 function backToEventSelector() {
     document.getElementById('event-detail-view')?.classList.remove('active');
     document.getElementById('event-selector-view')?.classList.remove('hidden');
+    // Reset dashboard stats to global view
+    updateDashboardStats();
 }
 window.backToEventSelector = backToEventSelector;
 
@@ -750,6 +835,8 @@ function switchEvent(eventName, btn) {
     if (btn) btn.classList.add('active');
     else document.querySelector(`.event-tab[data-event="${eventName}"]`)?.classList.add('active');
     document.getElementById(eventName + '-content')?.classList.add('active');
+    // Update dashboard stats for the selected event
+    updateDashboardStats(eventName);
 }
 window.switchEvent = switchEvent;
 
@@ -1285,6 +1372,130 @@ async function initDynamicEvents() {
 }
 window.initDynamicEvents = initDynamicEvents;
 
+// ===== TEXT SEARCH (Item 1) =====
+function handleTableSearch(eventCode, query) {
+    clearTimeout(searchTimeouts[eventCode]);
+    searchTimeouts[eventCode] = setTimeout(() => {
+        filterTableBySearch(eventCode, query);
+    }, 300); // 300ms debounce
+}
+window.handleTableSearch = handleTableSearch;
+
+function filterTableBySearch(eventCode, query) {
+    const tbody = document.getElementById(`${eventCode}-tbody`);
+    if (!tbody) return;
+
+    const rows = tbody.querySelectorAll('tr');
+    const searchTerm = query.toLowerCase().trim();
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+        if (!searchTerm) {
+            row.style.display = '';
+            row.classList.remove('search-highlight');
+            visibleCount++;
+            return;
+        }
+
+        // Search in team name, email, member names
+        const teamName = row.querySelector('td:nth-child(3)')?.textContent?.toLowerCase() || '';
+        const email = row.querySelector('.email-link')?.textContent?.toLowerCase() || '';
+        const m1 = row.querySelector('td:nth-child(4)')?.textContent?.toLowerCase() || '';
+        const m2 = row.querySelector('td:nth-child(5)')?.textContent?.toLowerCase() || '';
+        const m3 = row.querySelector('td:nth-child(6)')?.textContent?.toLowerCase() || '';
+
+        const match = teamName.includes(searchTerm) ||
+            email.includes(searchTerm) ||
+            m1.includes(searchTerm) ||
+            m2.includes(searchTerm) ||
+            m3.includes(searchTerm);
+
+        row.style.display = match ? '' : 'none';
+        row.classList.toggle('search-highlight', match && searchTerm.length > 0);
+        if (match) visibleCount++;
+    });
+
+    if (searchTerm) {
+        showToast(`🔍 Found ${visibleCount} result${visibleCount !== 1 ? 's' : ''}`);
+    }
+}
+window.filterTableBySearch = filterTableBySearch;
+
+// ===== BAR CHART (Item 3) =====
+let registrationsChart = null;
+
+async function renderRegistrationsChart() {
+    const canvas = document.getElementById('registrationsChart');
+    if (!canvas || typeof Chart === 'undefined') return;
+
+    try {
+        await loadAllEvents();
+
+        const labels = [];
+        const data = [];
+        const colors = [
+            'rgba(139, 92, 246, 0.8)',  // purple
+            'rgba(16, 185, 129, 0.8)',  // green
+            'rgba(245, 158, 11, 0.8)',  // orange
+            'rgba(236, 72, 153, 0.8)',  // pink
+            'rgba(59, 130, 246, 0.8)',  // blue
+            'rgba(239, 68, 68, 0.8)'    // red
+        ];
+
+        for (const event of allEvents) {
+            if (!event.isActive) continue;
+            labels.push(event.name);
+            const count = window[`${event.code}DataCount`] || 0;
+            data.push(count);
+        }
+
+        // Destroy existing chart if any
+        if (registrationsChart) {
+            registrationsChart.destroy();
+        }
+
+        registrationsChart = new Chart(canvas, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Teams Registered',
+                    data: data,
+                    backgroundColor: colors.slice(0, labels.length),
+                    borderRadius: 8,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => ` ${ctx.raw} teams`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: 'var(--text-secondary, #64748b)' }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(99, 102, 241, 0.1)' },
+                        ticks: { color: 'var(--text-secondary, #64748b)' }
+                    }
+                }
+            }
+        });
+    } catch (err) {
+        console.error('Chart render error:', err);
+    }
+}
+window.renderRegistrationsChart = renderRegistrationsChart;
+
 window.reloadFirestoreData = async function () {
     await loadAllEventData();
 };
@@ -1301,6 +1512,45 @@ window.handleExport = handleExport;
 
 function handleSendEmail() { showToast('📧 Email feature'); }
 window.handleSendEmail = handleSendEmail;
+
+// ===== SETTINGS MANAGEMENT =====
+async function saveSettings() {
+    const settings = {
+        emailNotifications: document.getElementById('emailNotifications')?.checked || false,
+        registrationOpen: document.getElementById('registrationOpen')?.checked || false,
+        maintenanceMode: document.getElementById('maintenanceMode')?.checked || false,
+        updatedAt: serverTimestamp()
+    };
+
+    try {
+        await setDoc(doc(db, 'config', 'settings'), settings, { merge: true });
+        showToast('✅ Settings saved!');
+        console.log('[Settings] Saved:', settings);
+    } catch (err) {
+        console.error('[Settings] Error saving:', err);
+        showToast('⚠️ Error saving settings');
+    }
+}
+window.saveSettings = saveSettings;
+
+async function loadSettings() {
+    try {
+        const docSnap = await getDoc(doc(db, 'config', 'settings'));
+        if (docSnap.exists()) {
+            const settings = docSnap.data();
+            if (document.getElementById('emailNotifications'))
+                document.getElementById('emailNotifications').checked = settings.emailNotifications || false;
+            if (document.getElementById('registrationOpen'))
+                document.getElementById('registrationOpen').checked = settings.registrationOpen !== false;
+            if (document.getElementById('maintenanceMode'))
+                document.getElementById('maintenanceMode').checked = settings.maintenanceMode || false;
+            console.log('[Settings] Loaded:', settings);
+        }
+    } catch (err) {
+        console.error('[Settings] Error loading:', err);
+    }
+}
+window.loadSettings = loadSettings;
 
 function handleAddEvent() { document.getElementById('createEventModal')?.classList.add('active'); }
 window.handleAddEvent = handleAddEvent;
@@ -1808,6 +2058,8 @@ window.handleLogin = function (event) {
             rateLimiters.login.reset('login');
             document.getElementById('login-page').style.display = 'none';
             document.getElementById('admin-dashboard').classList.add('active');
+            // Start session countdown timer
+            startSessionCountdown();
         })
         .catch((error) => {
             errorEl.style.display = 'block';
@@ -1835,7 +2087,87 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-onAuthStateChanged(auth, (user) => { if (user) resetInactivityTimer(); });
+onAuthStateChanged(auth, (user) => {
+    if (user) {
+        startSessionCountdown();
+    } else {
+        stopSessionTimer();
+    }
+});
+
+// ===== DASHBOARD STATS =====
+async function updateDashboardStats(eventCode = null) {
+    try {
+        const statsTeams = document.getElementById('stat-totalTeams');
+        const statsParticipants = document.getElementById('stat-participants');
+        const statsEvents = document.getElementById('stat-events');
+        const statsTeamsChange = document.getElementById('stat-teamsChange');
+        const statsParticipantsChange = document.getElementById('stat-participantsChange');
+        const statsEventsChange = document.getElementById('stat-eventsChange');
+
+        // Get events count
+        await loadAllEvents();
+        const activeEventCount = allEvents.filter(e => e.isActive).length;
+
+        if (eventCode) {
+            // Event-specific stats
+            const regQuery = query(collection(db, 'registrations'), where('eventCode', '==', eventCode));
+            const regSnapshot = await getDocs(regQuery);
+            const teamCount = regSnapshot.size;
+
+            // Calculate participants (avg 2.5 members per team)
+            let participantCount = 0;
+            regSnapshot.forEach(doc => {
+                const d = doc.data();
+                participantCount += [d.member1, d.member2, d.member3].filter(m => m?.name).length;
+            });
+
+            if (statsTeams) statsTeams.textContent = teamCount;
+            if (statsParticipants) statsParticipants.textContent = participantCount;
+            if (statsEvents) statsEvents.textContent = activeEventCount;
+
+            // Find event name
+            const eventName = allEvents.find(e => e.code === eventCode)?.name || eventCode;
+            if (statsTeamsChange) statsTeamsChange.innerHTML = `📊 <span style="color:var(--accent-1)">${SecurityUtils.escapeHtml(eventName)}</span>`;
+            if (statsParticipantsChange) statsParticipantsChange.innerHTML = `📊 <span style="color:var(--accent-1)">${SecurityUtils.escapeHtml(eventName)}</span>`;
+            if (statsEventsChange) statsEventsChange.textContent = 'Active events';
+        } else {
+            // Global stats (all events)
+            const allRegQuery = query(collection(db, 'registrations'));
+            const allRegSnapshot = await getDocs(allRegQuery);
+            const totalTeams = allRegSnapshot.size;
+
+            // Calculate total participants
+            let totalParticipants = 0;
+            allRegSnapshot.forEach(doc => {
+                const d = doc.data();
+                totalParticipants += [d.member1, d.member2, d.member3].filter(m => m?.name).length;
+            });
+
+            // Count new registrations this week
+            const weekAgo = new Date();
+            weekAgo.setDate(weekAgo.getDate() - 7);
+            let newThisWeek = 0;
+            allRegSnapshot.forEach(doc => {
+                const d = doc.data();
+                if (d.registeredAt) {
+                    const regDate = d.registeredAt.toDate ? d.registeredAt.toDate() : new Date(d.registeredAt.seconds * 1000);
+                    if (regDate > weekAgo) newThisWeek++;
+                }
+            });
+
+            if (statsTeams) statsTeams.textContent = totalTeams;
+            if (statsParticipants) statsParticipants.textContent = totalParticipants;
+            if (statsEvents) statsEvents.textContent = activeEventCount;
+            if (statsTeamsChange) statsTeamsChange.textContent = newThisWeek > 0 ? `↑ ${newThisWeek} new this week` : 'All events';
+            if (statsParticipantsChange) statsParticipantsChange.textContent = 'All events combined';
+            if (statsEventsChange) statsEventsChange.textContent = 'Active events';
+        }
+    } catch (error) {
+        console.error('Error updating dashboard stats:', error);
+    }
+}
+window.updateDashboardStats = updateDashboardStats;
 
 // ===== INIT =====
 window.addEventListener('DOMContentLoaded', async () => {
@@ -1844,4 +2176,13 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     // Load routing config
     loadRoutingConfig();
+
+    // Load settings from Firebase
+    loadSettings();
+
+    // Load dashboard stats (global view initially)
+    updateDashboardStats();
+
+    // Render bar chart (Item 3)
+    renderRegistrationsChart();
 });
