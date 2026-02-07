@@ -1708,7 +1708,7 @@
         .modal-content {
             background: var(--bg-secondary);
             border-radius: var(--radius-lg);
-            max-width: 850px;
+            max-width: 950px;
             width: 100%;
             max-height: 90vh;
             overflow: hidden;
@@ -1767,7 +1767,7 @@
             background: var(--bg-primary);
             border: 1px solid var(--glass-border);
             border-radius: var(--radius-md);
-            padding: 20px;
+            padding: 16px;
         }
 
         .form-section-title {
@@ -1782,7 +1782,7 @@
 
         .form-row {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: 2fr 2fr 1.2fr 1fr;
             gap: 12px;
             margin-bottom: 12px;
         }
