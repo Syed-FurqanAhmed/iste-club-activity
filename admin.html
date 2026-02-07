@@ -8,7 +8,7 @@
     <meta http-equiv="X-Frame-Options" content="DENY" />
     <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
     <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.google.com https://www.gstatic.com https://cdn.sheetjs.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com wss://*.firebaseio.com https://firestore.googleapis.com; frame-src https://www.google.com;" />
+        content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.google.com https://www.gstatic.com https://cdn.sheetjs.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com wss://*.firebaseio.com https://firestore.googleapis.com; frame-src https://www.google.com;" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <title>ISTE Admin Portal</title>
     <meta name="description" content="ISTE Club Admin Portal - Manage events, registrations, and winners." />
@@ -47,12 +47,16 @@
             </div>
             <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
                 <input type="hidden" id="editTeamId">
-                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px;">🏷️ Team Info</p>
+                <p
+                    style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px;">
+                    🏷️ Team Info</p>
                 <div class="form-group">
                     <label>Team Name</label>
                     <input type="text" id="editTeamName" placeholder="e.g. Code Crushers">
                 </div>
-                <p style="font-size: 12px; color: var(--text-muted); margin: 20px 0 16px; text-transform: uppercase; letter-spacing: 1px;">👤 Member 1</p>
+                <p
+                    style="font-size: 12px; color: var(--text-muted); margin: 20px 0 16px; text-transform: uppercase; letter-spacing: 1px;">
+                    👤 Member 1</p>
                 <div class="form-group">
                     <label>Name</label>
                     <input type="text" id="editM1Name" placeholder="Enter name">
@@ -61,7 +65,9 @@
                     <label>Details (USN • Dept)</label>
                     <input type="text" id="editM1Detail" placeholder="1CR23CS001 • CSE">
                 </div>
-                <p style="font-size: 12px; color: var(--text-muted); margin: 20px 0 16px; text-transform: uppercase; letter-spacing: 1px;">👤 Member 2</p>
+                <p
+                    style="font-size: 12px; color: var(--text-muted); margin: 20px 0 16px; text-transform: uppercase; letter-spacing: 1px;">
+                    👤 Member 2</p>
                 <div class="form-group">
                     <label>Name</label>
                     <input type="text" id="editM2Name" placeholder="Enter name">
@@ -70,7 +76,9 @@
                     <label>Details (USN • Dept)</label>
                     <input type="text" id="editM2Detail" placeholder="1CR23CS002 • CSE">
                 </div>
-                <p style="font-size: 12px; color: var(--text-muted); margin: 20px 0 16px; text-transform: uppercase; letter-spacing: 1px;">👤 Member 3</p>
+                <p
+                    style="font-size: 12px; color: var(--text-muted); margin: 20px 0 16px; text-transform: uppercase; letter-spacing: 1px;">
+                    👤 Member 3</p>
                 <div class="form-group">
                     <label>Name</label>
                     <input type="text" id="editM3Name" placeholder="Enter name (optional)">
@@ -79,7 +87,9 @@
                     <label>Details (USN • Dept)</label>
                     <input type="text" id="editM3Detail" placeholder="1CR23CS003 • CSE">
                 </div>
-                <p style="font-size: 12px; color: var(--text-muted); margin: 20px 0 16px; text-transform: uppercase; letter-spacing: 1px;">📧 Contact</p>
+                <p
+                    style="font-size: 12px; color: var(--text-muted); margin: 20px 0 16px; text-transform: uppercase; letter-spacing: 1px;">
+                    📧 Contact</p>
                 <div class="form-group">
                     <label>Team Email</label>
                     <input type="email" id="editEmail" placeholder="team@example.com">
@@ -104,7 +114,8 @@
                     <div class="icon">⚠️</div>
                     <p>Are you sure you want to delete</p>
                     <p><strong id="deleteTeamName">Team 1</strong>?</p>
-                    <p style="color: var(--accent-red); font-size: 12px; margin-top: 12px;">This action cannot be undone.</p>
+                    <p style="color: var(--accent-red); font-size: 12px; margin-top: 12px;">This action cannot be
+                        undone.</p>
                 </div>
             </div>
             <div class="modal-footer">
@@ -124,7 +135,8 @@
                 <input type="hidden" id="winnerTeamId">
                 <input type="hidden" id="winnerEventCode">
                 <p style="text-align: center; margin-bottom: 8px;">Setting winner for:</p>
-                <p style="text-align: center; font-weight: 700; font-size: 18px; color: var(--text-primary);" id="winnerTeamName">Team Name</p>
+                <p style="text-align: center; font-weight: 700; font-size: 18px; color: var(--text-primary);"
+                    id="winnerTeamName">Team Name</p>
                 <div class="winner-position-grid">
                     <button type="button" class="winner-position-btn gold" onclick="selectWinnerPosition(1, this)">
                         <div class="medal">🥇</div>
@@ -143,7 +155,8 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal('winnerModal')">Cancel</button>
-                <button class="btn btn-primary" onclick="confirmSetWinner()" id="confirmWinnerBtn">Set as Winner</button>
+                <button class="btn btn-primary" onclick="confirmSetWinner()" id="confirmWinnerBtn">Set as
+                    Winner</button>
             </div>
         </div>
     </div>
@@ -240,9 +253,12 @@
                 <div class="drawer-section">
                     <h4>Quick Actions</h4>
                     <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                        <button class="btn btn-primary" id="drawerEditBtn" onclick="editFromDrawer()" style="flex: 1;">✏️ Edit</button>
-                        <button class="btn btn-secondary" id="drawerVerifyBtn" onclick="verifyFromDrawer()" style="flex: 1;">✓ Verify</button>
-                        <button class="btn btn-danger" id="drawerDeleteBtn" onclick="deleteFromDrawer()" style="flex: 1;">🗑️ Delete</button>
+                        <button class="btn btn-primary" id="drawerEditBtn" onclick="editFromDrawer()"
+                            style="flex: 1;">✏️ Edit</button>
+                        <button class="btn btn-secondary" id="drawerVerifyBtn" onclick="verifyFromDrawer()"
+                            style="flex: 1;">✓ Verify</button>
+                        <button class="btn btn-danger" id="drawerDeleteBtn" onclick="deleteFromDrawer()"
+                            style="flex: 1;">🗑️ Delete</button>
                     </div>
                 </div>
             </div>
@@ -280,18 +296,16 @@
                 <form id="loginForm" onsubmit="handleLogin(event); return false;" autocomplete="on">
                     <div class="form-group">
                         <label for="username">👤 Email Address</label>
-                        <input type="email" id="username" name="username" placeholder="Enter your email" 
-                            required maxlength="254" minlength="5"
-                            autocomplete="email" 
+                        <input type="email" id="username" name="username" placeholder="Enter your email" required
+                            maxlength="254" minlength="5" autocomplete="email"
                             pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
                             title="Please enter a valid email address" />
                     </div>
                     <div class="form-group">
                         <label for="password">🔒 Password</label>
                         <div class="password-input-wrapper">
-                            <input type="password" id="password" name="password" placeholder="Enter password" 
-                                required minlength="8" maxlength="128"
-                                autocomplete="current-password" />
+                            <input type="password" id="password" name="password" placeholder="Enter password" required
+                                minlength="8" maxlength="128" autocomplete="current-password" />
                             <button type="button" class="password-toggle" id="passwordToggle"
                                 onclick="togglePasswordVisibility()" aria-label="Toggle password visibility">
                                 <svg class="eye-open" width="20" height="20" viewBox="0 0 24 24" fill="none"
@@ -311,7 +325,8 @@
                             </button>
                         </div>
                     </div>
-                    <div class="error-message" id="errorMessage" role="alert" aria-live="polite">❌ Invalid email or password</div>
+                    <div class="error-message" id="errorMessage" role="alert" aria-live="polite">❌ Invalid email or
+                        password</div>
                     <button type="submit" class="btn" id="loginBtn">Sign In</button>
                 </form>
             </div>
@@ -360,7 +375,20 @@
                             </div>
                         </div>
                     </div>
+                    <div class="session-timer" id="sessionTimer" title="Session timeout">
+                        <span class="timer-icon">⏱️</span>
+                        <span id="sessionTimeRemaining">30:00</span>
+                    </div>
                     <button id="logoutBtn" class="logout-btn" onclick="handleLogout()">Logout</button>
+                </div>
+            </div>
+
+            <!-- Session Warning Banner -->
+            <div class="session-warning" id="sessionWarning">
+                <div class="session-warning-content">
+                    <span>⚠️ Session expires in <strong id="warningCountdown">5:00</strong></span>
+                    <button class="stay-logged-in-btn" onclick="refreshSession()">Stay Logged In</button>
+                    <button class="dismiss-warning-btn" onclick="dismissSessionWarning()">✕</button>
                 </div>
             </div>
 
@@ -368,29 +396,28 @@
                 <div class="overview-card purple">
                     <div class="overview-card-icon">👥</div>
                     <h3>Total Teams</h3>
-                    <div class="number">18</div>
-                    <div class="change positive">↑ 3 new this week</div>
+                    <div class="number" id="stat-totalTeams">--</div>
+                    <div class="change positive" id="stat-teamsChange">Loading...</div>
                 </div>
                 <div class="overview-card green">
                     <div class="overview-card-icon">🎯</div>
                     <h3>Participants</h3>
-                    <div class="number">48</div>
-                    <div class="change positive">↑ 12 registered today</div>
+                    <div class="number" id="stat-participants">--</div>
+                    <div class="change positive" id="stat-participantsChange">Loading...</div>
                 </div>
                 <div class="overview-card orange">
                     <div class="overview-card-icon">🏆</div>
                     <h3>Events</h3>
-                    <div class="number">3</div>
-                    <div class="change info">Active events</div>
+                    <div class="number" id="stat-events">--</div>
+                    <div class="change info" id="stat-eventsChange">Loading...</div>
                 </div>
                 <div class="overview-card pink">
                     <div class="overview-card-icon">📸</div>
                     <h3>Gallery Photos</h3>
-                    <div class="number">24</div>
+                    <div class="number" id="stat-gallery">24</div>
                     <div class="change info">Uploaded</div>
                 </div>
             </div>
-
             <div class="content-grid">
                 <div class="event-tabs-container">
                     <div class="event-tabs-header">
@@ -440,7 +467,8 @@
                             </div>
                         </div>
 
-                        <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Select an event to
+                        <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Select an
+                            event to
                             manage:</p>
                         <div class="event-selector-grid" id="eventSelectorGrid">
                             <!-- Event cards will be dynamically generated -->
@@ -524,11 +552,21 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Bar Chart Card -->
+            <div class="chart-card">
+                <h3>📊 Registrations by Event</h3>
+                <div class="chart-container">
+                    <canvas id="registrationsChart"></canvas>
+                </div>
+            </div>
         </div>
     </div>
 
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="security.js"></script>
     <script src="js/admin.js" type="module"></script>
 </body>
+
 </html>
