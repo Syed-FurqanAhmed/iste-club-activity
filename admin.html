@@ -16,7 +16,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
         rel="stylesheet" />
     <link rel="stylesheet" href="css/admin.css" />
 </head>
@@ -215,70 +215,177 @@
         </div>
     </div>
 
-    <!-- Team Detail Drawer -->
-    <div class="drawer-overlay" id="teamDrawerOverlay">
-        <div class="team-drawer" id="teamDrawer">
-            <div class="drawer-header">
-                <h3>📋 Team Details</h3>
-                <button class="drawer-close" onclick="closeTeamDrawer()">&times;</button>
+    <!-- Admin Management Modal (Super Admin Only) -->
+    <div class="modal-overlay" id="adminManagementModal">
+        <div class="modal" style="max-width: 700px;">
+            <div class="modal-header">
+                <span class="modal-title">👥 Admin Management</span>
+                <button class="modal-close" onclick="closeModal('adminManagementModal')">&times;</button>
             </div>
-            <div class="drawer-body">
-                <div class="drawer-section">
-                    <h4>Team Information</h4>
-                    <div class="drawer-info-item">
-                        <span class="drawer-info-label">Team Name</span>
-                        <span class="drawer-info-value" id="drawerTeamName">—</span>
+            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                <!-- Add New Admin Form -->
+                <div class="admin-form-section">
+                    <h4 style="margin-bottom: 16px; color: var(--text-primary);">➕ Add New Admin</h4>
+                    <div class="form-group">
+                        <label>Admin Email (must exist in Firebase Auth)</label>
+                        <input type="email" id="newAdminEmail" placeholder="admin@example.com">
                     </div>
-                    <div class="drawer-info-item">
-                        <span class="drawer-info-label">Status</span>
-                        <span class="drawer-info-value" id="drawerStatus">—</span>
+                    <div class="form-group">
+                        <label>Display Name</label>
+                        <input type="text" id="newAdminDisplayName" placeholder="John Doe">
                     </div>
-                    <div class="drawer-info-item">
-                        <span class="drawer-info-label">Email</span>
-                        <span class="drawer-info-value" id="drawerEmail">—</span>
+                    <div class="form-group">
+                        <label>Role</label>
+                        <select id="newAdminRole" onchange="toggleEventAssignment()">
+                            <option value="normal">🟡 Normal Admin</option>
+                            <option value="super">🔴 Super Admin</option>
+                        </select>
                     </div>
-                    <div class="drawer-info-item">
-                        <span class="drawer-info-label">Registered</span>
-                        <span class="drawer-info-value" id="drawerRegisteredAt">—</span>
+                    <div class="form-group" id="eventAssignmentGroup">
+                        <label>Assign Events (Normal Admin only)</label>
+                        <div class="event-checkboxes" id="eventCheckboxes">
+                            <!-- Event checkboxes will be dynamically populated -->
+                        </div>
                     </div>
+                    <div class="form-group" id="routingPermissionGroup" style="margin-top: 12px;">
+                        <label class="event-checkbox-item" style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="newAdminCanManageRouting">
+                            <span>🎯 Can Manage Registration Routing</span>
+                        </label>
+                        <small style="color: var(--text-muted); font-size: 11px; margin-top: 4px; display: block;">
+                            Allow this admin to change where new registrations are routed
+                        </small>
+                    </div>
+                    <button class="btn btn-primary" onclick="addNewAdmin()" style="width: 100%;">
+                        ➕ Add Admin
+                    </button>
                 </div>
 
-                <div class="drawer-section">
-                    <h4>Team Members</h4>
-                    <div id="drawerMembers">
-                        <!-- Members will be populated dynamically -->
+                <hr style="border: none; border-top: 1px solid var(--border-color); margin: 24px 0;">
+
+                <!-- Current Admins List -->
+                <div class="admin-list-section">
+                    <h4 style="margin-bottom: 16px; color: var(--text-primary);">📋 Current Admins</h4>
+                    <div class="admin-list-container" id="adminListContainer">
+                        <div style="text-align: center; padding: 20px; color: var(--text-muted);">
+                            Loading admins...
+                        </div>
                     </div>
                 </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('adminManagementModal')">Close</button>
+            </div>
+        </div>
+    </div>
 
-                <div class="drawer-section">
-                    <h4>Quick Actions</h4>
-                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                        <button class="btn btn-primary" id="drawerEditBtn" onclick="editFromDrawer()"
-                            style="flex: 1;">✏️ Edit</button>
-                        <button class="btn btn-secondary" id="drawerVerifyBtn" onclick="verifyFromDrawer()"
-                            style="flex: 1;">✓ Verify</button>
-                        <button class="btn btn-danger" id="drawerDeleteBtn" onclick="deleteFromDrawer()"
-                            style="flex: 1;">🗑️ Delete</button>
+    <!-- Edit Admin Modal -->
+    <div class="modal-overlay" id="editAdminModal">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <span class="modal-title">✏️ Edit Admin Permissions</span>
+                <button class="modal-close" onclick="closeModal('editAdminModal')">&times;</button>
+            </div>
+            <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+                <input type="hidden" id="editAdminUid">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="editAdminEmail" disabled
+                        style="background: var(--bg-tertiary); cursor: not-allowed;">
+                </div>
+                <div class="form-group">
+                    <label>Role</label>
+                    <select id="editAdminRole" onchange="toggleEditEventAssignment()">
+                        <option value="normal">🟡 Normal Admin</option>
+                        <option value="super">🔴 Super Admin</option>
+                    </select>
+                </div>
+                <div class="form-group" id="editEventAssignmentGroup">
+                    <label>Assigned Events</label>
+                    <div class="event-checkboxes" id="editEventCheckboxes">
+                        <!-- Dynamic event checkboxes -->
                     </div>
+                </div>
+                <div class="form-group" id="editRoutingPermissionGroup" style="margin-top: 12px;">
+                    <label class="event-checkbox-item" style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="editAdminCanManageRouting">
+                        <span>🎯 Can Manage Registration Routing</span>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('editAdminModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveAdminChanges()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Detail Drawer -->
+    <div class="team-drawer-overlay" id="teamDrawerOverlay" onclick="closeTeamDrawer()"></div>
+    <div class="team-drawer" id="teamDrawer">
+        <div class="drawer-header">
+            <h3>� Team Details</h3>
+            <button class="drawer-close" onclick="closeTeamDrawer()">×</button>
+        </div>
+        <div class="drawer-content">
+            <!-- Team Info Section -->
+            <div class="drawer-section">
+                <div class="drawer-section-title">TEAM INFORMATION</div>
+                <div class="drawer-info-row">
+                    <span class="drawer-label">Team Name</span>
+                    <span class="drawer-value" id="drawerTeamName">-</span>
+                </div>
+                <div class="drawer-info-row">
+                    <span class="drawer-label">Status</span>
+                    <span class="drawer-value" id="drawerStatus">-</span>
+                </div>
+                <div class="drawer-info-row">
+                    <span class="drawer-label">Email</span>
+                    <span class="drawer-value" id="drawerEmail">-</span>
+                </div>
+                <div class="drawer-info-row">
+                    <span class="drawer-label">Registered</span>
+                    <span class="drawer-value" id="drawerRegisteredAt">-</span>
+                </div>
+            </div>
+
+            <!-- Members Section -->
+            <div class="drawer-section">
+                <div class="drawer-section-title">TEAM MEMBERS</div>
+                <div id="drawerMembers">
+                    <!-- Member cards dynamically populated -->
+                </div>
+            </div>
+
+            <!-- Quick Actions Section -->
+            <div class="drawer-section">
+                <div class="drawer-section-title">QUICK ACTIONS</div>
+                <div class="drawer-quick-actions">
+                    <button class="drawer-action-btn edit" id="drawerEditBtn" onclick="editFromDrawer()">✏️
+                        Edit</button>
+                    <button class="drawer-action-btn verify" id="drawerVerifyBtn" onclick="verifyFromDrawer()">✓
+                        Verify</button>
+                    <button class="drawer-action-btn delete" id="drawerDeleteBtn" onclick="deleteFromDrawer()">🗑️
+                        Delete</button>
                 </div>
             </div>
         </div>
     </div>
 
     <nav id="navbar">
-        <a href="index.html" class="logo">
-            <img src="images/download.png" alt="ISTE Logo" />
+        <a href="../index.html" class="logo">
+            <img src="../images/download.png" alt="ISTE Logo" />
             <div class="logo-text">
                 <span>ISTE</span>
                 <small>Admin Portal</small>
             </div>
         </a>
         <div class="nav-links" id="navLinks">
-            <a href="index.html">Home</a>
-            <a href="index.html#about">About</a>
-            <a href="index.html#activity">Events</a>
-            <a href="index.html#winners">Winners</a>
-            <a href="index.html#gallery">Gallery</a>
+            <a href="../index.html">Home</a>
+            <a href="../index.html#about">About</a>
+            <a href="../index.html">Events</a>
+            <a href="../index.html#winners">Winners</a>
+            <a href="../index.html#gallery">Gallery</a>
             <a href="#" class="active">Admin</a>
         </div>
         <div class="hamburger" id="hamburger" onclick="toggleNav()" aria-label="Toggle navigation menu" role="button"
@@ -289,48 +396,42 @@
         </div>
     </nav>
 
-    <div class="admin-wrapper">
-        <div id="login-page" class="login-container">
-            <div class="login-box">
-                <h2>🔐 Admin Login</h2>
-                <form id="loginForm" onsubmit="handleLogin(event); return false;" autocomplete="on">
-                    <div class="form-group">
-                        <label for="username">👤 Email Address</label>
-                        <input type="email" id="username" name="username" placeholder="Enter your email" required
-                            maxlength="254" minlength="5" autocomplete="email"
-                            pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-                            title="Please enter a valid email address" />
+    <!-- Login Page (shown by default, hidden after auth) -->
+    <div class="login-page" id="login-page">
+        <div class="login-container">
+            <div class="login-header">
+                <div class="login-logo">🛡️</div>
+                <h1>Admin Portal</h1>
+                <p>ISTE Club Management System</p>
+            </div>
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="login-form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" placeholder="Username" required
+                        autocomplete="username">
+                </div>
+                <div class="login-form-group">
+                    <label for="password">Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="password" name="password" placeholder="Password" required
+                            autocomplete="current-password">
+                        <button type="button" class="password-toggle" onclick="togglePasswordVisibility()">👁️</button>
                     </div>
-                    <div class="form-group">
-                        <label for="password">🔒 Password</label>
-                        <div class="password-input-wrapper">
-                            <input type="password" id="password" name="password" placeholder="Enter password" required
-                                minlength="8" maxlength="128" autocomplete="current-password" />
-                            <button type="button" class="password-toggle" id="passwordToggle"
-                                onclick="togglePasswordVisibility()" aria-label="Toggle password visibility">
-                                <svg class="eye-open" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round">
-                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                                    <circle cx="12" cy="12" r="3"></circle>
-                                </svg>
-                                <svg class="eye-closed" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round" style="display: none;">
-                                    <path
-                                        d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24">
-                                    </path>
-                                    <line x1="1" y1="1" x2="23" y2="23"></line>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="error-message" id="errorMessage" role="alert" aria-live="polite">❌ Invalid email or
-                        password</div>
-                    <button type="submit" class="btn" id="loginBtn">Sign In</button>
-                </form>
+                </div>
+                <div class="login-error" id="errorMessage" style="display: none;">
+                    <span>Invalid credentials</span>
+                </div>
+                <button type="submit" class="login-btn" id="loginBtn">
+                    <span class="login-btn-text">Sign In</span>
+                </button>
+            </form>
+            <div class="login-footer">
+                <p>Authorized personnel only</p>
             </div>
         </div>
+    </div>
+
+    <div class="admin-wrapper">
 
         <div id="admin-dashboard" class="dashboard">
             <div class="dashboard-header">
@@ -339,6 +440,7 @@
                     <p>Welcome back! Here's what's happening with your events.</p>
                 </div>
                 <div style="display: flex; align-items: center; gap: 12px;">
+                    <span id="admin-role-badge" class="role-badge-container"></span>
                     <div class="settings-wrapper">
                         <button class="settings-btn" onclick="toggleSettingsDropdown()">⚙️ Settings</button>
                         <div class="settings-dropdown" id="settingsDropdown">
@@ -414,11 +516,12 @@
                 <div class="overview-card pink">
                     <div class="overview-card-icon">📸</div>
                     <h3>Gallery Photos</h3>
-                    <div class="number" id="stat-gallery">24</div>
-                    <div class="change info">Uploaded</div>
+                    <div class="number" id="stat-gallery">--</div>
+                    <div class="change info" id="stat-galleryChange">Loading...</div>
                 </div>
             </div>
-            <div class="content-grid">
+
+            <div class="content-grid three-column">
                 <div class="event-tabs-container">
                     <div class="event-tabs-header">
                         <h3>📋 Event Management</h3>
@@ -467,8 +570,7 @@
                             </div>
                         </div>
 
-                        <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Select an
-                            event to
+                        <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Select an event to
                             manage:</p>
                         <div class="event-selector-grid" id="eventSelectorGrid">
                             <!-- Event cards will be dynamically generated -->
@@ -500,6 +602,67 @@
                     </div>
                 </div>
 
+                <!-- Center Hub Section -->
+                <div class="center-hub">
+                    <div class="hub-card welcome-card">
+                        <div class="hub-card-header">
+                            <span class="hub-icon">🎯</span>
+                            <h3>Analytics Hub</h3>
+                        </div>
+                        <p class="hub-description">Real-time insights and trends across all events</p>
+                    </div>
+
+                    <div class="hub-card stats-summary">
+                        <div class="mini-stat">
+                            <span class="mini-stat-value" id="totalTeamsToday">+5</span>
+                            <span class="mini-stat-label">New Today</span>
+                        </div>
+                        <div class="mini-stat">
+                            <span class="mini-stat-value" id="pendingVerifications">12</span>
+                            <span class="mini-stat-label">Pending</span>
+                        </div>
+                        <div class="mini-stat">
+                            <span class="mini-stat-value" id="verificationRate">78%</span>
+                            <span class="mini-stat-label">Verified</span>
+                        </div>
+                    </div>
+
+                    <div class="hub-card upcoming-deadlines">
+                        <h4>📅 Upcoming Deadlines</h4>
+                        <div class="deadline-item">
+                            <span class="deadline-event">UI Battle</span>
+                            <span class="deadline-date urgent">Feb 10</span>
+                        </div>
+                        <div class="deadline-item">
+                            <span class="deadline-event">PromptQuest</span>
+                            <span class="deadline-date">Feb 15</span>
+                        </div>
+                        <div class="deadline-item">
+                            <span class="deadline-event">Hackathon</span>
+                            <span class="deadline-date">Feb 20</span>
+                        </div>
+                    </div>
+
+                    <div class="hub-card top-performers">
+                        <h4>🏆 Top Events This Week</h4>
+                        <div class="performer-item">
+                            <span class="performer-rank">1</span>
+                            <span class="performer-name">UI Battle</span>
+                            <span class="performer-count">15 teams</span>
+                        </div>
+                        <div class="performer-item">
+                            <span class="performer-rank">2</span>
+                            <span class="performer-name">Testing</span>
+                            <span class="performer-count">4 teams</span>
+                        </div>
+                        <div class="performer-item">
+                            <span class="performer-rank">3</span>
+                            <span class="performer-name">PromptQuest</span>
+                            <span class="performer-count">0 teams</span>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="sidebar">
                     <div class="sidebar-card">
                         <h3>⚡ Quick Actions</h3>
@@ -524,6 +687,16 @@
                                 <p>Notify participants</p>
                             </div>
                         </div>
+                        <div class="quick-action" id="admin-management-action" onclick="openAdminManagement()"
+                            style="display: none;">
+                            <div class="quick-action-icon" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">
+                                👥</div>
+                            <div class="quick-action-text">
+                                <h4>Manage Admins</h4>
+                                <p>Add/remove admins</p>
+                            </div>
+                        </div>
+
                     </div>
 
                     <div class="sidebar-card">
@@ -550,14 +723,14 @@
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <!-- Bar Chart Card -->
-            <div class="chart-card">
-                <h3>📊 Registrations by Event</h3>
-                <div class="chart-container">
-                    <canvas id="registrationsChart"></canvas>
+                    <!-- Bar Chart Card -->
+                    <div class="chart-card">
+                        <h3>📊 Registrations by Event</h3>
+                        <div class="chart-container">
+                            <canvas id="registrationsChart"></canvas>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -565,8 +738,8 @@
 
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <script src="security.js"></script>
-    <script src="js/admin.js" type="module"></script>
+    <script src="../security.js"></script>
+    <script src="js/admin1.js" type="module"></script>
 </body>
 
 </html>
