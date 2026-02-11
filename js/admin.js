@@ -1,7 +1,7 @@
 // ===== FIREBASE IMPORTS =====
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-import { getFirestore, collection, getDocs, doc, deleteDoc, updateDoc, setDoc, getDoc, orderBy, query, where, addDoc, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, deleteDoc, updateDoc, setDoc, getDoc, orderBy, query, where, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
 // ===== SECURITY: Input Sanitization =====
 const SecurityUtils = {
@@ -144,6 +144,178 @@ let currentDrawerTeamId = null;
 let currentDrawerTeamData = null;
 let allEvents = []; // Store all loaded events
 
+// ===== ADMIN ROLE MANAGEMENT =====
+// Stores the current admin's role and permissions
+const AdminPermissions = {
+    currentAdmin: null,
+
+    // Set the current admin data after login
+    setAdmin(adminData) {
+        this.currentAdmin = adminData;
+        console.log('[AdminPermissions] Set admin:', adminData?.email, 'Role:', adminData?.role);
+    },
+
+    // Clear admin data on logout
+    clear() {
+        this.currentAdmin = null;
+    },
+
+    // Check if current user is super admin
+    isSuperAdmin() {
+        return this.currentAdmin?.role === 'super';
+    },
+
+    // Check if current user is normal admin
+    isNormalAdmin() {
+        return this.currentAdmin?.role === 'normal';
+    },
+
+    // Check if user can access a specific event
+    canAccessEvent(eventCode) {
+        if (!this.currentAdmin) return false;
+        if (this.isSuperAdmin()) return true;
+        return this.currentAdmin.assignedEvents?.includes(eventCode) || false;
+    },
+
+    // Check if user can delete (super admin only)
+    canDelete() {
+        return this.isSuperAdmin();
+    },
+
+    // Check if user can manage other admins
+    canManageAdmins() {
+        return this.isSuperAdmin();
+    },
+
+    // Check if user can access trash
+    canAccessTrash() {
+        return this.isSuperAdmin();
+    },
+
+    // Check if user can manage config
+    canManageConfig() {
+        return this.isSuperAdmin();
+    },
+
+    // Check if user can manage registration routing
+    canManageRouting() {
+        if (this.isSuperAdmin()) return true;
+        return this.currentAdmin?.canManageRouting || false;
+    },
+
+    // Check if user can create new events
+    canCreateEvents() {
+        return this.isSuperAdmin();
+    },
+
+    // Get list of accessible events for normal admin
+    getAccessibleEvents() {
+        if (this.isSuperAdmin()) return null; // null = all events
+        return this.currentAdmin?.assignedEvents || [];
+    },
+
+    // Get current admin info
+    getAdminInfo() {
+        return {
+            email: this.currentAdmin?.email || 'Unknown',
+            role: this.currentAdmin?.role || 'unknown',
+            displayName: this.currentAdmin?.displayName || 'Admin',
+            assignedEvents: this.currentAdmin?.assignedEvents || []
+        };
+    }
+};
+window.AdminPermissions = AdminPermissions;
+
+// Check admin role from Firestore after Firebase Auth login
+// Supports two lookup methods:
+// 1. By UID (for existing admins already bound)
+// 2. By email query (for newly added admins, then binds their UID)
+async function checkAdminRole(user) {
+    if (!user) {
+        console.error('[checkAdminRole] No user provided');
+        return null;
+    }
+
+    try {
+        // First, try to find by UID (fastest, for already-bound admins)
+        let adminDocRef = doc(db, 'admins', user.uid);
+        let adminDoc = await getDoc(adminDocRef);
+        let adminData = null;
+        let docId = user.uid;
+
+        if (adminDoc.exists()) {
+            adminData = adminDoc.data();
+            console.log('[checkAdminRole] Found admin by UID');
+        } else {
+            // Fallback: Query by email (for newly added admins)
+            console.log('[checkAdminRole] Not found by UID, searching by email...');
+            const adminsRef = collection(db, 'admins');
+            const emailQuery = query(adminsRef, where('email', '==', user.email));
+            const querySnapshot = await getDocs(emailQuery);
+
+            if (!querySnapshot.empty) {
+                // Found by email - get the first matching doc
+                const foundDoc = querySnapshot.docs[0];
+                adminData = foundDoc.data();
+                docId = foundDoc.id;
+                console.log('[checkAdminRole] Found admin by email, doc ID:', docId);
+
+                // Migrate: Create new doc with proper UID, delete old one
+                if (docId !== user.uid) {
+                    console.log('[checkAdminRole] Migrating admin doc to use UID:', user.uid);
+                    await setDoc(doc(db, 'admins', user.uid), {
+                        ...adminData,
+                        uid: user.uid,
+                        migratedFrom: docId,
+                        migratedAt: serverTimestamp()
+                    });
+                    // Delete old document
+                    await deleteDoc(doc(db, 'admins', docId));
+                    console.log('[checkAdminRole] Migration complete');
+                }
+            }
+        }
+
+        if (!adminData) {
+            console.warn('[checkAdminRole] User not found in admins collection:', user.email);
+            return null;
+        }
+
+        // Check if admin is active
+        if (!adminData.isActive) {
+            console.warn('[checkAdminRole] Admin account is deactivated:', user.email);
+            return null;
+        }
+
+        // Validate role
+        if (!['super', 'normal'].includes(adminData.role)) {
+            console.error('[checkAdminRole] Invalid role:', adminData.role);
+            return null;
+        }
+
+        const result = {
+            uid: user.uid,
+            email: user.email,
+            role: adminData.role,
+            displayName: adminData.displayName || user.email,
+            assignedEvents: adminData.assignedEvents || [],
+            canManageRouting: adminData.canManageRouting || false,
+            isActive: adminData.isActive
+        };
+
+        // Store in AdminPermissions
+        AdminPermissions.setAdmin(result);
+
+        console.log('[checkAdminRole] Admin verified:', result.email, 'Role:', result.role);
+        return result;
+
+    } catch (error) {
+        console.error('[checkAdminRole] Error checking admin role:', error);
+        return null;
+    }
+}
+window.checkAdminRole = checkAdminRole;
+
 // ===== TOAST =====
 function showToast(message) {
     const toast = document.getElementById('toast');
@@ -164,84 +336,85 @@ if (window.RateLimiter && window.SECURITY_CONFIG) {
     });
 }
 
-// ===== SESSION TIMEOUT (ENHANCED) =====
+// ===== SESSION TIMEOUT WITH VISUAL COUNTDOWN =====
 let inactivityTimer;
 let countdownInterval;
-let sessionTimeRemaining = 30 * 60; // 30 minutes in seconds
-const SESSION_TIMEOUT_SECONDS = 30 * 60;
-const SESSION_WARNING_SECONDS = 5 * 60; // Show warning at 5 minutes
+const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
+const WARNING_THRESHOLD_MS = 5 * 60 * 1000; // Show warning at 5 min
+const DANGER_THRESHOLD_MS = 2 * 60 * 1000; // Red at 2 min
+let sessionEndTime = 0;
 
-function formatTime(seconds) {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+function formatTime(ms) {
+    if (ms <= 0) return '0:00';
+    const totalSeconds = Math.ceil(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
-function updateSessionTimerUI() {
-    const timerElement = document.getElementById('sessionTimeRemaining');
+function updateTimerDisplay() {
+    const now = Date.now();
+    const remaining = Math.max(0, sessionEndTime - now);
+    const timerEl = document.getElementById('sessionTimeRemaining');
     const timerContainer = document.getElementById('sessionTimer');
     const warningBanner = document.getElementById('sessionWarning');
     const warningCountdown = document.getElementById('warningCountdown');
 
-    if (timerElement) {
-        timerElement.textContent = formatTime(sessionTimeRemaining);
+    if (timerEl) {
+        timerEl.textContent = formatTime(remaining);
     }
 
-    // Update timer styling based on time remaining
+    // Update timer visual state
     if (timerContainer) {
-        timerContainer.classList.remove('warning', 'critical');
-        if (sessionTimeRemaining <= 60) {
-            timerContainer.classList.add('critical');
-        } else if (sessionTimeRemaining <= SESSION_WARNING_SECONDS) {
-            timerContainer.classList.add('warning');
+        timerContainer.classList.remove('warning', 'danger');
+        if (remaining <= DANGER_THRESHOLD_MS) {
+            timerContainer.classList.add('danger');
+        } else if (remaining <= WARNING_THRESHOLD_MS + 5 * 60 * 1000) {
+            // Warning at 10 minutes
+            if (remaining <= 10 * 60 * 1000) {
+                timerContainer.classList.add('warning');
+            }
         }
     }
 
     // Show/hide warning banner
     if (warningBanner) {
-        if (sessionTimeRemaining <= SESSION_WARNING_SECONDS && sessionTimeRemaining > 0) {
+        if (remaining <= WARNING_THRESHOLD_MS && remaining > 0) {
             warningBanner.classList.add('active');
             if (warningCountdown) {
-                warningCountdown.textContent = formatTime(sessionTimeRemaining);
+                warningCountdown.textContent = formatTime(remaining);
             }
         } else {
             warningBanner.classList.remove('active');
         }
     }
-}
 
-function startSessionCountdown() {
-    sessionTimeRemaining = SESSION_TIMEOUT_SECONDS;
-    updateSessionTimerUI();
-
-    // Clear existing interval
-    if (countdownInterval) clearInterval(countdownInterval);
-
-    countdownInterval = setInterval(() => {
-        if (auth.currentUser) {
-            sessionTimeRemaining--;
-            updateSessionTimerUI();
-
-            if (sessionTimeRemaining <= 0) {
-                clearInterval(countdownInterval);
-                signOut(auth).then(() => showToast('⏱️ Session expired due to inactivity'));
-            }
-        }
-    }, 1000);
-}
-
-function resetInactivityTimer() {
-    clearTimeout(inactivityTimer);
-    if (auth.currentUser) {
-        sessionTimeRemaining = SESSION_TIMEOUT_SECONDS;
-        updateSessionTimerUI();
+    // Auto logout at 0
+    if (remaining <= 0 && auth.currentUser) {
+        clearInterval(countdownInterval);
+        signOut(auth).then(() => showToast('⏰ Session expired due to inactivity'));
     }
 }
 
+function resetInactivityTimer() {
+    // Reset the session end time
+    sessionEndTime = Date.now() + SESSION_TIMEOUT_MS;
+
+    // Clear existing interval and start fresh
+    clearInterval(countdownInterval);
+    countdownInterval = setInterval(updateTimerDisplay, 1000);
+
+    // Remove warning state
+    const warningBanner = document.getElementById('sessionWarning');
+    if (warningBanner) warningBanner.classList.remove('active');
+
+    // Immediate update
+    updateTimerDisplay();
+}
+
 function refreshSession() {
-    sessionTimeRemaining = SESSION_TIMEOUT_SECONDS;
-    updateSessionTimerUI();
-    showToast('✅ Session refreshed!');
+    resetInactivityTimer();
+    showToast('✅ Session refreshed! 30 minutes remaining.');
 }
 window.refreshSession = refreshSession;
 
@@ -251,24 +424,49 @@ function dismissSessionWarning() {
 }
 window.dismissSessionWarning = dismissSessionWarning;
 
-function stopSessionTimer() {
-    if (countdownInterval) clearInterval(countdownInterval);
-    clearTimeout(inactivityTimer);
-    sessionTimeRemaining = SESSION_TIMEOUT_SECONDS;
-    updateSessionTimerUI();
-}
+// Session timer counts down from login. Use "Stay Logged In" button to refresh.
 
-// Timer no longer resets on activity - only via "Stay Logged In" button
-// This provides true session timeout behavior
+// ===== SETTINGS DROPDOWN =====
+function toggleSettingsDropdown() {
+    const dropdown = document.getElementById('settingsDropdown');
+    if (dropdown) {
+        dropdown.classList.toggle('active');
+    }
+}
+window.toggleSettingsDropdown = toggleSettingsDropdown;
+
+// Close settings dropdown when clicking outside
+document.addEventListener('click', (e) => {
+    const dropdown = document.getElementById('settingsDropdown');
+    const btn = document.querySelector('.settings-btn');
+    if (dropdown && btn && !dropdown.contains(e.target) && !btn.contains(e.target)) {
+        dropdown.classList.remove('active');
+    }
+});
+
+function saveSettings() {
+    showToast('✅ Settings saved');
+}
+window.saveSettings = saveSettings;
 
 // ===== LOGOUT HANDLER =====
 function handleLogout() {
     signOut(auth)
         .then(() => {
-            stopSessionTimer();
+            clearInterval(countdownInterval);
+            sessionEndTime = 0;
+            AdminPermissions.clear(); // Clear admin permissions on logout
             document.getElementById('admin-dashboard').classList.remove('active');
             document.getElementById('login-page').style.display = 'flex';
-            document.getElementById('sessionWarning')?.classList.remove('active');
+
+            // Reset timer display
+            const timerEl = document.getElementById('sessionTimeRemaining');
+            if (timerEl) timerEl.textContent = '30:00';
+            const timerContainer = document.getElementById('sessionTimer');
+            if (timerContainer) timerContainer.classList.remove('warning', 'danger');
+            const warningBanner = document.getElementById('sessionWarning');
+            if (warningBanner) warningBanner.classList.remove('active');
+
             showToast('Logged out successfully');
             console.log('Logout successful');
         })
@@ -278,6 +476,404 @@ function handleLogout() {
         });
 }
 window.handleLogout = handleLogout;
+
+// ===== ROLE-BASED UI VISIBILITY =====
+function applyRoleBasedUI() {
+    const isSuperAdmin = AdminPermissions.isSuperAdmin();
+    const accessibleEvents = AdminPermissions.getAccessibleEvents();
+
+    console.log('[applyRoleBasedUI] Super Admin:', isSuperAdmin, 'Accessible Events:', accessibleEvents);
+
+    // === DELETE BUTTONS: Only visible to super admin ===
+    document.querySelectorAll('.action-btn.delete, .delete-btn, [data-action="delete"]').forEach(btn => {
+        btn.style.display = isSuperAdmin ? '' : 'none';
+    });
+
+    // === TRASH BUTTON: Only visible to super admin ===
+    const trashBtn = document.getElementById('trash-btn') || document.querySelector('[onclick*="openTrashView"]');
+    if (trashBtn) {
+        trashBtn.style.display = isSuperAdmin ? '' : 'none';
+    }
+
+    // === ADMIN MANAGEMENT TAB: Only visible to super admin ===
+    const adminMgmtTab = document.getElementById('admin-management-tab');
+    if (adminMgmtTab) {
+        adminMgmtTab.style.display = isSuperAdmin ? '' : 'none';
+    }
+
+    // === BULK DELETE BUTTON: Only visible to super admin ===
+    const bulkDeleteBtn = document.querySelector('[onclick*="bulkDeleteSelected"]');
+    if (bulkDeleteBtn) {
+        bulkDeleteBtn.style.display = isSuperAdmin ? '' : 'none';
+    }
+
+    // === CONFIG SETTINGS: Only visible to super admin ===
+    const configSection = document.getElementById('config-section');
+    if (configSection) {
+        configSection.style.display = isSuperAdmin ? '' : 'none';
+    }
+
+    // === FILTER EVENTS FOR NORMAL ADMINS ===
+    if (!isSuperAdmin && accessibleEvents) {
+        document.querySelectorAll('.event-card, .event-tab[data-event]').forEach(card => {
+            const eventCode = card.dataset.event;
+            if (eventCode && !accessibleEvents.includes(eventCode)) {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    // === UPDATE HEADER WITH ROLE BADGE ===
+    const headerRoleBadge = document.getElementById('admin-role-badge');
+    if (headerRoleBadge) {
+        const info = AdminPermissions.getAdminInfo();
+        headerRoleBadge.innerHTML = isSuperAdmin
+            ? '<span class="role-badge super">🔴 Super Admin</span>'
+            : `<span class="role-badge normal">🟡 Admin</span>`;
+    }
+
+    // === DISABLE DELETE IN DRAWER FOR NORMAL ADMINS ===
+    const drawerDeleteBtn = document.getElementById('drawerDeleteBtn');
+    if (drawerDeleteBtn) {
+        drawerDeleteBtn.style.display = isSuperAdmin ? '' : 'none';
+    }
+
+    // === ADMIN MANAGEMENT QUICK ACTION: Only visible to super admin ===
+    const adminMgmtAction = document.getElementById('admin-management-action');
+    if (adminMgmtAction) {
+        adminMgmtAction.style.display = isSuperAdmin ? '' : 'none';
+    }
+
+    // === CREATE EVENT BUTTON: Only visible to super admin ===
+    const createEventBtn = document.querySelector('[onclick*="openCreateEventModal"]');
+    if (createEventBtn) {
+        createEventBtn.style.display = isSuperAdmin ? '' : 'none';
+    }
+
+    // === REGISTRATION ROUTING CARD: Only visible to admins with routing permission ===
+    const routingCard = document.querySelector('.routing-config-card');
+    if (routingCard) {
+        routingCard.style.display = AdminPermissions.canManageRouting() ? '' : 'none';
+    }
+}
+window.applyRoleBasedUI = applyRoleBasedUI;
+
+// ===== ADMIN MANAGEMENT FUNCTIONS =====
+async function openAdminManagement() {
+    if (!AdminPermissions.isSuperAdmin()) {
+        showToast('❌ Access denied. Super Admin only.');
+        return;
+    }
+
+    document.getElementById('adminManagementModal').classList.add('active');
+    populateEventCheckboxes();
+    await loadAdminList();
+}
+window.openAdminManagement = openAdminManagement;
+
+async function loadAdminList() {
+    const container = document.getElementById('adminListContainer');
+    container.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">Loading admins...</div>';
+
+    try {
+        const adminsRef = collection(db, 'admins');
+        const snapshot = await getDocs(adminsRef);
+
+        if (snapshot.empty) {
+            container.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--text-muted);">No admins found</div>';
+            return;
+        }
+
+        let html = '';
+        snapshot.forEach(docSnap => {
+            const admin = docSnap.data();
+            const roleClass = admin.role === 'super' ? 'super' : 'normal';
+            const roleLabel = admin.role === 'super' ? '🔴 Super' : '🟡 Normal';
+            const eventsText = admin.role === 'super' ? 'All events' : (admin.assignedEvents?.join(', ') || 'None');
+            const routingText = admin.role === 'super' ? '✓' : (admin.canManageRouting ? '✓' : '✗');
+            const isSelf = auth.currentUser?.uid === docSnap.id;
+
+            html += `
+                <div class="admin-list-item" data-uid="${SecurityUtils.escapeHtml(docSnap.id)}">
+                    <div class="admin-info">
+                        <span class="admin-email">${SecurityUtils.escapeHtml(admin.email || 'Unknown')}</span>
+                        <div class="admin-meta">
+                            <span class="admin-role-tag ${roleClass}">${roleLabel}</span>
+                            <span>Events: ${SecurityUtils.escapeHtml(eventsText)}</span>
+                            <span title="Can manage registration routing">Routing: ${routingText}</span>
+                        </div>
+                    </div>
+                    ${!isSelf ? `
+                    <div class="admin-actions">
+                        <button class="admin-action-btn edit" onclick="openEditAdminModal('${SecurityUtils.escapeHtml(docSnap.id)}')">Edit</button>
+                        <button class="admin-action-btn remove" onclick="removeAdmin('${SecurityUtils.escapeHtml(docSnap.id)}', '${SecurityUtils.escapeHtml(admin.email || '')}')">Remove</button>
+                    </div>` : '<span style="color: var(--text-muted); font-size: 12px;">(You)</span>'}
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+    } catch (error) {
+        console.error('[loadAdminList] Error:', error);
+        container.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--accent-red);">Error loading admins</div>';
+    }
+}
+window.loadAdminList = loadAdminList;
+
+function populateEventCheckboxes() {
+    const container = document.getElementById('eventCheckboxes');
+
+    // If allEvents not loaded yet, show loading message
+    if (!allEvents || allEvents.length === 0) {
+        container.innerHTML = '<span style="color: var(--text-muted);">Loading events...</span>';
+        // Try to load events
+        loadAllEvents().then(() => {
+            populateEventCheckboxes(); // Retry after loading
+        });
+        return;
+    }
+
+    // Use dynamic allEvents array - automatically includes new events
+    container.innerHTML = allEvents
+        .filter(e => e.isActive)
+        .map(e => `
+            <label class="event-checkbox-item">
+                <input type="checkbox" name="assignedEvents" value="${SecurityUtils.escapeHtml(e.code)}">
+                <span>${SecurityUtils.escapeHtml(e.emoji)} ${SecurityUtils.escapeHtml(e.name)}</span>
+            </label>
+        `).join('');
+}
+
+function toggleEventAssignment() {
+    const roleSelect = document.getElementById('newAdminRole');
+    const eventGroup = document.getElementById('eventAssignmentGroup');
+    eventGroup.style.display = roleSelect.value === 'normal' ? '' : 'none';
+}
+window.toggleEventAssignment = toggleEventAssignment;
+
+async function addNewAdmin() {
+    if (!AdminPermissions.isSuperAdmin()) {
+        showToast('❌ Access denied');
+        return;
+    }
+
+    const email = document.getElementById('newAdminEmail').value.trim();
+    const displayName = document.getElementById('newAdminDisplayName').value.trim();
+    const role = document.getElementById('newAdminRole').value;
+
+    if (!email || !SecurityUtils.isValidEmail(email)) {
+        showToast('❌ Please enter a valid email address');
+        return;
+    }
+
+    // Get assigned events for normal admins
+    let assignedEvents = [];
+    let canManageRouting = false;
+    if (role === 'normal') {
+        document.querySelectorAll('#eventCheckboxes input:checked').forEach(cb => {
+            assignedEvents.push(cb.value);
+        });
+        if (assignedEvents.length === 0) {
+            showToast('❌ Please select at least one event for the admin');
+            return;
+        }
+        canManageRouting = document.getElementById('newAdminCanManageRouting')?.checked || false;
+    }
+
+    try {
+        // Check if email already exists in admins collection
+        const adminsRef = collection(db, 'admins');
+        const emailQuery = query(adminsRef, where('email', '==', email));
+        const existing = await getDocs(emailQuery);
+
+        if (!existing.empty) {
+            showToast('❌ An admin with this email already exists');
+            return;
+        }
+
+        // Create admin document with temporary ID
+        // When the user logs in for the first time, checkAdminRole() will:
+        // 1. Find this document by email query
+        // 2. Migrate it to use their Firebase Auth UID as the document ID
+        const tempId = 'pending_' + email.replace(/[^a-zA-Z0-9]/g, '_');
+
+        await setDoc(doc(db, 'admins', tempId), {
+            email: email,
+            displayName: displayName || email.split('@')[0],
+            role: role,
+            assignedEvents: role === 'super' ? [] : assignedEvents,
+            canManageRouting: role === 'super' ? true : canManageRouting,
+            isActive: true,
+            createdAt: serverTimestamp(),
+            createdBy: auth.currentUser?.email || 'unknown',
+            pendingActivation: true
+        });
+
+        showToast('✅ Admin added successfully');
+        await logAdminAction('admin_added', { email, role, assignedEvents });
+
+        // Clear form
+        document.getElementById('newAdminEmail').value = '';
+        document.getElementById('newAdminDisplayName').value = '';
+        document.getElementById('newAdminRole').value = 'normal';
+        const routingCheckbox = document.getElementById('newAdminCanManageRouting');
+        if (routingCheckbox) routingCheckbox.checked = false;
+        toggleEventAssignment();
+        populateEventCheckboxes();
+
+        // Refresh list
+        await loadAdminList();
+
+    } catch (error) {
+        console.error('[addNewAdmin] Error:', error);
+        showToast('❌ Error adding admin: ' + error.message);
+    }
+}
+window.addNewAdmin = addNewAdmin;
+
+async function removeAdmin(uid, email) {
+    if (!AdminPermissions.isSuperAdmin()) {
+        showToast('❌ Access denied');
+        return;
+    }
+
+    if (uid === auth.currentUser?.uid) {
+        showToast('❌ You cannot remove yourself');
+        return;
+    }
+
+    if (!confirm(`Are you sure you want to remove ${email} as an admin?`)) {
+        return;
+    }
+
+    try {
+        await deleteDoc(doc(db, 'admins', uid));
+        showToast('✅ Admin removed successfully');
+        await logAdminAction('admin_removed', { uid, email });
+        await loadAdminList();
+    } catch (error) {
+        console.error('[removeAdmin] Error:', error);
+        showToast('❌ Error removing admin: ' + error.message);
+    }
+}
+window.removeAdmin = removeAdmin;
+
+// ===== EDIT ADMIN FUNCTIONS =====
+async function openEditAdminModal(uid) {
+    if (!AdminPermissions.isSuperAdmin()) {
+        showToast('❌ Access denied');
+        return;
+    }
+
+    try {
+        // Fetch admin data from Firestore
+        const adminDoc = await getDoc(doc(db, 'admins', uid));
+        if (!adminDoc.exists()) {
+            showToast('❌ Admin not found');
+            return;
+        }
+
+        const adminData = adminDoc.data();
+
+        // Populate the edit form
+        document.getElementById('editAdminUid').value = uid;
+        document.getElementById('editAdminEmail').value = adminData.email || '';
+        document.getElementById('editAdminRole').value = adminData.role || 'normal';
+        document.getElementById('editAdminCanManageRouting').checked = adminData.canManageRouting || false;
+
+        // Populate event checkboxes
+        populateEditEventCheckboxes(adminData.assignedEvents || []);
+
+        // Show/hide event assignment based on role
+        toggleEditEventAssignment();
+
+        // Open the modal
+        document.getElementById('editAdminModal').classList.add('active');
+    } catch (error) {
+        console.error('[openEditAdminModal] Error:', error);
+        showToast('❌ Error loading admin data');
+    }
+}
+window.openEditAdminModal = openEditAdminModal;
+
+function populateEditEventCheckboxes(selectedEvents = []) {
+    const container = document.getElementById('editEventCheckboxes');
+
+    if (!allEvents || allEvents.length === 0) {
+        container.innerHTML = '<span style="color: var(--text-muted);">No events available</span>';
+        return;
+    }
+
+    container.innerHTML = allEvents
+        .filter(e => e.isActive)
+        .map(e => {
+            const isChecked = selectedEvents.includes(e.code) ? 'checked' : '';
+            return `
+                <label class="event-checkbox-item">
+                    <input type="checkbox" name="editAssignedEvents" value="${SecurityUtils.escapeHtml(e.code)}" ${isChecked}>
+                    <span>${SecurityUtils.escapeHtml(e.emoji)} ${SecurityUtils.escapeHtml(e.name)}</span>
+                </label>
+            `;
+        }).join('');
+}
+
+function toggleEditEventAssignment() {
+    const roleSelect = document.getElementById('editAdminRole');
+    const eventGroup = document.getElementById('editEventAssignmentGroup');
+    const routingGroup = document.getElementById('editRoutingPermissionGroup');
+    const isNormal = roleSelect.value === 'normal';
+
+    eventGroup.style.display = isNormal ? '' : 'none';
+    routingGroup.style.display = isNormal ? '' : 'none';
+}
+window.toggleEditEventAssignment = toggleEditEventAssignment;
+
+async function saveAdminChanges() {
+    if (!AdminPermissions.isSuperAdmin()) {
+        showToast('❌ Access denied');
+        return;
+    }
+
+    const uid = document.getElementById('editAdminUid').value;
+    const role = document.getElementById('editAdminRole').value;
+    const canManageRouting = document.getElementById('editAdminCanManageRouting').checked;
+
+    if (!uid) {
+        showToast('❌ Invalid admin ID');
+        return;
+    }
+
+    // Get assigned events for normal admins
+    let assignedEvents = [];
+    if (role === 'normal') {
+        document.querySelectorAll('#editEventCheckboxes input:checked').forEach(cb => {
+            assignedEvents.push(cb.value);
+        });
+        if (assignedEvents.length === 0) {
+            showToast('❌ Please select at least one event for the admin');
+            return;
+        }
+    }
+
+    try {
+        await updateDoc(doc(db, 'admins', uid), {
+            role: role,
+            assignedEvents: role === 'super' ? [] : assignedEvents,
+            canManageRouting: role === 'super' ? true : canManageRouting
+        });
+
+        showToast('✅ Admin updated successfully');
+        await logAdminAction('admin_updated', { uid, role, assignedEvents, canManageRouting });
+
+        // Close modal and refresh list
+        closeModal('editAdminModal');
+        await loadAdminList();
+    } catch (error) {
+        console.error('[saveAdminChanges] Error:', error);
+        showToast('❌ Error updating admin: ' + error.message);
+    }
+}
+window.saveAdminChanges = saveAdminChanges;
 
 // ===== AUDIT LOGGING =====
 async function logAdminAction(action, details = {}) {
@@ -404,7 +1000,7 @@ async function markAttended(docId, attended, eventCode) {
     try {
         await updateDoc(doc(db, 'registrations', docId), {
             attended: attended,
-            attendedAt: attended ? Timestamp.now() : null
+            attendedAt: attended ? serverTimestamp() : null
         });
         await logAdminAction('ATTENDANCE', {
             teamId: docId,
@@ -584,12 +1180,14 @@ function openTeamDrawer(teamId, teamData) {
 
     el('drawerVerifyBtn').textContent = safeStatus === 'Verified' ? '⏸ Mark Pending' : '✓ Verify';
     el('teamDrawerOverlay').classList.add('active');
+    document.getElementById('teamDrawer').classList.add('active');
     document.body.style.overflow = 'hidden';
 }
 window.openTeamDrawer = openTeamDrawer;
 
 function closeTeamDrawer() {
     document.getElementById('teamDrawerOverlay').classList.remove('active');
+    document.getElementById('teamDrawer').classList.remove('active');
     document.body.style.overflow = '';
     currentDrawerTeamId = null;
     currentDrawerTeamData = null;
@@ -816,16 +1414,20 @@ function openEventView(eventCode) {
         tab.classList.toggle('active', tab.dataset.event === eventCode);
     });
     switchEvent(eventCode);
-    // Update dashboard stats for this specific event
-    updateDashboardStats(eventCode);
+    // Update stats for selected event
+    if (typeof updateDashboardStats === 'function') {
+        updateDashboardStats(eventCode);
+    }
 }
 window.openEventView = openEventView;
 
 function backToEventSelector() {
     document.getElementById('event-detail-view')?.classList.remove('active');
     document.getElementById('event-selector-view')?.classList.remove('hidden');
-    // Reset dashboard stats to global view
-    updateDashboardStats();
+    // Reset stats to global view
+    if (typeof updateDashboardStats === 'function') {
+        updateDashboardStats();
+    }
 }
 window.backToEventSelector = backToEventSelector;
 
@@ -835,8 +1437,10 @@ function switchEvent(eventName, btn) {
     if (btn) btn.classList.add('active');
     else document.querySelector(`.event-tab[data-event="${eventName}"]`)?.classList.add('active');
     document.getElementById(eventName + '-content')?.classList.add('active');
-    // Update dashboard stats for the selected event
-    updateDashboardStats(eventName);
+    // Update stats for the switched event
+    if (typeof updateDashboardStats === 'function') {
+        updateDashboardStats(eventName);
+    }
 }
 window.switchEvent = switchEvent;
 
@@ -1044,13 +1648,32 @@ async function generateEventCards() {
     for (const event of allEvents) {
         if (!event.isActive) continue;
 
-        // Get registration count for this event
+        // Skip events that normal admin doesn't have access to
+        // Only filter if there's an active admin session with restrictions
+        const isSuperAdmin = AdminPermissions.isSuperAdmin();
+        const accessibleEvents = AdminPermissions.getAccessibleEvents();
+
+        // If no admin is logged in yet, or user is super admin, show all events
+        // accessibleEvents is null for super admin, empty/array for normal admin
+        if (AdminPermissions.currentAdmin && !isSuperAdmin && accessibleEvents && accessibleEvents.length > 0) {
+            if (!accessibleEvents.includes(event.code)) {
+                console.log('[generateEventCards] Skipping event (no access):', event.code);
+                continue;
+            }
+        }
+
+        // Get registration count for this event (only if admin has access)
         let count = 0;
         try {
-            const countQuery = query(collection(db, 'registrations'), where('eventCode', '==', event.code));
-            const countSnapshot = await getDocs(countQuery);
-            count = countSnapshot.size;
-            window[`${event.code}DataCount`] = count;
+            // Skip counting if admin doesn't have access to this event
+            if (!AdminPermissions.canAccessEvent(event.code)) {
+                console.log('[generateEventCards] Skipping count for event (no access):', event.code);
+            } else {
+                const countQuery = query(collection(db, 'registrations'), where('eventCode', '==', event.code));
+                const countSnapshot = await getDocs(countQuery);
+                count = countSnapshot.size;
+                window[`${event.code}DataCount`] = count;
+            }
         } catch (e) {
             console.warn(`Could not count registrations for ${event.code}`, e);
         }
@@ -1059,9 +1682,14 @@ async function generateEventCards() {
         const safeName = SecurityUtils.escapeHtml(event.name);
         const safeEmoji = SecurityUtils.escapeHtml(event.emoji);
 
+        // Hide delete button for normal admins
+        const deleteBtn = isSuperAdmin
+            ? `<button class="event-delete-btn" onclick="event.stopPropagation(); openDeleteEventModal('${safeCode}', '${safeName}')" title="Delete Event">🗑️</button>`
+            : '';
+
         grid.innerHTML += `
-            <div class="event-select-card" onclick="openEventView('${safeCode}')">
-                <button class="event-delete-btn" onclick="event.stopPropagation(); openDeleteEventModal('${safeCode}', '${safeName}')" title="Delete Event">🗑️</button>
+            <div class="event-select-card" data-event="${safeCode}" onclick="openEventView('${safeCode}')">
+                ${deleteBtn}
                 <div class="icon">${safeEmoji}</div>
                 <h4>${safeName}</h4>
                 <span class="count" id="${safeCode}-count">👥 ${count} teams</span>
@@ -1076,15 +1704,26 @@ function generateEventTabs() {
     if (!tabsContainer) return;
 
     tabsContainer.innerHTML = '';
+    const isSuperAdmin = AdminPermissions.isSuperAdmin();
+    const accessibleEvents = AdminPermissions.getAccessibleEvents();
+    let firstAccessible = true;
 
     allEvents.forEach((event, index) => {
         if (!event.isActive) return;
+
+        // Skip events that normal admin doesn't have access to
+        if (AdminPermissions.currentAdmin && !isSuperAdmin && accessibleEvents && accessibleEvents.length > 0) {
+            if (!accessibleEvents.includes(event.code)) {
+                return;
+            }
+        }
 
         const safeCode = SecurityUtils.escapeHtml(event.code);
         const safeName = SecurityUtils.escapeHtml(event.name);
         const safeEmoji = SecurityUtils.escapeHtml(event.emoji);
 
-        const isFirst = index === 0;
+        const isFirst = firstAccessible;
+        firstAccessible = false;
 
         tabsContainer.innerHTML += `
             <button class="event-tab ${isFirst ? 'active' : ''}" onclick="switchEvent('${safeCode}', this)" data-event="${safeCode}">
@@ -1094,21 +1733,31 @@ function generateEventTabs() {
 }
 window.generateEventTabs = generateEventTabs;
 
-// Generate event content sections dynamically
 function generateEventContents() {
     const container = document.getElementById('dynamicEventContents');
     if (!container) return;
 
     container.innerHTML = '';
+    const isSuperAdmin = AdminPermissions.isSuperAdmin();
+    const accessibleEvents = AdminPermissions.getAccessibleEvents();
+    let firstAccessible = true;
 
     allEvents.forEach((event, index) => {
         if (!event.isActive) return;
+
+        // Skip events that normal admin doesn't have access to
+        if (AdminPermissions.currentAdmin && !isSuperAdmin && accessibleEvents && accessibleEvents.length > 0) {
+            if (!accessibleEvents.includes(event.code)) {
+                return;
+            }
+        }
 
         const safeCode = SecurityUtils.escapeHtml(event.code);
         const safeName = SecurityUtils.escapeHtml(event.name);
         const safeEmoji = SecurityUtils.escapeHtml(event.emoji);
 
-        const isFirst = index === 0;
+        const isFirst = firstAccessible;
+        firstAccessible = false;
 
         container.innerHTML += `
             <div id="${safeCode}-content" class="event-content ${isFirst ? 'active' : ''}">
@@ -1158,12 +1807,42 @@ function generateEventContents() {
 
                         <div class="filter-bar" id="filterBar-${safeCode}">
                             <div class="filter-group">
-                                <label>From Date</label>
-                                <input type="date" id="filterDateFrom-${safeCode}">
-                            </div>
-                            <div class="filter-group">
-                                <label>To Date</label>
-                                <input type="date" id="filterDateTo-${safeCode}">
+                                <label>Date Range</label>
+                                <div class="animated-calendar" id="calendar-${safeCode}">
+                                    <div class="calendar-trigger" onclick="toggleCalendar('${safeCode}')">
+                                        <span class="calendar-icon">📅</span>
+                                        <span class="calendar-text placeholder" id="calendarText-${safeCode}">Select date range</span>
+                                    </div>
+                                    <div class="calendar-dropdown" id="calendarDropdown-${safeCode}">
+                                        <div class="calendar-header">
+                                            <button class="calendar-nav-btn" onclick="calendarPrevYear('${safeCode}')" title="Previous Year">«</button>
+                                            <button class="calendar-nav-btn" onclick="calendarPrevMonth('${safeCode}')" title="Previous Month">‹</button>
+                                            <span class="calendar-title" id="calendarTitle-${safeCode}">February 2026</span>
+                                            <button class="calendar-nav-btn" onclick="calendarNextMonth('${safeCode}')" title="Next Month">›</button>
+                                            <button class="calendar-nav-btn" onclick="calendarNextYear('${safeCode}')" title="Next Year">»</button>
+                                        </div>
+                                        <div class="calendar-weekdays">
+                                            <span class="calendar-weekday">Su</span>
+                                            <span class="calendar-weekday">Mo</span>
+                                            <span class="calendar-weekday">Tu</span>
+                                            <span class="calendar-weekday">We</span>
+                                            <span class="calendar-weekday">Th</span>
+                                            <span class="calendar-weekday">Fr</span>
+                                            <span class="calendar-weekday">Sa</span>
+                                        </div>
+                                        <div class="calendar-days" id="calendarDays-${safeCode}"></div>
+                                        <div class="calendar-footer">
+                                            <button class="calendar-footer-btn" onclick="calendarSelectToday('${safeCode}')">
+                                                <span class="check-icon">✓</span> Today
+                                            </button>
+                                            <button class="calendar-footer-btn" onclick="calendarClear('${safeCode}')">
+                                                × Clear
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <input type="hidden" id="filterDateFrom-${safeCode}">
+                                <input type="hidden" id="filterDateTo-${safeCode}">
                             </div>
                             <div class="filter-group">
                                 <label>Status</label>
@@ -1294,7 +1973,7 @@ async function loadEventData(eventCode) {
             // Safely encode team data for onclick
             const teamDataStr = encodeURIComponent(JSON.stringify(d));
 
-            tbody.innerHTML += `<tr data-team="${SecurityUtils.escapeHtml(docId)}" class="clickable-row" onclick="handleRowClick(event,'${SecurityUtils.escapeHtml(docId)}','${teamDataStr}')">
+            tbody.innerHTML += `<tr data-team="${SecurityUtils.escapeHtml(docId)}" data-registered-at="${d.registeredAt ? (d.registeredAt.toDate ? d.registeredAt.toDate().toISOString() : new Date(d.registeredAt.seconds * 1000).toISOString()) : ''}" class="clickable-row" onclick="handleRowClick(event,'${SecurityUtils.escapeHtml(docId)}','${teamDataStr}')">
                 <td onclick="event.stopPropagation()"><input type="checkbox" class="row-checkbox" data-team-id="${SecurityUtils.escapeHtml(docId)}" onchange="toggleRowSelection()"></td>
                 <td><span class="team-badge">${i++}</span></td>
                 <td><strong>${safeTeamName || '—'}</strong>${winnerBadge}</td>
@@ -1332,10 +2011,15 @@ async function loadEventData(eventCode) {
 }
 window.loadEventData = loadEventData;
 
-// Load data for all events
+// Load data for all events (respects admin access permissions)
 async function loadAllEventData() {
     for (const event of allEvents) {
         if (!event.isActive) continue;
+        // Skip loading data for events the admin doesn't have access to
+        if (!AdminPermissions.canAccessEvent(event.code)) {
+            console.log('[loadAllEventData] Skipping event (no access):', event.code);
+            continue;
+        }
         await loadEventData(event.code);
     }
 }
@@ -1372,185 +2056,23 @@ async function initDynamicEvents() {
 }
 window.initDynamicEvents = initDynamicEvents;
 
-// ===== TEXT SEARCH (Item 1) =====
-function handleTableSearch(eventCode, query) {
-    clearTimeout(searchTimeouts[eventCode]);
-    searchTimeouts[eventCode] = setTimeout(() => {
-        filterTableBySearch(eventCode, query);
-    }, 300); // 300ms debounce
-}
-window.handleTableSearch = handleTableSearch;
-
-function filterTableBySearch(eventCode, query) {
-    const tbody = document.getElementById(`${eventCode}-tbody`);
-    if (!tbody) return;
-
-    const rows = tbody.querySelectorAll('tr');
-    const searchTerm = query.toLowerCase().trim();
-    let visibleCount = 0;
-
-    rows.forEach(row => {
-        if (!searchTerm) {
-            row.style.display = '';
-            row.classList.remove('search-highlight');
-            visibleCount++;
-            return;
-        }
-
-        // Search in team name, email, member names
-        const teamName = row.querySelector('td:nth-child(3)')?.textContent?.toLowerCase() || '';
-        const email = row.querySelector('.email-link')?.textContent?.toLowerCase() || '';
-        const m1 = row.querySelector('td:nth-child(4)')?.textContent?.toLowerCase() || '';
-        const m2 = row.querySelector('td:nth-child(5)')?.textContent?.toLowerCase() || '';
-        const m3 = row.querySelector('td:nth-child(6)')?.textContent?.toLowerCase() || '';
-
-        const match = teamName.includes(searchTerm) ||
-            email.includes(searchTerm) ||
-            m1.includes(searchTerm) ||
-            m2.includes(searchTerm) ||
-            m3.includes(searchTerm);
-
-        row.style.display = match ? '' : 'none';
-        row.classList.toggle('search-highlight', match && searchTerm.length > 0);
-        if (match) visibleCount++;
-    });
-
-    if (searchTerm) {
-        showToast(`🔍 Found ${visibleCount} result${visibleCount !== 1 ? 's' : ''}`);
-    }
-}
-window.filterTableBySearch = filterTableBySearch;
-
-// ===== BAR CHART (Item 3) =====
-let registrationsChart = null;
-
-async function renderRegistrationsChart() {
-    const canvas = document.getElementById('registrationsChart');
-    if (!canvas || typeof Chart === 'undefined') return;
-
-    try {
-        await loadAllEvents();
-
-        const labels = [];
-        const data = [];
-        const colors = [
-            'rgba(139, 92, 246, 0.8)',  // purple
-            'rgba(16, 185, 129, 0.8)',  // green
-            'rgba(245, 158, 11, 0.8)',  // orange
-            'rgba(236, 72, 153, 0.8)',  // pink
-            'rgba(59, 130, 246, 0.8)',  // blue
-            'rgba(239, 68, 68, 0.8)'    // red
-        ];
-
-        for (const event of allEvents) {
-            if (!event.isActive) continue;
-            labels.push(event.name);
-            const count = window[`${event.code}DataCount`] || 0;
-            data.push(count);
-        }
-
-        // Destroy existing chart if any
-        if (registrationsChart) {
-            registrationsChart.destroy();
-        }
-
-        registrationsChart = new Chart(canvas, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Teams Registered',
-                    data: data,
-                    backgroundColor: colors.slice(0, labels.length),
-                    borderRadius: 8,
-                    borderSkipped: false
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        callbacks: {
-                            label: (ctx) => ` ${ctx.raw} teams`
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        grid: { display: false },
-                        ticks: { color: 'var(--text-secondary, #64748b)' }
-                    },
-                    y: {
-                        beginAtZero: true,
-                        grid: { color: 'rgba(99, 102, 241, 0.1)' },
-                        ticks: { color: 'var(--text-secondary, #64748b)' }
-                    }
-                }
-            }
-        });
-    } catch (err) {
-        console.error('Chart render error:', err);
-    }
-}
-window.renderRegistrationsChart = renderRegistrationsChart;
-
 window.reloadFirestoreData = async function () {
     await loadAllEventData();
 };
 
 // ===== MISC FUNCTIONS =====
-function toggleNav() {
-    document.getElementById('navLinks')?.classList.toggle('active');
-    document.getElementById('hamburger')?.classList.toggle('active');
-}
-window.toggleNav = toggleNav;
+// function toggleNav() {
+//     document.getElementById('navLinks')?.classList.toggle('active');
+//     document.getElementById('hamburger')?.classList.toggle('active');
+// }
+// window.toggleNav = toggleNav;
+
 
 function handleExport() { showToast('📥 Export feature coming soon'); }
 window.handleExport = handleExport;
 
 function handleSendEmail() { showToast('📧 Email feature'); }
 window.handleSendEmail = handleSendEmail;
-
-// ===== SETTINGS MANAGEMENT =====
-async function saveSettings() {
-    const settings = {
-        emailNotifications: document.getElementById('emailNotifications')?.checked || false,
-        registrationOpen: document.getElementById('registrationOpen')?.checked || false,
-        maintenanceMode: document.getElementById('maintenanceMode')?.checked || false,
-        updatedAt: serverTimestamp()
-    };
-
-    try {
-        await setDoc(doc(db, 'config', 'settings'), settings, { merge: true });
-        showToast('✅ Settings saved!');
-        console.log('[Settings] Saved:', settings);
-    } catch (err) {
-        console.error('[Settings] Error saving:', err);
-        showToast('⚠️ Error saving settings');
-    }
-}
-window.saveSettings = saveSettings;
-
-async function loadSettings() {
-    try {
-        const docSnap = await getDoc(doc(db, 'config', 'settings'));
-        if (docSnap.exists()) {
-            const settings = docSnap.data();
-            if (document.getElementById('emailNotifications'))
-                document.getElementById('emailNotifications').checked = settings.emailNotifications || false;
-            if (document.getElementById('registrationOpen'))
-                document.getElementById('registrationOpen').checked = settings.registrationOpen !== false;
-            if (document.getElementById('maintenanceMode'))
-                document.getElementById('maintenanceMode').checked = settings.maintenanceMode || false;
-            console.log('[Settings] Loaded:', settings);
-        }
-    } catch (err) {
-        console.error('[Settings] Error loading:', err);
-    }
-}
-window.loadSettings = loadSettings;
 
 function handleAddEvent() { document.getElementById('createEventModal')?.classList.add('active'); }
 window.handleAddEvent = handleAddEvent;
@@ -1858,25 +2380,17 @@ async function removeWinner(teamId, eventCode) {
 }
 window.removeWinner = removeWinner;
 
-function toggleSettingsDropdown() { document.getElementById('settingsDropdown')?.classList.toggle('active'); }
-window.toggleSettingsDropdown = toggleSettingsDropdown;
-
 function togglePasswordVisibility() {
     const input = document.getElementById('password');
-    const toggleBtn = document.getElementById('passwordToggle');
-    if (!input || !toggleBtn) return;
-
-    const eyeOpen = toggleBtn.querySelector('.eye-open');
-    const eyeClosed = toggleBtn.querySelector('.eye-closed');
+    const toggleBtn = document.querySelector('.password-toggle');
+    if (!input) return;
 
     if (input.type === 'password') {
         input.type = 'text';
-        if (eyeOpen) eyeOpen.style.display = 'none';
-        if (eyeClosed) eyeClosed.style.display = 'block';
+        if (toggleBtn) toggleBtn.textContent = '🙈';
     } else {
         input.type = 'password';
-        if (eyeOpen) eyeOpen.style.display = 'block';
-        if (eyeClosed) eyeClosed.style.display = 'none';
+        if (toggleBtn) toggleBtn.textContent = '👁️';
     }
 }
 window.togglePasswordVisibility = togglePasswordVisibility;
@@ -1937,18 +2451,41 @@ async function applyFilters(eventName) {
     const tbody = document.getElementById(`${eventName}-tbody`);
     if (!tbody) return;
 
-    const rows = tbody.querySelectorAll('tr');
+    const rows = tbody.querySelectorAll('tr[data-team]');
     let visibleCount = 0;
+
+    // Parse date range if provided
+    const fromDate = dateFrom ? new Date(dateFrom) : null;
+    const toDate = dateTo ? new Date(dateTo) : null;
+    if (fromDate) fromDate.setHours(0, 0, 0, 0);
+    if (toDate) toDate.setHours(23, 59, 59, 999);
 
     rows.forEach(row => {
         const statusCell = row.querySelector('.status-pill');
         const rowStatus = statusCell ? statusCell.textContent.toLowerCase().trim() : '';
 
+        // Get registration date from data attribute
+        const regDateAttr = row.getAttribute('data-registered-at');
+        let rowDate = null;
+        if (regDateAttr) {
+            rowDate = new Date(regDateAttr);
+        }
+
         let showRow = true;
 
         // Status filter
-        if (status && status !== 'all' && rowStatus !== status) {
+        if (status && status !== 'all' && status !== '' && rowStatus !== status) {
             showRow = false;
+        }
+
+        // Date range filter
+        if (showRow && (fromDate || toDate) && rowDate) {
+            if (fromDate && rowDate < fromDate) {
+                showRow = false;
+            }
+            if (toDate && rowDate > toDate) {
+                showRow = false;
+            }
         }
 
         row.style.display = showRow ? '' : 'none';
@@ -1978,6 +2515,11 @@ function clearFilters(eventName) {
     // Reset radio buttons for this specific event
     const allRadio = document.querySelector(`input[name="statusFilter-${eventName}"][value="all"]`);
     if (allRadio) allRadio.checked = true;
+
+    // Clear calendar state for this event
+    if (typeof calendarClear === 'function') {
+        calendarClear(eventName);
+    }
 
     showToast('🔄 Filters cleared');
 }
@@ -2053,13 +2595,40 @@ window.handleLogin = function (event) {
     loginBtn.textContent = 'Signing in...';
 
     signInWithEmailAndPassword(auth, email, password)
-        .then(() => {
+        .then(async (userCredential) => {
+            // Check admin role from Firestore
+            const adminData = await checkAdminRole(userCredential.user);
+
+            if (!adminData) {
+                // User is not an admin or is deactivated
+                await signOut(auth);
+                errorEl.style.display = 'block';
+                errorEl.textContent = '❌ Access denied. You are not authorized as an admin.';
+                return;
+            }
+
             // Reset rate limiter on successful login
             rateLimiters.login.reset('login');
+
+            // Apply role-based UI visibility
+            applyRoleBasedUI();
+
+            // Re-initialize events with proper role filtering
+            // This ensures normal admins only see their assigned events
+            await initDynamicEvents();
+
+            // Show appropriate dashboard
             document.getElementById('login-page').style.display = 'none';
             document.getElementById('admin-dashboard').classList.add('active');
+
+            // Show role-specific welcome message
+            const roleLabel = adminData.role === 'super' ? '🔴 Super Admin' : '🟡 Admin';
+            showToast(`Welcome, ${roleLabel}!`);
+
             // Start session countdown timer
-            startSessionCountdown();
+            resetInactivityTimer();
+
+            console.log('[Login] Success:', adminData.email, 'Role:', adminData.role);
         })
         .catch((error) => {
             errorEl.style.display = 'block';
@@ -2087,11 +2656,526 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-onAuthStateChanged(auth, (user) => {
-    if (user) {
-        startSessionCountdown();
+onAuthStateChanged(auth, (user) => { if (user) resetInactivityTimer(); });
+
+// ===== REGISTRATIONS CHART =====
+let registrationsChart = null;
+
+async function renderRegistrationsChart() {
+    const canvas = document.getElementById('registrationsChart');
+    if (!canvas || typeof Chart === 'undefined') {
+        console.log('[Chart] Canvas or Chart.js not available');
+        return;
+    }
+
+    try {
+        const labels = [];
+        const data = [];
+        const colors = [
+            'rgba(249, 115, 22, 0.8)',   // ember orange
+            'rgba(251, 113, 133, 0.8)',  // coral pink
+            'rgba(252, 211, 77, 0.8)',   // warm yellow
+            'rgba(16, 185, 129, 0.8)',   // green
+            'rgba(6, 182, 212, 0.8)',    // cyan
+            'rgba(236, 72, 153, 0.8)'    // pink
+        ];
+        const borderColors = [
+            'rgba(249, 115, 22, 1)',
+            'rgba(251, 113, 133, 1)',
+            'rgba(252, 211, 77, 1)',
+            'rgba(16, 185, 129, 1)',
+            'rgba(6, 182, 212, 1)',
+            'rgba(236, 72, 153, 1)'
+        ];
+
+        // Add Testing event
+        const testingCount = window.testingDataCount || 0;
+        labels.push('Testing');
+        data.push(testingCount);
+
+        // Add PromptQuest event
+        const promptquestCount = window.promptquestDataCount || 0;
+        labels.push('PromptQuest');
+        data.push(promptquestCount);
+
+        // Add UI Battle event
+        const uibattleCount = window.uibattleDataCount || 0;
+        labels.push('UI Battle');
+        data.push(uibattleCount);
+
+        // Destroy existing chart if any
+        if (registrationsChart) {
+            registrationsChart.destroy();
+        }
+
+        registrationsChart = new Chart(canvas, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Teams Registered',
+                    data: data,
+                    backgroundColor: colors.slice(0, labels.length),
+                    borderColor: borderColors.slice(0, labels.length),
+                    borderWidth: 1,
+                    borderRadius: 8,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(22, 22, 26, 0.95)',
+                        titleColor: '#FFFBF5',
+                        bodyColor: '#FFFBF5',
+                        borderColor: 'rgba(249, 115, 22, 0.3)',
+                        borderWidth: 1,
+                        padding: 12,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: (ctx) => ` ${ctx.raw} teams`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#9CA3AF', font: { size: 12 } }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: 'rgba(249, 115, 22, 0.1)' },
+                        ticks: {
+                            color: '#9CA3AF',
+                            font: { size: 12 },
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+
+        console.log('[Chart] Rendered with data:', { labels, data });
+    } catch (err) {
+        console.error('[Chart] Render error:', err);
+    }
+}
+
+window.renderRegistrationsChart = renderRegistrationsChart;
+
+// ===== ANALYTICS HUB (Dynamic Data) =====
+async function updateAnalyticsHub() {
+    try {
+        // Get all registration counts
+        const testingCount = window.testingDataCount || 0;
+        const promptquestCount = window.promptquestDataCount || 0;
+        const uibattleCount = window.uibattleDataCount || 0;
+        const totalTeams = testingCount + promptquestCount + uibattleCount;
+
+        // Get today's registrations (simplified - counts from today)
+        let newToday = 0;
+        let pendingCount = 0;
+        let verifiedCount = 0;
+
+        // Query registrations to calculate stats (respects admin permissions)
+        try {
+            const regsRef = collection(db, 'registrations');
+            let snapshot;
+
+            // For normal admins, only query registrations they have access to
+            if (!AdminPermissions.isSuperAdmin()) {
+                const accessibleEvents = AdminPermissions.getAccessibleEvents();
+                if (accessibleEvents && accessibleEvents.length > 0) {
+                    // Firestore 'in' query supports up to 10 values
+                    // Split into chunks if more than 10 accessible events
+                    const chunks = [];
+                    for (let i = 0; i < accessibleEvents.length; i += 10) {
+                        chunks.push(accessibleEvents.slice(i, i + 10));
+                    }
+
+                    // Query each chunk and merge results
+                    const allDocs = [];
+                    for (const chunk of chunks) {
+                        const chunkQuery = query(regsRef, where('eventCode', 'in', chunk));
+                        const chunkSnapshot = await getDocs(chunkQuery);
+                        chunkSnapshot.forEach(doc => allDocs.push(doc));
+                    }
+                    snapshot = { forEach: (fn) => allDocs.forEach(fn), size: allDocs.length };
+                } else {
+                    // No accessible events, skip stats
+                    console.log('[Hub] No accessible events for normal admin, skipping stats');
+                    snapshot = { forEach: () => { }, size: 0 };
+                }
+            } else {
+                // Super admin can query all registrations
+                snapshot = await getDocs(regsRef);
+            }
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            snapshot.forEach(docSnap => {
+                const data = docSnap.data();
+
+                // Count pending vs verified
+                if (data.status === 'Verified') {
+                    verifiedCount++;
+                } else {
+                    pendingCount++;
+                }
+
+                // Count today's registrations
+                if (data.registeredAt) {
+                    const regDate = data.registeredAt.toDate ? data.registeredAt.toDate() : new Date(data.registeredAt);
+                    if (regDate >= today) {
+                        newToday++;
+                    }
+                }
+            });
+        } catch (e) {
+            console.log('[Hub] Could not fetch detailed stats:', e);
+        }
+
+        // Calculate verification rate
+        const verificationRate = totalTeams > 0 ? Math.round((verifiedCount / totalTeams) * 100) : 0;
+
+        // Update Stats Summary
+        const newTodayEl = document.getElementById('totalTeamsToday');
+        const pendingEl = document.getElementById('pendingVerifications');
+        const rateEl = document.getElementById('verificationRate');
+
+        if (newTodayEl) newTodayEl.textContent = `+${newToday}`;
+        if (pendingEl) pendingEl.textContent = pendingCount;
+        if (rateEl) rateEl.textContent = `${verificationRate}%`;
+
+        // Update Top Performers (sorted by count)
+        const events = [
+            { name: 'Testing', count: testingCount },
+            { name: 'PromptQuest', count: promptquestCount },
+            { name: 'UI Battle', count: uibattleCount }
+        ].sort((a, b) => b.count - a.count);
+
+        const performersContainer = document.querySelector('.top-performers');
+        if (performersContainer) {
+            const h4 = performersContainer.querySelector('h4');
+            performersContainer.innerHTML = '';
+            if (h4) performersContainer.appendChild(h4);
+            else performersContainer.innerHTML = '<h4>🏆 Top Events This Week</h4>';
+
+            events.forEach((event, index) => {
+                const item = document.createElement('div');
+                item.className = 'performer-item';
+                item.innerHTML = `
+                    <span class="performer-rank">${index + 1}</span>
+                    <span class="performer-name">${event.name}</span>
+                    <span class="performer-count">${event.count} teams</span>
+                `;
+                performersContainer.appendChild(item);
+            });
+        }
+
+        console.log('[Hub] Analytics updated:', { newToday, pendingCount, verifiedCount, verificationRate });
+    } catch (err) {
+        console.error('[Hub] Update error:', err);
+    }
+}
+
+window.updateAnalyticsHub = updateAnalyticsHub;
+
+// ===== ANIMATED CALENDAR COMPONENT =====
+const calendarState = {};
+
+function initCalendarState(eventCode) {
+    if (!calendarState[eventCode]) {
+        const now = new Date();
+        calendarState[eventCode] = {
+            currentMonth: now.getMonth(),
+            currentYear: now.getFullYear(),
+            fromDate: null,
+            toDate: null,
+            selectingStart: true
+        };
+    }
+
+    // Ensure currentMonth and currentYear are valid
+    const state = calendarState[eventCode];
+    if (typeof state.currentMonth !== 'number' || isNaN(state.currentMonth)) {
+        state.currentMonth = new Date().getMonth();
+    }
+    if (typeof state.currentYear !== 'number' || isNaN(state.currentYear)) {
+        state.currentYear = new Date().getFullYear();
+    }
+
+    return calendarState[eventCode];
+}
+
+function toggleCalendar(eventCode) {
+    const dropdown = document.getElementById(`calendarDropdown-${eventCode}`);
+    const trigger = dropdown?.previousElementSibling;
+
+    // Close all other calendars
+    document.querySelectorAll('.calendar-dropdown.open').forEach(d => {
+        if (d.id !== `calendarDropdown-${eventCode}`) {
+            d.classList.remove('open');
+            d.previousElementSibling?.classList.remove('active');
+        }
+    });
+
+    if (dropdown) {
+        dropdown.classList.toggle('open');
+        trigger?.classList.toggle('active');
+
+        if (dropdown.classList.contains('open')) {
+            // CSS handles positioning via absolute positioning
+
+            initCalendarState(eventCode);
+
+            // If there's a selected fromDate, navigate to that month
+            const state = calendarState[eventCode];
+            if (state && state.fromDate) {
+                // Ensure fromDate is a proper Date object
+                const fromDateObj = state.fromDate instanceof Date ? state.fromDate : new Date(state.fromDate);
+                if (!isNaN(fromDateObj.getTime())) {
+                    state.currentMonth = fromDateObj.getMonth();
+                    state.currentYear = fromDateObj.getFullYear();
+                }
+            }
+
+            renderCalendar(eventCode);
+        }
+    }
+}
+window.toggleCalendar = toggleCalendar;
+
+function renderCalendar(eventCode) {
+    const state = initCalendarState(eventCode);
+    const daysContainer = document.getElementById(`calendarDays-${eventCode}`);
+    const titleEl = document.getElementById(`calendarTitle-${eventCode}`);
+
+    if (!daysContainer || !titleEl) return;
+
+    const months = ['January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'];
+
+    titleEl.textContent = `${months[state.currentMonth]} ${state.currentYear}`;
+
+    const firstDay = new Date(state.currentYear, state.currentMonth, 1);
+    const lastDay = new Date(state.currentYear, state.currentMonth + 1, 0);
+    const startDay = firstDay.getDay();
+    const daysInMonth = lastDay.getDate();
+
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    daysContainer.innerHTML = '';
+
+    // Empty cells for days before first
+    for (let i = 0; i < startDay; i++) {
+        daysContainer.innerHTML += '<button class="calendar-day empty"></button>';
+    }
+
+    // Days of month
+    for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(state.currentYear, state.currentMonth, day);
+        date.setHours(0, 0, 0, 0);
+
+        let classes = 'calendar-day';
+
+        if (date.getTime() === today.getTime()) {
+            classes += ' today';
+        }
+
+        // Range highlighting
+        if (state.fromDate && state.toDate) {
+            const from = new Date(state.fromDate).setHours(0, 0, 0, 0);
+            const to = new Date(state.toDate).setHours(0, 0, 0, 0);
+            const curr = date.getTime();
+
+            if (curr === from && curr === to) {
+                classes += ' selected range-start range-end';
+            } else if (curr === from) {
+                classes += ' selected range-start';
+            } else if (curr === to) {
+                classes += ' selected range-end';
+            } else if (curr > from && curr < to) {
+                classes += ' in-range';
+            }
+        } else if (state.fromDate && !state.toDate) {
+            const from = new Date(state.fromDate).setHours(0, 0, 0, 0);
+            if (date.getTime() === from) {
+                classes += ' selected range-start';
+            }
+        }
+
+        daysContainer.innerHTML += `<button class="${classes}" onclick="selectCalendarDay('${eventCode}', ${day})">${day}</button>`;
+    }
+}
+window.renderCalendar = renderCalendar;
+
+function selectCalendarDay(eventCode, day) {
+    const state = calendarState[eventCode];
+    if (!state) return;
+
+    const selectedDate = new Date(state.currentYear, state.currentMonth, day);
+
+    if (state.selectingStart || (state.fromDate && state.toDate)) {
+        // Starting new selection
+        state.fromDate = selectedDate;
+        state.toDate = null;
+        state.selectingStart = false;
     } else {
-        stopSessionTimer();
+        // Completing range
+        if (selectedDate < state.fromDate) {
+            state.toDate = state.fromDate;
+            state.fromDate = selectedDate;
+        } else {
+            state.toDate = selectedDate;
+        }
+        state.selectingStart = true;
+
+        // Close calendar after end date is selected
+        setTimeout(() => {
+            const dropdown = document.getElementById(`calendarDropdown-${eventCode}`);
+            if (dropdown) {
+                dropdown.classList.remove('open');
+                dropdown.previousElementSibling?.classList.remove('active');
+            }
+        }, 300);
+    }
+
+    renderCalendar(eventCode);
+    updateCalendarText(eventCode);
+    updateHiddenInputs(eventCode);
+}
+window.selectCalendarDay = selectCalendarDay;
+
+function updateCalendarText(eventCode) {
+    const state = calendarState[eventCode];
+    const textEl = document.getElementById(`calendarText-${eventCode}`);
+
+    if (!state || !textEl) return;
+
+    if (state.fromDate && state.toDate) {
+        textEl.textContent = `${formatDate(state.fromDate)} – ${formatDate(state.toDate)}`;
+        textEl.classList.remove('placeholder');
+    } else if (state.fromDate) {
+        textEl.textContent = `${formatDate(state.fromDate)} – Select end`;
+        textEl.classList.remove('placeholder');
+    } else {
+        textEl.textContent = 'Select date range';
+        textEl.classList.add('placeholder');
+    }
+}
+
+function updateHiddenInputs(eventCode) {
+    const state = calendarState[eventCode];
+    const fromInput = document.getElementById(`filterDateFrom-${eventCode}`);
+    const toInput = document.getElementById(`filterDateTo-${eventCode}`);
+
+    if (fromInput && state?.fromDate) {
+        fromInput.value = state.fromDate.toISOString().split('T')[0];
+    } else if (fromInput) {
+        fromInput.value = '';
+    }
+
+    if (toInput && state?.toDate) {
+        toInput.value = state.toDate.toISOString().split('T')[0];
+    } else if (toInput) {
+        toInput.value = '';
+    }
+}
+
+function formatDate(date) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+}
+
+function calendarPrevMonth(eventCode) {
+    const state = calendarState[eventCode];
+    if (!state) return;
+
+    state.currentMonth--;
+    if (state.currentMonth < 0) {
+        state.currentMonth = 11;
+        state.currentYear--;
+    }
+    renderCalendar(eventCode);
+}
+window.calendarPrevMonth = calendarPrevMonth;
+
+function calendarNextMonth(eventCode) {
+    const state = calendarState[eventCode];
+    if (!state) return;
+
+    state.currentMonth++;
+    if (state.currentMonth > 11) {
+        state.currentMonth = 0;
+        state.currentYear++;
+    }
+    renderCalendar(eventCode);
+}
+window.calendarNextMonth = calendarNextMonth;
+
+function calendarPrevYear(eventCode) {
+    const state = calendarState[eventCode];
+    if (state) {
+        state.currentYear--;
+        renderCalendar(eventCode);
+    }
+}
+window.calendarPrevYear = calendarPrevYear;
+
+function calendarNextYear(eventCode) {
+    const state = calendarState[eventCode];
+    if (state) {
+        state.currentYear++;
+        renderCalendar(eventCode);
+    }
+}
+window.calendarNextYear = calendarNextYear;
+
+function calendarSelectToday(eventCode) {
+    const state = calendarState[eventCode];
+    if (!state) return;
+
+    const today = new Date();
+    state.currentMonth = today.getMonth();
+    state.currentYear = today.getFullYear();
+    state.fromDate = today;
+    state.toDate = today;
+    state.selectingStart = true;
+
+    renderCalendar(eventCode);
+    updateCalendarText(eventCode);
+    updateHiddenInputs(eventCode);
+}
+window.calendarSelectToday = calendarSelectToday;
+
+function calendarClear(eventCode) {
+    const state = calendarState[eventCode];
+    if (!state) return;
+
+    state.fromDate = null;
+    state.toDate = null;
+    state.selectingStart = true;
+
+    renderCalendar(eventCode);
+    updateCalendarText(eventCode);
+    updateHiddenInputs(eventCode);
+}
+window.calendarClear = calendarClear;
+
+// Close calendar on outside click
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.animated-calendar')) {
+        document.querySelectorAll('.calendar-dropdown.open').forEach(d => {
+            d.classList.remove('open');
+            d.previousElementSibling?.classList.remove('active');
+        });
     }
 });
 
@@ -2101,88 +3185,184 @@ async function updateDashboardStats(eventCode = null) {
         const statsTeams = document.getElementById('stat-totalTeams');
         const statsParticipants = document.getElementById('stat-participants');
         const statsEvents = document.getElementById('stat-events');
+        const statsGallery = document.getElementById('stat-gallery');
         const statsTeamsChange = document.getElementById('stat-teamsChange');
         const statsParticipantsChange = document.getElementById('stat-participantsChange');
         const statsEventsChange = document.getElementById('stat-eventsChange');
+        const statsGalleryChange = document.getElementById('stat-galleryChange');
 
-        // Get events count
+        // Get events list
         await loadAllEvents();
         const activeEventCount = allEvents.filter(e => e.isActive).length;
 
+        const isSuperAdmin = AdminPermissions.isSuperAdmin();
+        const accessibleEvents = AdminPermissions.getAccessibleEvents();
+
+        // Determine which event(s) to query
+        let eventsToQuery = [];
+        let statsLabel = '';
+
         if (eventCode) {
-            // Event-specific stats
-            const regQuery = query(collection(db, 'registrations'), where('eventCode', '==', eventCode));
-            const regSnapshot = await getDocs(regQuery);
-            const teamCount = regSnapshot.size;
-
-            // Calculate participants (avg 2.5 members per team)
-            let participantCount = 0;
-            regSnapshot.forEach(doc => {
-                const d = doc.data();
-                participantCount += [d.member1, d.member2, d.member3].filter(m => m?.name).length;
-            });
-
-            if (statsTeams) statsTeams.textContent = teamCount;
-            if (statsParticipants) statsParticipants.textContent = participantCount;
-            if (statsEvents) statsEvents.textContent = activeEventCount;
-
-            // Find event name
+            // Specific event requested (e.g., when viewing an event)
+            eventsToQuery = [eventCode];
             const eventName = allEvents.find(e => e.code === eventCode)?.name || eventCode;
-            if (statsTeamsChange) statsTeamsChange.innerHTML = `📊 <span style="color:var(--accent-1)">${SecurityUtils.escapeHtml(eventName)}</span>`;
-            if (statsParticipantsChange) statsParticipantsChange.innerHTML = `📊 <span style="color:var(--accent-1)">${SecurityUtils.escapeHtml(eventName)}</span>`;
-            if (statsEventsChange) statsEventsChange.textContent = 'Active events';
+            statsLabel = `📊 ${eventName}`;
+        } else if (isSuperAdmin) {
+            // Super admin: show global stats from ALL events
+            eventsToQuery = allEvents.filter(e => e.isActive).map(e => e.code);
+            statsLabel = 'All events';
         } else {
-            // Global stats (all events)
-            const allRegQuery = query(collection(db, 'registrations'));
-            const allRegSnapshot = await getDocs(allRegQuery);
-            const totalTeams = allRegSnapshot.size;
+            // Normal admin: show stats from active routing event
+            try {
+                const configDoc = await getDoc(doc(db, 'config', 'routing'));
+                const activeRoutingEvent = configDoc.exists() ? (configDoc.data().activeEvent || 'testing') : 'testing';
 
-            // Calculate total participants
-            let totalParticipants = 0;
-            allRegSnapshot.forEach(doc => {
-                const d = doc.data();
-                totalParticipants += [d.member1, d.member2, d.member3].filter(m => m?.name).length;
-            });
-
-            // Count new registrations this week
-            const weekAgo = new Date();
-            weekAgo.setDate(weekAgo.getDate() - 7);
-            let newThisWeek = 0;
-            allRegSnapshot.forEach(doc => {
-                const d = doc.data();
-                if (d.registeredAt) {
-                    const regDate = d.registeredAt.toDate ? d.registeredAt.toDate() : new Date(d.registeredAt.seconds * 1000);
-                    if (regDate > weekAgo) newThisWeek++;
+                // Only use if they have access
+                if (accessibleEvents && accessibleEvents.includes(activeRoutingEvent)) {
+                    eventsToQuery = [activeRoutingEvent];
+                } else if (accessibleEvents && accessibleEvents.length > 0) {
+                    eventsToQuery = [accessibleEvents[0]]; // Fallback to first accessible
+                } else {
+                    eventsToQuery = ['testing']; // Ultimate fallback
                 }
-            });
-
-            if (statsTeams) statsTeams.textContent = totalTeams;
-            if (statsParticipants) statsParticipants.textContent = totalParticipants;
-            if (statsEvents) statsEvents.textContent = activeEventCount;
-            if (statsTeamsChange) statsTeamsChange.textContent = newThisWeek > 0 ? `↑ ${newThisWeek} new this week` : 'All events';
-            if (statsParticipantsChange) statsParticipantsChange.textContent = 'All events combined';
-            if (statsEventsChange) statsEventsChange.textContent = 'Active events';
+                const eventName = allEvents.find(e => e.code === eventsToQuery[0])?.name || eventsToQuery[0];
+                statsLabel = `📊 ${eventName}`;
+            } catch (e) {
+                console.warn('[Stats] Could not load routing config, using first accessible event');
+                eventsToQuery = accessibleEvents && accessibleEvents.length > 0 ? [accessibleEvents[0]] : ['testing'];
+                statsLabel = 'Current event';
+            }
         }
+
+        // Query each event and sum up stats
+        let totalTeams = 0;
+        let totalParticipants = 0;
+        let newThisWeek = 0;
+        let todayCount = 0;
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        for (const code of eventsToQuery) {
+            try {
+                const regQuery = query(collection(db, 'registrations'), where('eventCode', '==', code));
+                const regSnapshot = await getDocs(regQuery);
+                totalTeams += regSnapshot.size;
+
+                regSnapshot.forEach(docSnap => {
+                    const d = docSnap.data();
+                    // Count participants
+                    totalParticipants += [d.member1, d.member2, d.member3].filter(m => m?.name).length;
+
+                    // Count new registrations
+                    if (d.registeredAt) {
+                        const regDate = d.registeredAt.toDate ? d.registeredAt.toDate() : new Date(d.registeredAt.seconds * 1000);
+                        if (regDate > weekAgo) newThisWeek++;
+                        if (regDate >= today) todayCount++;
+                    }
+                });
+            } catch (e) {
+                console.warn(`[Stats] Could not fetch stats for ${code}:`, e.message);
+            }
+        }
+
+        // Get gallery photos count (if super admin)
+        let galleryCount = 0;
+        if (isSuperAdmin) {
+            try {
+                const gallerySnapshot = await getDocs(collection(db, 'gallery'));
+                galleryCount = gallerySnapshot.size;
+            } catch (e) {
+                console.log('[Stats] Could not fetch gallery count');
+            }
+        }
+
+        // Update UI
+        if (statsTeams) statsTeams.textContent = totalTeams;
+        if (statsParticipants) statsParticipants.textContent = totalParticipants;
+        if (statsEvents) statsEvents.textContent = activeEventCount;
+        if (statsGallery) statsGallery.textContent = galleryCount || '--';
+
+        if (statsTeamsChange) statsTeamsChange.textContent = newThisWeek > 0 ? `↑ ${newThisWeek} this week` : statsLabel;
+        if (statsParticipantsChange) statsParticipantsChange.textContent = todayCount > 0 ? `↑ ${todayCount} today` : statsLabel;
+        if (statsEventsChange) statsEventsChange.textContent = 'Active events';
+        if (statsGalleryChange) statsGalleryChange.textContent = isSuperAdmin ? 'Uploaded' : '--';
+
+        console.log('[Stats] Dashboard stats updated for:', eventsToQuery.join(', '));
     } catch (error) {
         console.error('Error updating dashboard stats:', error);
+        // Set fallback values
+        const fallbackStats = ['stat-totalTeams', 'stat-participants', 'stat-events', 'stat-gallery'];
+        fallbackStats.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = '--';
+        });
     }
 }
 window.updateDashboardStats = updateDashboardStats;
 
+
 // ===== INIT =====
 window.addEventListener('DOMContentLoaded', async () => {
-    // Initialize the dynamic event system - this replaces hardcoded event loading
-    await initDynamicEvents();
+    // Check if user is already authenticated (e.g., session from previous login)
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        // Unsubscribe immediately - we only need this check once on load
+        unsubscribe();
 
-    // Load routing config
-    loadRoutingConfig();
+        if (user) {
+            // User is already logged in - verify admin role and load data
+            const adminData = await checkAdminRole(user);
+            if (adminData) {
+                // Apply role-based UI
+                applyRoleBasedUI();
 
-    // Load settings from Firebase
-    loadSettings();
+                // Show dashboard
+                document.getElementById('login-page').style.display = 'none';
+                document.getElementById('admin-dashboard').classList.add('active');
 
-    // Load dashboard stats (global view initially)
-    updateDashboardStats();
+                // Initialize the dynamic event system
+                await initDynamicEvents();
 
-    // Render bar chart (Item 3)
-    renderRegistrationsChart();
+                // Load routing config
+                loadRoutingConfig();
+
+                // Render the registrations chart after data is loaded
+                renderRegistrationsChart();
+
+                // Update analytics hub with live data
+                updateAnalyticsHub();
+
+                // Update dashboard stats
+                updateDashboardStats();
+
+                // Start session countdown timer
+                resetInactivityTimer();
+            } else {
+                // User exists but not an admin - sign out
+                await signOut(auth);
+            }
+        }
+        // If no user, just show login page (default state)
+    });
+});
+
+// ===== MOBILE NAVBAR TOGGLE =====
+function toggleNav() {
+    const navLinks = document.getElementById("navLinks");
+    const hamburger = document.getElementById("hamburger");
+    navLinks.classList.toggle("active");
+    hamburger.classList.toggle("active");
+}
+window.toggleNav = toggleNav;
+
+// Close mobile menu when clicking outside
+document.addEventListener("click", function (event) {
+    const navLinks = document.getElementById("navLinks");
+    const hamburger = document.getElementById("hamburger");
+    const navbar = document.getElementById("navbar");
+    if (navbar && !navbar.contains(event.target) && navLinks.classList.contains("active")) {
+        navLinks.classList.remove("active");
+        hamburger.classList.remove("active");
+    }
 });
