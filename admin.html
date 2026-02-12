@@ -373,19 +373,19 @@
     </div>
 
     <nav id="navbar">
-        <a href="../index.html" class="logo">
-            <img src="../images/download.png" alt="ISTE Logo" />
+        <a href="index.html" class="logo">
+            <img src="images/download.png" alt="ISTE Logo" />
             <div class="logo-text">
                 <span>ISTE</span>
                 <small>Admin Portal</small>
             </div>
         </a>
         <div class="nav-links" id="navLinks">
-            <a href="../index.html">Home</a>
-            <a href="../index.html#about">About</a>
-            <a href="../index.html">Events</a>
-            <a href="../index.html#winners">Winners</a>
-            <a href="../index.html#gallery">Gallery</a>
+            <a href="index.html">Home</a>
+            <a href="index.html#about">About</a>
+            <a href="index.html">Events</a>
+            <a href="index.html#winners">Winners</a>
+            <a href="index.html#gallery">Gallery</a>
             <a href="#" class="active">Admin</a>
         </div>
         <div class="hamburger" id="hamburger" onclick="toggleNav()" aria-label="Toggle navigation menu" role="button"
@@ -736,6 +736,26 @@
         </div>
     </div>
 
+    <script>
+        // Toggle navigation for mobile hamburger menu
+        function toggleNav() {
+            const navLinks = document.getElementById('navLinks');
+            const hamburger = document.getElementById('hamburger');
+            navLinks.classList.toggle('active');
+            hamburger.classList.toggle('active');
+        }
+
+        // Close nav when clicking outside
+        document.addEventListener('click', function(e) {
+            const navLinks = document.getElementById('navLinks');
+            const hamburger = document.getElementById('hamburger');
+            if (!navLinks.contains(e.target) && !hamburger.contains(e.target) && navLinks.classList.contains('active')) {
+                navLinks.classList.remove('active');
+                hamburger.classList.remove('active');
+            }
+        });
+    </script>
+
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="../security.js"></script>
@@ -743,3 +763,4 @@
 </body>
 
 </html>
+
