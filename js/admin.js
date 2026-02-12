@@ -1,6 +1,6 @@
 // ===== FIREBASE IMPORTS =====
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, browserSessionPersistence, setPersistence } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
 import { getFirestore, collection, getDocs, doc, deleteDoc, updateDoc, setDoc, getDoc, orderBy, query, where, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
 // ===== SECURITY: Input Sanitization =====
@@ -2617,6 +2617,18 @@ window.handleLogin = function (event) {
             // This ensures normal admins only see their assigned events
             await initDynamicEvents();
 
+            // Load routing config
+            loadRoutingConfig();
+
+            // Render the registrations chart after data is loaded
+            renderRegistrationsChart();
+
+            // Update analytics hub with live data
+            updateAnalyticsHub();
+
+            // Update dashboard stats
+            updateDashboardStats();
+
             // Show appropriate dashboard
             document.getElementById('login-page').style.display = 'none';
             document.getElementById('admin-dashboard').classList.add('active');
@@ -3305,7 +3317,10 @@ window.updateDashboardStats = updateDashboardStats;
 
 // ===== INIT =====
 window.addEventListener('DOMContentLoaded', async () => {
-    // Check if user is already authenticated (e.g., session from previous login)
+    // Set session-based persistence - user must re-login when browser closes
+    await setPersistence(auth, browserSessionPersistence);
+    
+    // Check if user is already authenticated (only within this browser session)
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
         // Unsubscribe immediately - we only need this check once on load
         unsubscribe();
