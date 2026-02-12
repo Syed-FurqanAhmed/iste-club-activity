@@ -223,7 +223,7 @@ nav {
 }
 
 .hamburger {
-    display: none;
+    display: flex;
     flex-direction: column;
     gap: 5px;
     cursor: pointer;
@@ -5361,8 +5361,6 @@ body.light-theme .settings-dropdown {
     }
 
     /* Catch-all for dynamically loaded content */
-    nav,
-    .nav-links,
     table,
     .table-container,
     .table-wrapper,
@@ -5371,11 +5369,18 @@ body.light-theme .settings-dropdown {
     .modal,
     .modal-overlay,
     .team-drawer,
-    div[class*="container"],
-    div[class*="wrapper"],
-    div[class*="grid"] {
+    div[class*="container"]:not(.login-container),
+    div[class*="wrapper"]:not(.admin-wrapper),
+    div[class*="grid"]:not(.overview-grid) {
         max-width: 100vw !important;
         overflow-x: auto !important;
+    }
+
+    /* Nav should not scroll */
+    nav {
+        max-width: 100vw !important;
+        overflow-x: visible !important;
+        overflow: visible !important;
     }
 
     /* Ensure nav doesn't cause overflow when hidden */
@@ -5383,4 +5388,10 @@ body.light-theme .settings-dropdown {
         display: none !important;
         visibility: hidden !important;
     }
-}
+
+    /* Ensure hamburger is always visible on mobile */
+    .hamburger {
+        display: flex !important;
+        z-index: 10001 !important;
+    }
+} 
