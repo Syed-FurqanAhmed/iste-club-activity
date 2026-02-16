@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
++--
 
 <head>
     <meta charset="UTF-8" />
@@ -16,8 +17,45 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
         rel="stylesheet" />
+    <style>
+        /* Nyght Serif — Local Font */
+        @font-face {
+            font-family: 'Nyght Serif';
+            src: url('css/nyght-serif-main/nyght-serif-main/fonts/WEB/NyghtSerif-Light.woff2') format('woff2');
+            font-weight: 300;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Nyght Serif';
+            src: url('css/nyght-serif-main/nyght-serif-main/fonts/WEB/NyghtSerif-Regular.woff2') format('woff2');
+            font-weight: 400;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Nyght Serif';
+            src: url('css/nyght-serif-main/nyght-serif-main/fonts/WEB/NyghtSerif-Medium.woff2') format('woff2');
+            font-weight: 500;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Nyght Serif';
+            src: url('css/nyght-serif-main/nyght-serif-main/fonts/WEB/NyghtSerif-Bold.woff2') format('woff2');
+            font-weight: 700;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Nyght Serif';
+            src: url('css/nyght-serif-main/nyght-serif-main/fonts/WEB/NyghtSerif-Dark.woff2') format('woff2');
+            font-weight: 900;
+            font-style: normal;
+        }
+    </style>
     <link rel="stylesheet" href="css/admin.css?v=5" />
 </head>
 
@@ -125,6 +163,47 @@
         </div>
     </div>
 
+    <!-- Feedback Viewer Modal -->
+    <div class="modal-overlay" id="feedbackModal">
+        <div class="modal" style="max-width: 800px;">
+            <div class="modal-header">
+                <span class="modal-title">💬 User Feedback</span>
+                <button class="modal-close" onclick="closeModal('feedbackModal')">&times;</button>
+            </div>
+            <div class="modal-body" style="max-height: 70vh; overflow-y: auto; padding: 0;">
+                <div class="feedback-stats" id="feedbackStats">
+                    <div class="feedback-stat-item">
+                        <span class="stat-emoji">😄</span>
+                        <span class="stat-count" id="rating4Count">0</span>
+                    </div>
+                    <div class="feedback-stat-item">
+                        <span class="stat-emoji">🙂</span>
+                        <span class="stat-count" id="rating3Count">0</span>
+                    </div>
+                    <div class="feedback-stat-item">
+                        <span class="stat-emoji">😕</span>
+                        <span class="stat-count" id="rating2Count">0</span>
+                    </div>
+                    <div class="feedback-stat-item">
+                        <span class="stat-emoji">😢</span>
+                        <span class="stat-count" id="rating1Count">0</span>
+                    </div>
+                </div>
+                <div class="feedback-list" id="feedbackList">
+                    <div class="feedback-loading">
+                        <div class="spinner"></div>
+                        <p>Loading feedback...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" onclick="clearAllFeedback()" style="margin-right: auto;">🗑️ Clear All</button>
+                <button class="btn btn-secondary" onclick="closeModal('feedbackModal')">Close</button>
+                <button class="btn btn-primary" onclick="exportFeedback()">📥 Export CSV</button>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="winnerModal">
         <div class="modal">
             <div class="modal-header">
@@ -211,6 +290,192 @@
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeModal('createEventModal')">Cancel</button>
                 <button class="btn btn-primary" onclick="createNewEvent()">Create Event</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Management Modal -->
+    <div class="modal-overlay" id="teamManagementModal">
+        <div class="modal" style="max-width: 900px;">
+            <div class="modal-header">
+                <span class="modal-title">👥 Team Management</span>
+                <button class="modal-close" onclick="closeModal('teamManagementModal')">&times;</button>
+            </div>
+            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                <!-- Add New Team Member Form -->
+                <div class="team-mgmt-form-section">
+                    <h4 style="margin-bottom: 12px; color: var(--text-primary); font-size: 15px;">➕ Add New Team Member
+                    </h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label>Full Name *</label>
+                            <input type="text" id="newMemberName" placeholder="e.g. Dr. John Doe">
+                        </div>
+                        <div class="form-group">
+                            <label>Category *</label>
+                            <select id="newMemberCategory">
+                                <option value="faculty">Faculty Coordinator</option>
+                                <option value="core">Core Team</option>
+                                <option value="volunteers">Volunteer</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Role/Position *</label>
+                            <input type="text" id="newMemberRole" placeholder="e.g. President, Tech Lead">
+                        </div>
+                        <div class="form-group">
+                            <label>Department/Year</label>
+                            <input type="text" id="newMemberDept" placeholder="e.g. 3rd Year ISE">
+                        </div>
+                        <div class="form-group">
+                            <label>Image Path</label>
+                            <input type="text" id="newMemberImage" placeholder="images/Name.png">
+                        </div>
+                        <div class="form-group">
+                            <label>Display Order</label>
+                            <input type="number" id="newMemberOrder" placeholder="1" value="1" min="1">
+                        </div>
+                    </div>
+                    <p
+                        style="font-size: 11px; color: var(--text-muted); margin: 12px 0 6px; text-transform: uppercase; letter-spacing: 1px;">
+                        🔗 Social Links (optional)
+                    </p>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                        <div class="form-group">
+                            <label>LinkedIn URL</label>
+                            <input type="text" id="newMemberLinkedin" placeholder="https://linkedin.com/in/...">
+                        </div>
+                        <div class="form-group">
+                            <label>GitHub URL</label>
+                            <input type="text" id="newMemberGithub" placeholder="https://github.com/...">
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="newMemberEmail" placeholder="email@example.com">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="addTeamMember()"
+                        style="width: 100%; margin-top: 10px; padding: 10px;">
+                        ➕ Add Team Member
+                    </button>
+                </div>
+
+                <hr style="border: none; border-top: 1px solid var(--border-color); margin: 16px 0;">
+
+                <!-- Team Members List -->
+                <div class="team-mgmt-list-section">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <h4 style="color: var(--text-primary); font-size: 15px;">📋 Current Team Members</h4>
+                        <div class="team-mgmt-tabs">
+                            <button class="team-mgmt-tab active" data-category="all"
+                                onclick="filterTeamMembers('all', this)">All</button>
+                            <button class="team-mgmt-tab" data-category="faculty"
+                                onclick="filterTeamMembers('faculty', this)">Faculty</button>
+                            <button class="team-mgmt-tab" data-category="core"
+                                onclick="filterTeamMembers('core', this)">Core</button>
+                            <button class="team-mgmt-tab" data-category="volunteers"
+                                onclick="filterTeamMembers('volunteers', this)">Volunteers</button>
+                        </div>
+                    </div>
+                    <div class="team-mgmt-list" id="teamMembersList">
+                        <div style="text-align: center; padding: 20px; color: var(--text-muted);">
+                            Loading team members...
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('teamManagementModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Team Member Modal -->
+    <div class="modal-overlay" id="editMemberModal">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <span class="modal-title">✏️ Edit Team Member</span>
+                <button class="modal-close" onclick="closeModal('editMemberModal')">&times;</button>
+            </div>
+            <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+                <input type="hidden" id="editMemberId">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div class="form-group">
+                        <label>Full Name *</label>
+                        <input type="text" id="editMemberName" placeholder="e.g. Dr. John Doe">
+                    </div>
+                    <div class="form-group">
+                        <label>Category *</label>
+                        <select id="editMemberCategory">
+                            <option value="faculty">Faculty Coordinator</option>
+                            <option value="core">Core Team</option>
+                            <option value="volunteers">Volunteer</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Role/Position *</label>
+                        <input type="text" id="editMemberRole" placeholder="e.g. President, Tech Lead">
+                    </div>
+                    <div class="form-group">
+                        <label>Department/Year</label>
+                        <input type="text" id="editMemberDept" placeholder="e.g. 3rd Year ISE">
+                    </div>
+                    <div class="form-group">
+                        <label>Image URL</label>
+                        <input type="text" id="editMemberImage" placeholder="images/Name.png">
+                    </div>
+                    <div class="form-group">
+                        <label>Display Order</label>
+                        <input type="number" id="editMemberOrder" placeholder="1" min="1">
+                    </div>
+                </div>
+                <p
+                    style="font-size: 12px; color: var(--text-muted); margin: 16px 0 8px; text-transform: uppercase; letter-spacing: 1px;">
+                    🔗 Social Links (optional)
+                </p>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+                    <div class="form-group">
+                        <label>LinkedIn URL</label>
+                        <input type="text" id="editMemberLinkedin" placeholder="https://linkedin.com/in/...">
+                    </div>
+                    <div class="form-group">
+                        <label>GitHub URL</label>
+                        <input type="text" id="editMemberGithub" placeholder="https://github.com/...">
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="editMemberEmailAddr" placeholder="email@example.com">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('editMemberModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveTeamMemberEdit()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Team Member Modal -->
+    <div class="modal-overlay" id="deleteMemberModal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">🗑️ Delete Team Member</span>
+                <button class="modal-close" onclick="closeModal('deleteMemberModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="deleteMemberId">
+                <div class="delete-warning">
+                    <div class="icon">⚠️</div>
+                    <p>Are you sure you want to remove</p>
+                    <p><strong id="deleteMemberName">Member Name</strong>?</p>
+                    <p style="color: var(--accent-red); font-size: 12px; margin-top: 12px;">This action cannot be
+                        undone.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('deleteMemberModal')">Cancel</button>
+                <button class="btn btn-danger" onclick="confirmDeleteMember()">Delete</button>
             </div>
         </div>
     </div>
@@ -373,19 +638,19 @@
     </div>
 
     <nav id="navbar">
-        <a href="index.html" class="logo">
-            <img src="images/download.png" alt="ISTE Logo" />
+        <a href="../index.html" class="logo">
+            <img src="../images/download.png" alt="ISTE Logo" />
             <div class="logo-text">
                 <span>ISTE</span>
                 <small>Admin Portal</small>
             </div>
         </a>
         <div class="nav-links" id="navLinks">
-            <a href="index.html">Home</a>
-            <a href="index.html#about">About</a>
-            <a href="index.html">Events</a>
-            <a href="index.html#winners">Winners</a>
-            <a href="index.html#gallery">Gallery</a>
+            <a href="../index.html">Home</a>
+            <a href="../index.html#about">About</a>
+            <a href="../index.html">Events</a>
+            <a href="../index.html#winners">Winners</a>
+            <a href="../index.html#gallery">Gallery</a>
             <a href="#" class="active">Admin</a>
         </div>
         <div class="hamburger" id="hamburger" onclick="toggleNav()" aria-label="Toggle navigation menu" role="button"
@@ -479,7 +744,7 @@
                     </div>
                     <div class="session-timer" id="sessionTimer" title="Session timeout">
                         <span class="timer-icon">⏱️</span>
-                        <span id="sessionTimeRemaining">30:00</span>
+                        <span id="sessionTimeRemaining">10:00</span>
                     </div>
                     <button id="logoutBtn" class="logout-btn" onclick="handleLogout()">Logout</button>
                 </div>
@@ -495,29 +760,45 @@
             </div>
 
             <div class="overview-grid">
-                <div class="overview-card purple">
+                <div class="overview-card purple skeleton-loading" id="card-totalTeams">
                     <div class="overview-card-icon">👥</div>
                     <h3>Total Teams</h3>
-                    <div class="number" id="stat-totalTeams">--</div>
-                    <div class="change positive" id="stat-teamsChange">Loading...</div>
+                    <div class="number" id="stat-totalTeams">
+                        <div class="skeleton-bar skeleton-number"></div>
+                    </div>
+                    <div class="change positive" id="stat-teamsChange">
+                        <div class="skeleton-bar skeleton-label"></div>
+                    </div>
                 </div>
-                <div class="overview-card green">
+                <div class="overview-card green skeleton-loading" id="card-participants">
                     <div class="overview-card-icon">🎯</div>
                     <h3>Participants</h3>
-                    <div class="number" id="stat-participants">--</div>
-                    <div class="change positive" id="stat-participantsChange">Loading...</div>
+                    <div class="number" id="stat-participants">
+                        <div class="skeleton-bar skeleton-number"></div>
+                    </div>
+                    <div class="change positive" id="stat-participantsChange">
+                        <div class="skeleton-bar skeleton-label"></div>
+                    </div>
                 </div>
-                <div class="overview-card orange">
+                <div class="overview-card orange skeleton-loading" id="card-events">
                     <div class="overview-card-icon">🏆</div>
                     <h3>Events</h3>
-                    <div class="number" id="stat-events">--</div>
-                    <div class="change info" id="stat-eventsChange">Loading...</div>
+                    <div class="number" id="stat-events">
+                        <div class="skeleton-bar skeleton-number"></div>
+                    </div>
+                    <div class="change info" id="stat-eventsChange">
+                        <div class="skeleton-bar skeleton-label"></div>
+                    </div>
                 </div>
-                <div class="overview-card pink">
+                <div class="overview-card pink skeleton-loading" id="card-gallery">
                     <div class="overview-card-icon">📸</div>
                     <h3>Gallery Photos</h3>
-                    <div class="number" id="stat-gallery">--</div>
-                    <div class="change info" id="stat-galleryChange">Loading...</div>
+                    <div class="number" id="stat-gallery">
+                        <div class="skeleton-bar skeleton-number"></div>
+                    </div>
+                    <div class="change info" id="stat-galleryChange">
+                        <div class="skeleton-bar skeleton-label"></div>
+                    </div>
                 </div>
             </div>
 
@@ -696,6 +977,24 @@
                                 <p>Add/remove admins</p>
                             </div>
                         </div>
+                        <div class="quick-action" onclick="openTeamManagement()">
+                            <div class="quick-action-icon"
+                                style="background: rgba(168, 85, 247, 0.15); color: #a855f7;">
+                                🧑‍🤝‍🧑</div>
+                            <div class="quick-action-text">
+                                <h4>Team Members</h4>
+                                <p>Manage Our People</p>
+                            </div>
+                        </div>
+                        <div class="quick-action" onclick="openFeedbackViewer()">
+                            <div class="quick-action-icon"
+                                style="background: rgba(236, 72, 153, 0.15); color: #ec4899;">
+                                💬</div>
+                            <div class="quick-action-text">
+                                <h4>User Feedback</h4>
+                                <p>View visitor responses</p>
+                            </div>
+                        </div>
 
                     </div>
 
@@ -746,7 +1045,7 @@
         }
 
         // Close nav when clicking outside
-        document.addEventListener('click', function(e) {
+        document.addEventListener('click', function (e) {
             const navLinks = document.getElementById('navLinks');
             const hamburger = document.getElementById('hamburger');
             if (!navLinks.contains(e.target) && !hamburger.contains(e.target) && navLinks.classList.contains('active')) {
@@ -755,13 +1054,10 @@
             }
         });
     </script>
-
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="../security.js"></script>
-    <script src="js/admin.js" type="module"></script>
+    <script src="js/admin1.js" type="module"></script>
 </body>
 
 </html>
-
-
