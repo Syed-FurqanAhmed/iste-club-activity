@@ -75,6 +75,48 @@ window.addEventListener('scroll', function () {
     navbar.classList.toggle('scrolled', window.scrollY > 80);
 });
 
+// ===== SCROLL SPY - Active nav link based on section =====
+function updateActiveNavLink() {
+    const sections = document.querySelectorAll('section[id], .hero');
+    const navLinks = document.querySelectorAll('.nav-links a:not(.nav-cta)');
+    
+    let currentSection = '';
+    const scrollPosition = window.scrollY + 150; // Offset for navbar height
+    
+    sections.forEach(section => {
+        const sectionTop = section.offsetTop;
+        const sectionHeight = section.offsetHeight;
+        const sectionId = section.getAttribute('id') || 'main-content';
+        
+        if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
+            currentSection = sectionId;
+        }
+    });
+    
+    // Map section IDs to nav href
+    const sectionToNav = {
+        'main-content': '#',
+        'hero': '#',
+        'about': '#about',
+        'activity': '#activity',
+        'winners': '#winners',
+        'gallery': '#gallery',
+        'team': '#team'
+    };
+    
+    const activeHref = sectionToNav[currentSection] || '#';
+    
+    navLinks.forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('href') === activeHref) {
+            link.classList.add('active');
+        }
+    });
+}
+
+window.addEventListener('scroll', updateActiveNavLink);
+window.addEventListener('load', updateActiveNavLink);
+
 // Mobile navigation
 function toggleNav() {
     document.getElementById('navLinks').classList.toggle('active');
@@ -212,6 +254,209 @@ function initSectionReveal() {
 
 // Initialize section reveal on DOM load
 document.addEventListener('DOMContentLoaded', initSectionReveal);
+
+// ===== ANIMATED NUMBER COUNTER =====
+function animateNumber(el, target, suffix = '', duration = 2000) {
+    const startTime = performance.now();
+    const startValue = 0;
+    
+    function easeOutExpo(t) {
+        return t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
+    }
+    
+    function update(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const easedProgress = easeOutExpo(progress);
+        const currentValue = Math.floor(startValue + (target - startValue) * easedProgress);
+        
+        el.textContent = currentValue + suffix;
+        
+        if (progress < 1) {
+            requestAnimationFrame(update);
+        } else {
+            el.textContent = target + suffix;
+        }
+    }
+    
+    requestAnimationFrame(update);
+}
+
+// Initialize stats counter animation
+function initStatsCounter() {
+    const statsSection = document.querySelector('.stats-bar');
+    if (!statsSection) return;
+    
+    let hasAnimated = false;
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && !hasAnimated) {
+                hasAnimated = true;
+                const statNumbers = statsSection.querySelectorAll('.stat-number');
+                statNumbers.forEach((stat, index) => {
+                    const text = stat.textContent.trim();
+                    const match = text.match(/^(\d+)(.*)$/);
+                    if (match) {
+                        const number = parseInt(match[1]);
+                        const suffix = match[2] || '';
+                        stat.textContent = '0' + suffix;
+                        setTimeout(() => {
+                            animateNumber(stat, number, suffix, 2000);
+                        }, index * 150); // Stagger animation
+                    }
+                });
+            }
+        });
+    }, { threshold: 0.3 });
+    
+    observer.observe(statsSection);
+}
+
+// ===== GALLERY REVEAL ANIMATION =====
+function initGalleryReveal() {
+    const galleryItems = document.querySelectorAll('.gallery-item');
+    if (!galleryItems.length) return;
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('revealed');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { 
+        threshold: 0.2,
+        rootMargin: '0px 0px -50px 0px'
+    });
+    
+    galleryItems.forEach((item, index) => {
+        item.style.setProperty('--item-index', index);
+        observer.observe(item);
+    });
+}
+
+// ===== WINNER PODIUM ANIMATION =====
+function initWinnerPodium() {
+    const winnersGrid = document.querySelector('.winners-grid');
+    if (!winnersGrid) return;
+    
+    let hasAnimated = false;
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && !hasAnimated) {
+                hasAnimated = true;
+                // Trigger podium rise: Bronze (3rd) → Silver (2nd) → Gold (1st)
+                const winnerCards = winnersGrid.querySelectorAll('.winner-card');
+                winnerCards.forEach(card => {
+                    card.classList.add('podium-rise');
+                });
+            }
+        });
+    }, { threshold: 0.3 });
+    
+    observer.observe(winnersGrid);
+}
+
+// ===== LIGHTBOX SWIPE GESTURES =====
+function initLightboxSwipe() {
+    const imageModal = document.getElementById('imageModal');
+    if (!imageModal) return;
+    
+    let touchStartX = 0;
+    let touchEndX = 0;
+    let touchStartY = 0;
+    let touchEndY = 0;
+    const minSwipeDistance = 50;
+    
+    // Get all gallery images for navigation
+    function getGalleryImages() {
+        return Array.from(document.querySelectorAll('.gallery-item img'));
+    }
+    
+    function getCurrentImageIndex() {
+        const modalImg = document.getElementById('modalImage');
+        const images = getGalleryImages();
+        return images.findIndex(img => img.src === modalImg.src);
+    }
+    
+    function navigateImage(direction) {
+        const images = getGalleryImages();
+        const currentIndex = getCurrentImageIndex();
+        let newIndex;
+        
+        if (direction === 'next') {
+            newIndex = (currentIndex + 1) % images.length;
+        } else {
+            newIndex = (currentIndex - 1 + images.length) % images.length;
+        }
+        
+        const modalImg = document.getElementById('modalImage');
+        modalImg.style.opacity = '0';
+        modalImg.style.transform = direction === 'next' ? 'translateX(-30px)' : 'translateX(30px)';
+        
+        setTimeout(() => {
+            modalImg.src = images[newIndex].src;
+            modalImg.style.transform = direction === 'next' ? 'translateX(30px)' : 'translateX(-30px)';
+            
+            requestAnimationFrame(() => {
+                modalImg.style.opacity = '1';
+                modalImg.style.transform = 'translateX(0)';
+            });
+        }, 150);
+    }
+    
+    // Expose navigateImage globally for button onclick
+    window.navigateLightbox = navigateImage;
+    
+    // Touch events for swipe
+    imageModal.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+        touchStartY = e.changedTouches[0].screenY;
+    }, { passive: true });
+    
+    imageModal.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        touchEndY = e.changedTouches[0].screenY;
+        handleSwipe();
+    });
+    
+    function handleSwipe() {
+        const diffX = touchEndX - touchStartX;
+        const diffY = touchEndY - touchStartY;
+        
+        // Only trigger if horizontal swipe is more significant than vertical
+        if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > minSwipeDistance) {
+            if (diffX > 0) {
+                navigateImage('prev');
+            } else {
+                navigateImage('next');
+            }
+        }
+    }
+    
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+        if (!imageModal.classList.contains('active')) return;
+        
+        if (e.key === 'ArrowRight') {
+            navigateImage('next');
+        } else if (e.key === 'ArrowLeft') {
+            navigateImage('prev');
+        } else if (e.key === 'Escape') {
+            closeImageModal();
+        }
+    });
+}
+
+// Initialize all enhanced animations
+document.addEventListener('DOMContentLoaded', function() {
+    initStatsCounter();
+    initGalleryReveal();
+    initWinnerPodium();
+    initLightboxSwipe();
+});
 
 // ===== DUPLICATE REGISTRATION CHECK =====
 async function checkDuplicate(field, value, errorElementId) {
@@ -714,4 +959,252 @@ if (testimonialTrack) {
         });
     });
 }
+
+// ===== TEAM TABS =====
+const teamTabs = document.querySelectorAll('.team-tab');
+const teamPanels = document.querySelectorAll('.team-panel');
+
+teamTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+        const targetPanel = tab.getAttribute('data-tab');
+        
+        // Remove active from all tabs and panels
+        teamTabs.forEach(t => t.classList.remove('active'));
+        teamPanels.forEach(p => p.classList.remove('active'));
+        
+        // Add active to clicked tab and corresponding panel
+        tab.classList.add('active');
+        document.getElementById(`panel-${targetPanel}`).classList.add('active');
+    });
+});
+
+// ===== LOAD TEAM FROM FIREBASE =====
+async function loadTeamFromFirebase() {
+    // Check if Firebase is available
+    if (typeof firebase === 'undefined' || !window.firebaseConfig) {
+        console.warn('Firebase not available for team loading');
+        return;
+    }
+    
+    try {
+        // Initialize Firebase if not already done
+        if (!firebase.apps.length) {
+            firebase.initializeApp(window.firebaseConfig);
+        }
+        const db = firebase.firestore();
+        
+        // Get all team members ordered by 'order' field
+        const snapshot = await db.collection('teamMembers').orderBy('order', 'asc').get();
+        
+        if (snapshot.empty) {
+            // No team members found, show placeholder message
+            ['faculty', 'core', 'volunteers'].forEach(category => {
+                const grid = document.getElementById(`team-grid-${category}`);
+                if (grid) {
+                    grid.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 2rem;">No team members added yet.</p>';
+                }
+            });
+            return;
+        }
+        
+        // Group members by category
+        const members = { faculty: [], core: [], volunteers: [] };
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            if (members[data.category]) {
+                members[data.category].push(data);
+            }
+        });
+        
+        // Role class mapping
+        const getRoleClass = (role) => {
+            const roleLower = role.toLowerCase();
+            if (roleLower.includes('president') || roleLower.includes('hod') || roleLower.includes('principal')) return 'role-president';
+            if (roleLower.includes('vice') || roleLower.includes('coordinator')) return 'role-vp';
+            if (roleLower.includes('tech') || roleLower.includes('developer')) return 'role-tech';
+            if (roleLower.includes('design') || roleLower.includes('creative')) return 'role-design';
+            if (roleLower.includes('event') || roleLower.includes('management')) return 'role-event';
+            if (roleLower.includes('social') || roleLower.includes('media') || roleLower.includes('content')) return 'role-social';
+            return 'role-tech'; // default
+        };
+        
+        // Escape HTML for security
+        const escapeHtml = (str) => {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        };
+        
+        // Render members for each category
+        Object.keys(members).forEach(category => {
+            const grid = document.getElementById(`team-grid-${category}`);
+            if (!grid) return;
+            
+            if (members[category].length === 0) {
+                grid.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 2rem;">No team members in this category.</p>';
+                return;
+            }
+            
+            grid.innerHTML = members[category].map(member => {
+                const roleClass = getRoleClass(member.role);
+                const socials = member.socials || {};
+                
+                // Build social links
+                let socialLinksHtml = '';
+                if (socials.linkedin) {
+                    socialLinksHtml += `<a href="${escapeHtml(socials.linkedin)}" target="_blank" rel="noopener" title="LinkedIn">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+                    </a>`;
+                }
+                if (socials.github) {
+                    socialLinksHtml += `<a href="${escapeHtml(socials.github)}" target="_blank" rel="noopener" title="GitHub">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                    </a>`;
+                }
+                if (socials.email) {
+                    socialLinksHtml += `<a href="mailto:${escapeHtml(socials.email)}" title="Email">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M0 3v18h24v-18h-24zm21.518 2l-9.518 7.713-9.518-7.713h19.036zm-19.518 14v-11.817l10 8.104 10-8.104v11.817h-20z"/></svg>
+                    </a>`;
+                }
+                // Build image path - prepend images/ if not already a full URL
+                const imagePath = member.imageUrl 
+                    ? (member.imageUrl.startsWith('http') ? member.imageUrl : `images/${member.imageUrl}`)
+                    : '';
+                
+                return `
+                <div class="team-card">
+                    <div class="team-avatar">
+                        ${member.imageUrl 
+                            ? `<img src="${escapeHtml(imagePath)}" alt="${escapeHtml(member.name)}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                               <div class="avatar-placeholder" style="display:none;">${escapeHtml(member.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2))}</div>`
+                            : `<div class="avatar-placeholder">${escapeHtml(member.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0,2))}</div>`
+                        }
+                    </div>
+                    <div class="team-info">
+                        <h4>${escapeHtml(member.name)}</h4>
+                        <span class="team-role ${roleClass}">${escapeHtml(member.role)}</span>
+                        ${member.department ? `<p class="team-dept">${escapeHtml(member.department)}</p>` : ''}
+                        ${socialLinksHtml ? `<div class="team-socials">${socialLinksHtml}</div>` : ''}
+                    </div>
+                </div>
+                `;
+            }).join('');
+        });
+        
+    } catch (error) {
+        console.error('Error loading team members:', error);
+        ['faculty', 'core', 'volunteers'].forEach(category => {
+            const grid = document.getElementById(`team-grid-${category}`);
+            if (grid) {
+                grid.innerHTML = '<p style="text-align: center; color: var(--accent-red); padding: 2rem;">Error loading team members.</p>';
+            }
+        });
+    }
+}
+
+// Load team members when DOM is ready
+document.addEventListener('DOMContentLoaded', loadTeamFromFirebase);
+
+// ===== FEEDBACK WIDGET =====
+document.addEventListener('DOMContentLoaded', function() {
+    const emojiButtons = document.querySelectorAll('.emoji-btn');
+    const feedbackForm = document.getElementById('feedbackForm');
+    const feedbackSuccess = document.getElementById('feedbackSuccess');
+    const feedbackHeader = document.querySelector('.feedback-header');
+    const feedbackWidget = document.querySelector('.feedback-widget');
+    const feedbackSection = document.querySelector('.feedback-section');
+    const submitBtn = document.getElementById('submitFeedback');
+    const feedbackText = document.getElementById('feedbackText');
+    
+    let selectedRating = 0;
+    
+    // Function to reset/close feedback form
+    function closeFeedbackForm() {
+        if (feedbackForm) feedbackForm.classList.remove('active');
+        emojiButtons.forEach(b => b.classList.remove('selected'));
+        if (feedbackText) feedbackText.value = '';
+        selectedRating = 0;
+    }
+    
+    // Handle emoji selection
+    emojiButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Remove selected class from all
+            emojiButtons.forEach(b => b.classList.remove('selected'));
+            // Add to clicked one
+            this.classList.add('selected');
+            selectedRating = parseInt(this.dataset.rating);
+            // Show feedback form
+            if (feedbackForm) {
+                feedbackForm.classList.add('active');
+            }
+        });
+    });
+    
+    // Close on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && feedbackForm && feedbackForm.classList.contains('active')) {
+            closeFeedbackForm();
+        }
+    });
+    
+    // Close when clicking outside the widget (on the section background)
+    if (feedbackSection) {
+        feedbackSection.addEventListener('click', function(e) {
+            // Only close if clicking directly on section, not on widget
+            if (e.target === feedbackSection && feedbackForm && feedbackForm.classList.contains('active')) {
+                closeFeedbackForm();
+            }
+        });
+    }
+    
+    // Handle submit
+    if (submitBtn) {
+        submitBtn.addEventListener('click', async function() {
+            const feedback = feedbackText ? feedbackText.value.trim() : '';
+            
+            if (selectedRating === 0) {
+                return;
+            }
+            
+            // Disable button and show loading
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Sending...';
+            
+            try {
+                // Save to Firestore 'feedback' collection
+                await db.collection('feedback').add({
+                    rating: selectedRating,
+                    feedback: feedback,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    page: 'index',
+                    userAgent: navigator.userAgent
+                });
+                
+                // Show success
+                if (feedbackHeader) feedbackHeader.style.display = 'none';
+                if (feedbackForm) feedbackForm.style.display = 'none';
+                if (feedbackSuccess) feedbackSuccess.classList.add('active');
+                
+                // Reset after 3 seconds
+                setTimeout(() => {
+                    if (feedbackSuccess) feedbackSuccess.classList.remove('active');
+                    if (feedbackHeader) feedbackHeader.style.display = 'flex';
+                    if (feedbackForm) feedbackForm.classList.remove('active');
+                    emojiButtons.forEach(b => b.classList.remove('selected'));
+                    if (feedbackText) feedbackText.value = '';
+                    selectedRating = 0;
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Send Feedback';
+                }, 3000);
+                
+            } catch (error) {
+                console.error('Error submitting feedback:', error);
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Try Again';
+            }
+        });
+    }
+});
 
