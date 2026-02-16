@@ -16,9 +16,45 @@
         content="ISTE Club - Indian Society for Technical Education. Explore tech workshops, coding events, and join our vibrant tech community." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=Playfair+Display:wght@400;500;600;700;800&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&display=swap"
         rel="stylesheet" />
+    <style>
+        /* Nyght Serif — Local Font */
+        @font-face {
+            font-family: 'Nyght Serif';
+            src: url('admin1/css/nyght-serif-main/nyght-serif-main/fonts/WEB/NyghtSerif-Light.woff2') format('woff2');
+            font-weight: 300;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Nyght Serif';
+            src: url('admin1/css/nyght-serif-main/nyght-serif-main/fonts/WEB/NyghtSerif-Regular.woff2') format('woff2');
+            font-weight: 400;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Nyght Serif';
+            src: url('admin1/css/nyght-serif-main/nyght-serif-main/fonts/WEB/NyghtSerif-Medium.woff2') format('woff2');
+            font-weight: 500;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Nyght Serif';
+            src: url('admin1/css/nyght-serif-main/nyght-serif-main/fonts/WEB/NyghtSerif-Bold.woff2') format('woff2');
+            font-weight: 700;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Nyght Serif';
+            src: url('admin1/css/nyght-serif-main/nyght-serif-main/fonts/WEB/NyghtSerif-Dark.woff2') format('woff2');
+            font-weight: 900;
+            font-style: normal;
+        }
+    </style>
     <!-- SECURITY: reCAPTCHA v3 for invisible bot protection -->
     <script src="https://www.google.com/recaptcha/api.js?render=6LeeoD8sAAAAAGKAdRH9D4ca5FHGsip-XXGcXOzM"></script>
     <link rel="stylesheet" href="css/index.css">
@@ -62,6 +98,7 @@
             <a href="#activity">Events</a>
             <a href="#winners">Winners</a>
             <a href="#gallery">Gallery</a>
+            <a href="#team">Team</a>
             <a href="admin.html" class="nav-cta">Admin</a>
         </div>
         <div class="hamburger" id="hamburger" onclick="toggleNav()" aria-label="Toggle navigation menu" role="button"
@@ -347,6 +384,110 @@
         </div>
     </section>
 
+    <!-- TEAM SECTION -->
+    <section class="team-section reveal" id="team">
+        <div class="section-header">
+            <span class="section-tag">Our People</span>
+            <h2 class="section-title">Meet the <span class="gradient-text">Team</span></h2>
+            <p class="section-subtitle">The passionate minds driving ISTE forward</p>
+        </div>
+
+        <!-- Team Tabs -->
+        <div class="team-tabs">
+            <button class="team-tab active" data-tab="faculty">Faculty Coordinators</button>
+            <button class="team-tab" data-tab="core">Core Team</button>
+            <button class="team-tab" data-tab="volunteers">Volunteers</button>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="team-content">
+            <!-- Faculty Coordinators -->
+            <div class="team-panel active" id="panel-faculty">
+                <div class="team-grid team-grid-small" id="team-grid-faculty">
+                    <div class="team-loading">Loading...</div>
+                </div>
+            </div>
+
+            <!-- Core Team -->
+            <div class="team-panel" id="panel-core">
+                <div class="team-grid" id="team-grid-core">
+                    <div class="team-loading">Loading...</div>
+                </div>
+            </div>
+
+            <!-- Volunteers -->
+            <div class="team-panel" id="panel-volunteers">
+                <div class="team-grid team-grid-compact" id="team-grid-volunteers">
+                    <div class="team-loading">Loading...</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FEEDBACK SECTION -->
+    <section class="feedback-section" id="feedback">
+        <div class="feedback-container">
+            <div class="feedback-widget">
+                <div class="feedback-header">
+                    <span class="feedback-question">Was this helpful?</span>
+                    <div class="feedback-emojis">
+                        <button class="emoji-btn" data-rating="1" title="Very unhappy">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M8 15s1.5-2 4-2 4 2 4 2"/>
+                                <line x1="9" y1="9" x2="9.01" y2="9"/>
+                                <line x1="15" y1="9" x2="15.01" y2="9"/>
+                            </svg>
+                        </button>
+                        <button class="emoji-btn" data-rating="2" title="Unhappy">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M16 16s-1.5-2-4-2-4 2-4 2"/>
+                                <line x1="9" y1="9" x2="9.01" y2="9"/>
+                                <line x1="15" y1="9" x2="15.01" y2="9"/>
+                            </svg>
+                        </button>
+                        <button class="emoji-btn" data-rating="3" title="Happy">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                                <line x1="9" y1="9" x2="9.01" y2="9"/>
+                                <line x1="15" y1="9" x2="15.01" y2="9"/>
+                            </svg>
+                        </button>
+                        <button class="emoji-btn" data-rating="4" title="Very happy">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                                <line x1="9" y1="8" x2="9.01" y2="8"/>
+                                <line x1="15" y1="8" x2="15.01" y2="8"/>
+                                <path d="M9 8 C9 7 10 6 12 6 C14 6 15 7 15 8"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="feedback-form" id="feedbackForm">
+                    <div class="feedback-form-header">
+                        <span class="feedback-label">FEEDBACK</span>
+                    </div>
+                    <div class="feedback-textarea-wrapper">
+                        <textarea id="feedbackText" placeholder="Your feedback..." rows="4"></textarea>
+                    </div>
+                    <div class="feedback-footer">
+                        <span class="feedback-thanks">We appreciate your input.</span>
+                        <button class="feedback-submit-btn" id="submitFeedback">Send Feedback</button>
+                    </div>
+                </div>
+                
+                <div class="feedback-success" id="feedbackSuccess">
+                    <div class="success-icon">✓</div>
+                    <span>Thank you for your feedback!</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- FOOTER -->
     <footer>
         <div class="footer-content">
@@ -360,6 +501,7 @@
                 <a href="#activity">Events</a>
                 <a href="#winners">Winners</a>
                 <a href="#gallery">Gallery</a>
+                <a href="#team">Team</a>
             </div>
             <div class="footer-section">
                 <h4>Contact</h4>
@@ -380,10 +522,21 @@
         </svg>
     </button>
 
-    <!-- IMAGE MODAL -->
+    <!-- IMAGE MODAL / LIGHTBOX -->
     <div class="image-modal" id="imageModal">
         <button class="modal-close" onclick="closeImageModal()">✕</button>
+        <button class="modal-nav modal-nav-prev" onclick="navigateLightbox('prev')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+        </button>
         <img src="" alt="Full View" id="modalImage" />
+        <button class="modal-nav modal-nav-next" onclick="navigateLightbox('next')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 6 15 12 9 18"></polyline>
+            </svg>
+        </button>
+        <span class="swipe-hint">← Swipe to navigate →</span>
     </div>
 
     <!-- SUCCESS MODAL WITH CONFETTI -->
