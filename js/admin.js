@@ -1,7 +1,7 @@
 // ===== FIREBASE IMPORTS =====
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, browserSessionPersistence, setPersistence } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-import { getFirestore, collection, getDocs, doc, deleteDoc, updateDoc, setDoc, getDoc, orderBy, query, where, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, deleteDoc, updateDoc, setDoc, getDoc, orderBy, query, where, addDoc, serverTimestamp, limit } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
 // ===== SECURITY: Input Sanitization =====
 const SecurityUtils = {
@@ -339,8 +339,8 @@ if (window.RateLimiter && window.SECURITY_CONFIG) {
 // ===== SESSION TIMEOUT WITH VISUAL COUNTDOWN =====
 let inactivityTimer;
 let countdownInterval;
-const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
-const WARNING_THRESHOLD_MS = 5 * 60 * 1000; // Show warning at 5 min
+const SESSION_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
+const WARNING_THRESHOLD_MS = 3 * 60 * 1000; // Show warning at 3 min
 const DANGER_THRESHOLD_MS = 2 * 60 * 1000; // Red at 2 min
 let sessionEndTime = 0;
 
@@ -369,11 +369,8 @@ function updateTimerDisplay() {
         timerContainer.classList.remove('warning', 'danger');
         if (remaining <= DANGER_THRESHOLD_MS) {
             timerContainer.classList.add('danger');
-        } else if (remaining <= WARNING_THRESHOLD_MS + 5 * 60 * 1000) {
-            // Warning at 10 minutes
-            if (remaining <= 10 * 60 * 1000) {
-                timerContainer.classList.add('warning');
-            }
+        } else if (remaining <= WARNING_THRESHOLD_MS) {
+            timerContainer.classList.add('warning');
         }
     }
 
@@ -392,7 +389,16 @@ function updateTimerDisplay() {
     // Auto logout at 0
     if (remaining <= 0 && auth.currentUser) {
         clearInterval(countdownInterval);
-        signOut(auth).then(() => showToast('⏰ Session expired due to inactivity'));
+        sessionEndTime = 0;
+        signOut(auth).then(() => {
+            AdminPermissions.clear();
+            document.getElementById('admin-dashboard').classList.remove('active');
+            document.getElementById('login-page').style.display = 'flex';
+            if (timerEl) timerEl.textContent = '10:00';
+            if (timerContainer) timerContainer.classList.remove('warning', 'danger');
+            if (warningBanner) warningBanner.classList.remove('active');
+            showToast('⏰ Session expired due to inactivity');
+        });
     }
 }
 
@@ -414,7 +420,7 @@ function resetInactivityTimer() {
 
 function refreshSession() {
     resetInactivityTimer();
-    showToast('✅ Session refreshed! 30 minutes remaining.');
+    showToast('✅ Session refreshed! 10 minutes remaining.');
 }
 window.refreshSession = refreshSession;
 
@@ -461,7 +467,7 @@ function handleLogout() {
 
             // Reset timer display
             const timerEl = document.getElementById('sessionTimeRemaining');
-            if (timerEl) timerEl.textContent = '30:00';
+            if (timerEl) timerEl.textContent = '10:00';
             const timerContainer = document.getElementById('sessionTimer');
             if (timerContainer) timerContainer.classList.remove('warning', 'danger');
             const warningBanner = document.getElementById('sessionWarning');
@@ -3290,16 +3296,28 @@ async function updateDashboardStats(eventCode = null) {
             }
         }
 
-        // Update UI
-        if (statsTeams) statsTeams.textContent = totalTeams;
-        if (statsParticipants) statsParticipants.textContent = totalParticipants;
-        if (statsEvents) statsEvents.textContent = activeEventCount;
-        if (statsGallery) statsGallery.textContent = galleryCount || '--';
+        // Update UI with animation & remove skeletons
+        function revealStatCard(cardId, statEl, value, changeEl, changeText) {
+            const card = document.getElementById(cardId);
+            if (card) {
+                card.classList.remove('skeleton-loading');
+                card.classList.add('loaded');
+            }
+            if (statEl) {
+                statEl.textContent = '';
+                if (typeof window.animateStat === 'function' && typeof value === 'number' && !isNaN(value)) {
+                    window.animateStat(statEl.id, value);
+                } else {
+                    statEl.textContent = value;
+                }
+            }
+            if (changeEl) changeEl.textContent = changeText;
+        }
 
-        if (statsTeamsChange) statsTeamsChange.textContent = newThisWeek > 0 ? `↑ ${newThisWeek} this week` : statsLabel;
-        if (statsParticipantsChange) statsParticipantsChange.textContent = todayCount > 0 ? `↑ ${todayCount} today` : statsLabel;
-        if (statsEventsChange) statsEventsChange.textContent = 'Active events';
-        if (statsGalleryChange) statsGalleryChange.textContent = isSuperAdmin ? 'Uploaded' : '--';
+        revealStatCard('card-totalTeams', statsTeams, totalTeams, statsTeamsChange, newThisWeek > 0 ? `↑ ${newThisWeek} this week` : statsLabel);
+        setTimeout(() => revealStatCard('card-participants', statsParticipants, totalParticipants, statsParticipantsChange, todayCount > 0 ? `↑ ${todayCount} today` : statsLabel), 120);
+        setTimeout(() => revealStatCard('card-events', statsEvents, activeEventCount, statsEventsChange, 'Active events'), 240);
+        setTimeout(() => revealStatCard('card-gallery', statsGallery, galleryCount || '--', statsGalleryChange, isSuperAdmin ? 'Uploaded' : '--'), 360);
 
         console.log('[Stats] Dashboard stats updated for:', eventsToQuery.join(', '));
     } catch (error) {
@@ -3319,7 +3337,7 @@ window.updateDashboardStats = updateDashboardStats;
 window.addEventListener('DOMContentLoaded', async () => {
     // Set session-based persistence - user must re-login when browser closes
     await setPersistence(auth, browserSessionPersistence);
-    
+
     // Check if user is already authenticated (only within this browser session)
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
         // Unsubscribe immediately - we only need this check once on load
@@ -3381,3 +3399,493 @@ document.addEventListener("click", function (event) {
         hamburger.classList.remove("active");
     }
 });
+
+// ===== TEAM MANAGEMENT =====
+let teamMembersData = [];
+let currentTeamFilter = 'all';
+
+// Open Team Management Modal
+function openTeamManagement() {
+    document.getElementById('teamManagementModal').classList.add('active');
+    loadTeamMembers();
+}
+window.openTeamManagement = openTeamManagement;
+
+// Load all team members from Firebase
+async function loadTeamMembers() {
+    const listContainer = document.getElementById('teamMembersList');
+    listContainer.innerHTML = `
+        <div class="team-mgmt-loading">
+            <div style="font-size: 32px; margin-bottom: 8px;">⏳</div>
+            Loading team members...
+        </div>`;
+
+    try {
+        const teamQuery = query(collection(db, 'teamMembers'), orderBy('order', 'asc'));
+        const snapshot = await getDocs(teamQuery);
+
+        teamMembersData = [];
+        snapshot.forEach(doc => {
+            teamMembersData.push({ id: doc.id, ...doc.data() });
+        });
+
+        renderTeamMembersList();
+    } catch (error) {
+        console.error('Error loading team members:', error);
+        listContainer.innerHTML = `
+            <div class="team-mgmt-empty">
+                <div class="team-mgmt-empty-icon">⚠️</div>
+                <div class="team-mgmt-empty-text" style="color: #ef4444;">Error loading team members</div>
+            </div>`;
+    }
+}
+
+// Filter team members by category
+function filterTeamMembers(category, btn) {
+    currentTeamFilter = category;
+
+    // Update active tab
+    document.querySelectorAll('.team-mgmt-tab').forEach(tab => tab.classList.remove('active'));
+    btn.classList.add('active');
+
+    renderTeamMembersList();
+}
+window.filterTeamMembers = filterTeamMembers;
+
+// Render team members list
+function renderTeamMembersList() {
+    const listContainer = document.getElementById('teamMembersList');
+
+    let filteredMembers = teamMembersData;
+    if (currentTeamFilter !== 'all') {
+        filteredMembers = teamMembersData.filter(m => m.category === currentTeamFilter);
+    }
+
+    if (filteredMembers.length === 0) {
+        listContainer.innerHTML = `
+            <div class="team-mgmt-empty">
+                <div class="team-mgmt-empty-icon">👥</div>
+                <div class="team-mgmt-empty-text">No team members found</div>
+            </div>`;
+        return;
+    }
+
+    const categoryLabels = {
+        'faculty': 'Faculty Coordinator',
+        'core': 'Core Team',
+        'volunteers': 'Volunteer'
+    };
+
+    // Helper to get admin-relative path (admin1/ needs ../ prefix for root-relative paths)
+    const getAdminImagePath = (path) => {
+        if (!path) return '';
+        // If it's already a full URL, use as-is
+        if (path.startsWith('http://') || path.startsWith('https://')) return path;
+        // For local paths like "images/...", prepend "../" for admin folder
+        if (path.startsWith('images/')) return '../' + path;
+        return path;
+    };
+
+    listContainer.innerHTML = filteredMembers.map(member => `
+        <div class="team-mgmt-item" data-id="${member.id}">
+            ${member.imageUrl
+            ? `<img class="team-mgmt-item-avatar" src="${SecurityUtils.escapeHtml(getAdminImagePath(member.imageUrl))}" alt="${SecurityUtils.escapeHtml(member.name)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                   <div class="team-mgmt-item-avatar team-mgmt-avatar-placeholder" style="display:none;">${getInitials(member.name)}</div>`
+            : `<div class="team-mgmt-item-avatar team-mgmt-avatar-placeholder">${getInitials(member.name)}</div>`}
+            <div class="team-mgmt-item-info">
+                <div class="team-mgmt-item-name">${SecurityUtils.escapeHtml(member.name)}</div>
+                <div class="team-mgmt-item-role">${SecurityUtils.escapeHtml(member.role)}</div>
+                <span class="team-mgmt-item-category ${member.category}">${categoryLabels[member.category] || member.category}</span>
+            </div>
+            <div class="team-mgmt-item-actions">
+                <button class="team-mgmt-action-btn edit" onclick="openEditMember('${member.id}')" title="Edit">✏️</button>
+                ${AdminPermissions.canDelete() ? `<button class="team-mgmt-action-btn delete" onclick="openDeleteMember('${member.id}')" title="Delete">🗑️</button>` : ''}
+            </div>
+        </div>
+    `).join('');
+}
+
+// Get initials from name
+function getInitials(name) {
+    if (!name) return '?';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+}
+
+// Add new team member
+async function addTeamMember() {
+    const name = document.getElementById('newMemberName').value.trim();
+    const category = document.getElementById('newMemberCategory').value;
+    const role = document.getElementById('newMemberRole').value.trim();
+    const department = document.getElementById('newMemberDept').value.trim();
+    const imageUrl = document.getElementById('newMemberImage').value.trim();
+    const order = parseInt(document.getElementById('newMemberOrder').value) || 1;
+    const linkedin = document.getElementById('newMemberLinkedin').value.trim();
+    const github = document.getElementById('newMemberGithub').value.trim();
+    const email = document.getElementById('newMemberEmail').value.trim();
+
+    if (!name || !category || !role) {
+        showToast('Please fill in all required fields', 'error');
+        return;
+    }
+
+    // Only super admins can manage team members
+    if (!AdminPermissions.isSuperAdmin()) {
+        showToast('Only super admins can add team members', 'error');
+        return;
+    }
+
+    try {
+        const memberData = {
+            name: SecurityUtils.sanitizeString(name, 100),
+            category: category,
+            role: SecurityUtils.sanitizeString(role, 50),
+            department: SecurityUtils.sanitizeString(department, 50),
+            imageUrl: imageUrl ? SecurityUtils.sanitizeString(imageUrl, 500) : '',
+            order: order,
+            socials: {
+                linkedin: linkedin ? SecurityUtils.sanitizeString(linkedin, 200) : '',
+                github: github ? SecurityUtils.sanitizeString(github, 200) : '',
+                email: email ? SecurityUtils.sanitizeString(email, 100) : ''
+            },
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+        };
+
+        await addDoc(collection(db, 'teamMembers'), memberData);
+
+        // Clear form
+        document.getElementById('newMemberName').value = '';
+        document.getElementById('newMemberRole').value = '';
+        document.getElementById('newMemberDept').value = '';
+        document.getElementById('newMemberImage').value = '';
+        document.getElementById('newMemberOrder').value = '1';
+        document.getElementById('newMemberLinkedin').value = '';
+        document.getElementById('newMemberGithub').value = '';
+        document.getElementById('newMemberEmail').value = '';
+
+        showToast('Team member added successfully!', 'success');
+        loadTeamMembers();
+    } catch (error) {
+        console.error('Error adding team member:', error);
+        showToast('Error adding team member', 'error');
+    }
+}
+window.addTeamMember = addTeamMember;
+
+// Open edit member modal
+function openEditMember(memberId) {
+    const member = teamMembersData.find(m => m.id === memberId);
+    if (!member) return;
+
+    document.getElementById('editMemberId').value = memberId;
+    document.getElementById('editMemberName').value = member.name || '';
+    document.getElementById('editMemberCategory').value = member.category || 'core';
+    document.getElementById('editMemberRole').value = member.role || '';
+    document.getElementById('editMemberDept').value = member.department || '';
+    document.getElementById('editMemberImage').value = member.imageUrl || '';
+    document.getElementById('editMemberOrder').value = member.order || 1;
+    document.getElementById('editMemberLinkedin').value = member.socials?.linkedin || '';
+    document.getElementById('editMemberGithub').value = member.socials?.github || '';
+    document.getElementById('editMemberEmailAddr').value = member.socials?.email || '';
+
+    document.getElementById('editMemberModal').classList.add('active');
+}
+window.openEditMember = openEditMember;
+
+// Save team member edit
+async function saveTeamMemberEdit() {
+    const memberId = document.getElementById('editMemberId').value;
+    const name = document.getElementById('editMemberName').value.trim();
+    const category = document.getElementById('editMemberCategory').value;
+    const role = document.getElementById('editMemberRole').value.trim();
+    const department = document.getElementById('editMemberDept').value.trim();
+    const imageUrl = document.getElementById('editMemberImage').value.trim();
+    const order = parseInt(document.getElementById('editMemberOrder').value) || 1;
+    const linkedin = document.getElementById('editMemberLinkedin').value.trim();
+    const github = document.getElementById('editMemberGithub').value.trim();
+    const email = document.getElementById('editMemberEmailAddr').value.trim();
+
+    if (!name || !category || !role) {
+        showToast('Please fill in all required fields', 'error');
+        return;
+    }
+
+    // Only super admins can manage team members
+    if (!AdminPermissions.isSuperAdmin()) {
+        showToast('Only super admins can edit team members', 'error');
+        return;
+    }
+
+    try {
+        const memberRef = doc(db, 'teamMembers', memberId);
+        await updateDoc(memberRef, {
+            name: SecurityUtils.sanitizeString(name, 100),
+            category: category,
+            role: SecurityUtils.sanitizeString(role, 50),
+            department: SecurityUtils.sanitizeString(department, 50),
+            imageUrl: imageUrl ? SecurityUtils.sanitizeString(imageUrl, 500) : '',
+            order: order,
+            socials: {
+                linkedin: linkedin ? SecurityUtils.sanitizeString(linkedin, 200) : '',
+                github: github ? SecurityUtils.sanitizeString(github, 200) : '',
+                email: email ? SecurityUtils.sanitizeString(email, 100) : ''
+            },
+            updatedAt: serverTimestamp()
+        });
+
+        closeModal('editMemberModal');
+        showToast('Team member updated successfully!', 'success');
+        loadTeamMembers();
+    } catch (error) {
+        console.error('Error updating team member:', error);
+        showToast('Error updating team member', 'error');
+    }
+}
+window.saveTeamMemberEdit = saveTeamMemberEdit;
+
+// Open delete confirmation
+function openDeleteMember(memberId) {
+    const member = teamMembersData.find(m => m.id === memberId);
+    if (!member) return;
+
+    document.getElementById('deleteMemberId').value = memberId;
+    document.getElementById('deleteMemberName').textContent = member.name;
+    document.getElementById('deleteMemberModal').classList.add('active');
+}
+window.openDeleteMember = openDeleteMember;
+
+// Confirm delete team member
+async function confirmDeleteMember() {
+    const memberId = document.getElementById('deleteMemberId').value;
+
+    // Only super admins can delete team members
+    if (!AdminPermissions.canDelete()) {
+        closeModal('deleteMemberModal');
+        showToast('Only super admins can delete team members', 'error');
+        return;
+    }
+
+    try {
+        // Pre-check: verify admin doc exists with UID for Firestore rules
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+            const adminDocRef = doc(db, 'admins', currentUser.uid);
+            const adminDoc = await getDoc(adminDocRef);
+            if (!adminDoc.exists()) {
+                console.error('[Delete] Admin doc not found for UID:', currentUser.uid, '- Firestore rules will reject. Attempting migration...');
+                // Try to find and migrate admin doc by email
+                const adminsRef = collection(db, 'admins');
+                const emailQuery = query(adminsRef, where('email', '==', currentUser.email));
+                const querySnapshot = await getDocs(emailQuery);
+                if (!querySnapshot.empty) {
+                    const foundDoc = querySnapshot.docs[0];
+                    const adminData = foundDoc.data();
+                    await setDoc(doc(db, 'admins', currentUser.uid), {
+                        ...adminData,
+                        uid: currentUser.uid,
+                        migratedFrom: foundDoc.id,
+                        migratedAt: serverTimestamp()
+                    });
+                    await deleteDoc(doc(db, 'admins', foundDoc.id));
+                    console.log('[Delete] Admin doc migrated to UID:', currentUser.uid);
+                } else {
+                    closeModal('deleteMemberModal');
+                    showToast('Admin verification failed. Please re-login.', 'error');
+                    return;
+                }
+            } else {
+                const data = adminDoc.data();
+                console.log('[Delete] Admin doc verified - role:', data.role, 'isActive:', data.isActive);
+                if (data.role !== 'super' || data.isActive !== true) {
+                    closeModal('deleteMemberModal');
+                    showToast('Insufficient permissions. Your admin doc may need updating.', 'error');
+                    return;
+                }
+            }
+        }
+
+        await deleteDoc(doc(db, 'teamMembers', memberId));
+        closeModal('deleteMemberModal');
+        showToast('Team member deleted successfully!', 'success');
+        loadTeamMembers();
+    } catch (error) {
+        console.error('Error deleting team member:', error);
+        if (error.code === 'permission-denied') {
+            showToast('Permission denied. Check Firestore rules & admin doc.', 'error');
+        } else {
+            showToast('Error deleting team member: ' + error.message, 'error');
+        }
+    }
+}
+window.confirmDeleteMember = confirmDeleteMember;
+
+// ===== FEEDBACK VIEWER =====
+let feedbackData = [];
+
+async function openFeedbackViewer() {
+    document.getElementById('feedbackModal').classList.add('active');
+    await loadFeedback();
+}
+window.openFeedbackViewer = openFeedbackViewer;
+
+async function loadFeedback() {
+    const feedbackList = document.getElementById('feedbackList');
+    
+    try {
+        const snapshot = await getDocs(
+            query(collection(db, 'feedback'), orderBy('timestamp', 'desc'), limit(100))
+        );
+        
+        feedbackData = [];
+        const ratingCounts = { 1: 0, 2: 0, 3: 0, 4: 0 };
+        
+        snapshot.forEach(doc => {
+            const data = { id: doc.id, ...doc.data() };
+            feedbackData.push(data);
+            if (data.rating >= 1 && data.rating <= 4) {
+                ratingCounts[data.rating]++;
+            }
+        });
+        
+        // Update stats
+        document.getElementById('rating4Count').textContent = ratingCounts[4];
+        document.getElementById('rating3Count').textContent = ratingCounts[3];
+        document.getElementById('rating2Count').textContent = ratingCounts[2];
+        document.getElementById('rating1Count').textContent = ratingCounts[1];
+        
+        // Render feedback list
+        if (feedbackData.length === 0) {
+            feedbackList.innerHTML = `
+                <div class="feedback-empty">
+                    <div class="feedback-empty-icon">📭</div>
+                    <p>No feedback yet</p>
+                </div>
+            `;
+            return;
+        }
+        
+        const ratingEmojis = {
+            1: '😢',
+            2: '😕',
+            3: '🙂',
+            4: '😄'
+        };
+        
+        const ratingLabels = {
+            1: 'Very Unhappy',
+            2: 'Unhappy',
+            3: 'Happy',
+            4: 'Very Happy'
+        };
+        
+        feedbackList.innerHTML = feedbackData.map(item => {
+            const date = item.timestamp?.toDate?.() 
+                ? item.timestamp.toDate().toLocaleDateString('en-US', { 
+                    year: 'numeric', month: 'short', day: 'numeric', 
+                    hour: '2-digit', minute: '2-digit' 
+                }) 
+                : 'Unknown date';
+            
+            return `
+                <div class="feedback-item" data-id="${item.id}">
+                    <div class="feedback-item-header">
+                        <div class="feedback-rating">
+                            <span class="rating-emoji">${ratingEmojis[item.rating] || '❓'}</span>
+                            <span class="rating-label">${ratingLabels[item.rating] || 'Unknown'}</span>
+                        </div>
+                        <div class="feedback-actions">
+                            <span class="feedback-date">${date}</span>
+                            <button class="feedback-delete-btn" onclick="deleteFeedback('${item.id}')" title="Delete">🗑️</button>
+                        </div>
+                    </div>
+                    ${item.feedback ? `<div class="feedback-message">${SecurityUtils.escapeHtml(item.feedback)}</div>` : ''}
+                    <div class="feedback-meta">
+                        <span>📄 ${item.page || 'Unknown page'}</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+    } catch (error) {
+        console.error('Error loading feedback:', error);
+        feedbackList.innerHTML = `
+            <div class="feedback-empty">
+                <div class="feedback-empty-icon">❌</div>
+                <p>Error loading feedback</p>
+            </div>
+        `;
+    }
+}
+
+function exportFeedback() {
+    if (feedbackData.length === 0) {
+        showToast('No feedback to export', 'error');
+        return;
+    }
+    
+    const ratingLabels = { 1: 'Very Unhappy', 2: 'Unhappy', 3: 'Happy', 4: 'Very Happy' };
+    
+    const csvContent = [
+        ['Date', 'Rating', 'Rating Label', 'Feedback', 'Page'].join(','),
+        ...feedbackData.map(item => {
+            const date = item.timestamp?.toDate?.() 
+                ? item.timestamp.toDate().toISOString() 
+                : '';
+            return [
+                `"${date}"`,
+                item.rating,
+                `"${ratingLabels[item.rating] || 'Unknown'}"`,
+                `"${(item.feedback || '').replace(/"/g, '""')}"`,
+                `"${item.page || ''}"`
+            ].join(',');
+        })
+    ].join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `feedback_export_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    
+    showToast('Feedback exported successfully!', 'success');
+}
+window.exportFeedback = exportFeedback;
+
+async function deleteFeedback(feedbackId) {
+    if (!confirm('Delete this feedback?')) return;
+    
+    try {
+        await deleteDoc(doc(db, 'feedback', feedbackId));
+        showToast('Feedback deleted', 'success');
+        await loadFeedback(); // Refresh list
+    } catch (error) {
+        console.error('Error deleting feedback:', error);
+        showToast('Error deleting feedback: ' + error.message, 'error');
+    }
+}
+window.deleteFeedback = deleteFeedback;
+
+async function clearAllFeedback() {
+    const count = feedbackData.length;
+    if (count === 0) {
+        showToast('No feedback to clear', 'error');
+        return;
+    }
+    
+    if (!confirm(`Are you sure you want to delete ALL ${count} feedback entries? This cannot be undone.`)) return;
+    
+    try {
+        // Delete all feedback documents
+        const deletePromises = feedbackData.map(item => 
+            deleteDoc(doc(db, 'feedback', item.id))
+        );
+        await Promise.all(deletePromises);
+        
+        showToast(`Cleared ${count} feedback entries`, 'success');
+        await loadFeedback(); // Refresh list
+    } catch (error) {
+        console.error('Error clearing feedback:', error);
+        showToast('Error clearing feedback: ' + error.message, 'error');
+    }
+}
+window.clearAllFeedback = clearAllFeedback;
