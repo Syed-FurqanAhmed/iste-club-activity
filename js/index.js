@@ -17,12 +17,34 @@
 // SECURITY: reCAPTCHA v3 Site Key
 const RECAPTCHA_SITE_KEY = '6LeeoD8sAAAAAGKAdRH9D4ca5FHGsip-XXGcXOzM';
 
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+// Initialize Firebase with error handling
+let db;
+try {
+    if (typeof firebase !== 'undefined' && typeof firebaseConfig !== 'undefined') {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+        console.log('[Firebase] Initialized successfully');
+    } else {
+        console.error('[Firebase] Configuration not found. Please create config.js from config.example.js');
+    }
+} catch (error) {
+    console.error('[Firebase] Initialization error:', error);
+}
 
 // ===== SECURITY INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', function () {
+    // Check if Firebase is configured
+    if (!db) {
+        console.warn('[App] Firebase not configured. Some features will be unavailable.');
+        // Show a subtle warning banner (optional - you can remove this if you don't want visible warnings)
+        const registerBtn = document.getElementById('registerBtn');
+        if (registerBtn) {
+            registerBtn.disabled = true;
+            registerBtn.textContent = 'Registration Unavailable';
+            registerBtn.title = 'Firebase configuration required';
+        }
+    }
+    
     // Initialize security module for registration
     if (window.ISTESecurity) {
         window.ISTESecurity.init('registration');
@@ -981,17 +1003,20 @@ teamTabs.forEach(tab => {
 // ===== LOAD TEAM FROM FIREBASE =====
 async function loadTeamFromFirebase() {
     // Check if Firebase is available
-    if (typeof firebase === 'undefined' || !window.firebaseConfig) {
-        console.warn('Firebase not available for team loading');
+    if (typeof firebase === 'undefined' || typeof db === 'undefined') {
+        console.warn('Firebase not initialized for team loading');
+        // Show error message in all team grids
+        ['faculty', 'core', 'volunteers'].forEach(category => {
+            const grid = document.getElementById(`team-grid-${category}`);
+            if (grid) {
+                grid.innerHTML = '<p style="text-align: center; color: var(--text-muted); padding: 2rem;">Team data unavailable. Please check Firebase configuration.</p>';
+            }
+        });
         return;
     }
     
     try {
-        // Initialize Firebase if not already done
-        if (!firebase.apps.length) {
-            firebase.initializeApp(window.firebaseConfig);
-        }
-        const db = firebase.firestore();
+        // Use the global db instance already initialized at the top
         
         // Get all team members ordered by 'order' field
         const snapshot = await db.collection('teamMembers').orderBy('order', 'asc').get();
