@@ -3475,17 +3475,32 @@ function renderTeamMembersList() {
     };
 
     // Helper to get admin-relative path (admin1/ needs ../ prefix for root-relative paths)
+    // const getAdminImagePath = (path) => {
+    //     if (!path) return '';
+    //     // If it's already a full URL, use as-is
+    //     if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    //     // Normalize backslashes to forward slashes
+    //     const normalizedPath = path.replace(/\\/g, '/');
+    //     // For local paths like "images/...", prepend "../" for admin folder
+    //     if (normalizedPath.startsWith('images/')) return '../' + normalizedPath;
+    //     return normalizedPath;
+    // };
+
     const getAdminImagePath = (path) => {
-        if (!path) return '';
-        // If it's already a full URL, use as-is
-        if (path.startsWith('http://') || path.startsWith('https://')) return path;
-        // Normalize backslashes to forward slashes
-        const normalizedPath = path.replace(/\\/g, '/');
-        // For local paths like "images/...", prepend "../" for admin folder
-        if (normalizedPath.startsWith('images/')) return '../' + normalizedPath;
-        return normalizedPath;
+    if (!path) return '';
+    // If it's already a full URL, use as-is
+    if (path.startsWith('http://') || path.startsWith('https://')) return path;
+    // Normalize backslashes to forward slashes
+    const normalizedPath = path.replace(/\\/g, '/');
+    // For local paths like "Name.png", prepend "images/" and "../" for admin folder
+    if (!normalizedPath.startsWith('images/')) {
+        return '../images/' + normalizedPath;
+    }
+    // If already has images/ prefix
+    return '../' + normalizedPath;
     };
 
+    
     listContainer.innerHTML = filteredMembers.map(member => `
         <div class="team-mgmt-item" data-id="${member.id}">
             ${member.imageUrl
