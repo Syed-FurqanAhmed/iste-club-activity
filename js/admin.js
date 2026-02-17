@@ -116,21 +116,19 @@ const rateLimiters = {
 };
 
 // ===== FIREBASE CONFIGURATION =====
+// Load config from external config.js file (gitignored for security)
 // Note: Firebase API keys are designed to be public. Security is enforced via:
 // 1. Firebase Security Rules (server-side)
 // 2. Firebase Authentication
 // 3. App Check (recommended for production)
-const firebaseConfig = {
-    apiKey: "AIzaSyAf1JlNjAsUGib1PpZWF6xELseRERpLE48",
-    authDomain: "iste-toce.firebaseapp.com",
-    projectId: "iste-toce",
-    storageBucket: "iste-toce.firebasestorage.app",
-    messagingSenderId: "918228043244",
-    appId: "1:918228043244:web:891b81cc0a80127588ecc9",
-    measurementId: "G-RWG0BCFGEJ"
-};
 
-const app = initializeApp(firebaseConfig);
+if (typeof window.firebaseConfig === 'undefined') {
+    console.error('[Admin] Firebase config not found. Please create config.js from config.example.js');
+    alert('⚠️ Configuration Error\n\nFirebase configuration not found.\n\nPlease create config.js from config.example.js with your Firebase credentials.');
+    throw new Error('Firebase configuration required');
+}
+
+const app = initializeApp(window.firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
@@ -3481,9 +3479,11 @@ function renderTeamMembersList() {
         if (!path) return '';
         // If it's already a full URL, use as-is
         if (path.startsWith('http://') || path.startsWith('https://')) return path;
+        // Normalize backslashes to forward slashes
+        const normalizedPath = path.replace(/\\/g, '/');
         // For local paths like "images/...", prepend "../" for admin folder
-        if (path.startsWith('images/')) return '../' + path;
-        return path;
+        if (normalizedPath.startsWith('images/')) return '../' + normalizedPath;
+        return normalizedPath;
     };
 
     listContainer.innerHTML = filteredMembers.map(member => `
