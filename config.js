@@ -1,6 +1,6 @@
 // config.js - DO NOT COMMIT THIS FILE TO GITHUB!
-const firebaseConfig = {
-  apiKey: "AIzaSyAf1JlNjAsUGib1PpZWF6xELseRERpLE48",  // Replace with the NEW key you just created
+window.firebaseConfig = {
+  apiKey: "AIzaSyAf1JlNjAsUGib1PpZWF6xELseRERpLE48",
   authDomain: "iste-toce.firebaseapp.com",
   projectId: "iste-toce",
   storageBucket: "iste-toce.firebasestorage.app",
