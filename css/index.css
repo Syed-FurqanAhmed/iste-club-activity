@@ -1434,6 +1434,49 @@
             transform: scale(1.02);
         }
 
+        /* No Featured Event State */
+        .no-event-state {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 60px 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .no-event-state .empty-state-icon {
+            font-size: 80px;
+            margin-bottom: 24px;
+            opacity: 0.8;
+        }
+        
+        .no-event-state h3 {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+        }
+        
+        .no-event-state p {
+            color: var(--text-secondary);
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        /* Event Status Badge Variants */
+        .event-status-badge.coming-soon {
+            background: linear-gradient(135deg, #fef3c7, #fde047);
+            color: #92400e;
+        }
+        
+        .event-status-badge.closed {
+            background: linear-gradient(135deg, #fee2e2, #fca5a5);
+            color: #991b1b;
+        }
+
         /* ===== WINNERS SECTION ===== */
         .winners {
             padding: 100px 6%;
@@ -1446,7 +1489,7 @@
             gap: 30px;
             max-width: 1000px;
             margin: 0 auto;
-            align-items: end;
+            align-items: stretch;
         }
 
         .winner-card {
@@ -1462,22 +1505,24 @@
             /* Start hidden for podium animation */
             opacity: 0;
             transform: translateY(60px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
-        /* Gold card elevated styling - center position */
+        /* Gold card styling - first position */
         .winner-card.gold {
-            order: 2;
-            padding: 45px 25px;
+            order: 1;
             border-color: rgba(251, 191, 36, 0.3);
             z-index: 2;
         }
 
-        /* Silver - left position */
+        /* Silver - second position */
         .winner-card.silver {
-            order: 1;
+            order: 2;
         }
 
-        /* Bronze - right position */
+        /* Bronze - third position */
         .winner-card.bronze {
             order: 3;
         }
