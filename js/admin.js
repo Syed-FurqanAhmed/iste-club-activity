@@ -1,7 +1,7 @@
 // ===== FIREBASE IMPORTS =====
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, browserSessionPersistence, setPersistence } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-import { getFirestore, collection, getDocs, doc, deleteDoc, updateDoc, setDoc, getDoc, orderBy, query, where, addDoc, serverTimestamp, limit } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, deleteDoc, updateDoc, setDoc, getDoc, orderBy, query, where, addDoc, serverTimestamp, limit, writeBatch } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
 // ===== SECURITY: Input Sanitization =====
 const SecurityUtils = {
@@ -30,13 +30,32 @@ const SecurityUtils = {
     // Validate and sanitize team name
     sanitizeTeamName(name) {
         const sanitized = this.sanitizeString(name, 100);
-        // Remove potentially dangerous characters but allow common ones
         return sanitized.replace(/[<>\"'`]/g, '');
     },
 
-    // Validate USN format (adjust pattern as needed)
+    // Sanitize member data and return safe HTML-ready values
+    sanitizeMember(member) {
+        const name = this.escapeHtml(this.sanitizeString(member?.name, 100) || '-');
+        const usn = this.sanitizeString(member?.usn, 20) || '';
+        const dept = this.sanitizeString(member?.dept, 50) || '';
+        const detail = this.escapeHtml(`${usn} • ${dept}`);
+        return { name, detail, usn, dept };
+    },
+
+    // Sanitize all team data for rendering
+    sanitizeTeamData(d) {
+        const teamName = this.escapeHtml(this.sanitizeTeamName(d.teamName));
+        const email = this.escapeHtml(this.sanitizeString(d.email, 254));
+        const status = ['Pending', 'Verified'].includes(d.status) ? d.status : 'Pending';
+        const m1 = this.sanitizeMember(d.member1);
+        const m2 = this.sanitizeMember(d.member2);
+        const m3 = this.sanitizeMember(d.member3);
+        return { teamName, email, status, m1, m2, m3 };
+    },
+
+    // Validate USN format
     isValidUSN(usn) {
-        if (!usn) return true; // Optional field
+        if (!usn) return true;
         const usnRegex = /^[A-Za-z0-9]{6,15}$/;
         return usnRegex.test(usn);
     },
@@ -56,8 +75,18 @@ const SecurityUtils = {
     // Validate document ID format (Firestore)
     isValidDocId(id) {
         if (!id || typeof id !== 'string') return false;
-        // Firestore doc IDs: 1-1500 bytes, no forward slashes
         return id.length >= 1 && id.length <= 1500 && !id.includes('/');
+    },
+
+    // Safe JSON.parse wrapper to prevent crashes on malformed data
+    safeJsonParse(str, fallback = null) {
+        if (!str || typeof str !== 'string') return fallback;
+        try {
+            const parsed = JSON.parse(str);
+            return parsed !== null ? parsed : fallback;
+        } catch (e) {
+            return fallback;
+        }
     }
 };
 
@@ -123,7 +152,7 @@ const rateLimiters = {
 // 3. App Check (recommended for production)
 
 if (typeof window.firebaseConfig === 'undefined') {
-    console.error('[Admin] Firebase config not found. Please create config.js from config.example.js');
+    secureLog('[Admin] Firebase config not found. Please create config.js from config.example.js');
     alert('⚠️ Configuration Error\n\nFirebase configuration not found.\n\nPlease create config.js from config.example.js with your Firebase credentials.');
     throw new Error('Firebase configuration required');
 }
@@ -144,13 +173,17 @@ let allEvents = []; // Store all loaded events
 
 // ===== ADMIN ROLE MANAGEMENT =====
 // Stores the current admin's role and permissions
+// SECURITY: Debug logging disabled in production to prevent information leakage
+const DEBUG_MODE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const secureLog = (...args) => { if (DEBUG_MODE) console.log(...args); };
+
 const AdminPermissions = {
     currentAdmin: null,
 
     // Set the current admin data after login
     setAdmin(adminData) {
         this.currentAdmin = adminData;
-        console.log('[AdminPermissions] Set admin:', adminData?.email, 'Role:', adminData?.role);
+        secureLog('[AdminPermissions] Set admin:', adminData?.email, 'Role:', adminData?.role);
     },
 
     // Clear admin data on logout
@@ -230,7 +263,7 @@ window.AdminPermissions = AdminPermissions;
 // 2. By email query (for newly added admins, then binds their UID)
 async function checkAdminRole(user) {
     if (!user) {
-        console.error('[checkAdminRole] No user provided');
+        secureLog('[checkAdminRole] No user provided');
         return null;
     }
 
@@ -243,10 +276,10 @@ async function checkAdminRole(user) {
 
         if (adminDoc.exists()) {
             adminData = adminDoc.data();
-            console.log('[checkAdminRole] Found admin by UID');
+            secureLog('[checkAdminRole] Found admin by UID');
         } else {
             // Fallback: Query by email (for newly added admins)
-            console.log('[checkAdminRole] Not found by UID, searching by email...');
+            secureLog('[checkAdminRole] Not found by UID, searching by email...');
             const adminsRef = collection(db, 'admins');
             const emailQuery = query(adminsRef, where('email', '==', user.email));
             const querySnapshot = await getDocs(emailQuery);
@@ -256,11 +289,11 @@ async function checkAdminRole(user) {
                 const foundDoc = querySnapshot.docs[0];
                 adminData = foundDoc.data();
                 docId = foundDoc.id;
-                console.log('[checkAdminRole] Found admin by email, doc ID:', docId);
+                secureLog('[checkAdminRole] Found admin by email, doc ID:', docId);
 
                 // Migrate: Create new doc with proper UID, delete old one
                 if (docId !== user.uid) {
-                    console.log('[checkAdminRole] Migrating admin doc to use UID:', user.uid);
+                    secureLog('[checkAdminRole] Migrating admin doc to use UID:', user.uid);
                     await setDoc(doc(db, 'admins', user.uid), {
                         ...adminData,
                         uid: user.uid,
@@ -269,25 +302,25 @@ async function checkAdminRole(user) {
                     });
                     // Delete old document
                     await deleteDoc(doc(db, 'admins', docId));
-                    console.log('[checkAdminRole] Migration complete');
+                    secureLog('[checkAdminRole] Migration complete');
                 }
             }
         }
 
         if (!adminData) {
-            console.warn('[checkAdminRole] User not found in admins collection:', user.email);
+            secureLog('[checkAdminRole] User not found in admins collection');
             return null;
         }
 
         // Check if admin is active
         if (!adminData.isActive) {
-            console.warn('[checkAdminRole] Admin account is deactivated:', user.email);
+            secureLog('[checkAdminRole] Admin account is deactivated');
             return null;
         }
 
         // Validate role
         if (!['super', 'normal'].includes(adminData.role)) {
-            console.error('[checkAdminRole] Invalid role:', adminData.role);
+            secureLog('[checkAdminRole] Invalid role:', adminData.role);
             return null;
         }
 
@@ -304,11 +337,11 @@ async function checkAdminRole(user) {
         // Store in AdminPermissions
         AdminPermissions.setAdmin(result);
 
-        console.log('[checkAdminRole] Admin verified:', result.email, 'Role:', result.role);
+        secureLog('[checkAdminRole] Admin verified. Role:', result.role);
         return result;
 
     } catch (error) {
-        console.error('[checkAdminRole] Error checking admin role:', error);
+        secureLog('[checkAdminRole] Error checking admin role:', error);
         return null;
     }
 }
@@ -475,7 +508,7 @@ function handleLogout() {
             console.log('Logout successful');
         })
         .catch((error) => {
-            console.error('Logout error:', error);
+            secureLog('Logout error:', error);
             showToast('Error logging out');
         });
 }
@@ -486,7 +519,7 @@ function applyRoleBasedUI() {
     const isSuperAdmin = AdminPermissions.isSuperAdmin();
     const accessibleEvents = AdminPermissions.getAccessibleEvents();
 
-    console.log('[applyRoleBasedUI] Super Admin:', isSuperAdmin, 'Accessible Events:', accessibleEvents);
+    secureLog('[applyRoleBasedUI] Super Admin:', isSuperAdmin, 'Accessible Events:', accessibleEvents);
 
     // === DELETE BUTTONS: Only visible to super admin ===
     document.querySelectorAll('.action-btn.delete, .delete-btn, [data-action="delete"]').forEach(btn => {
@@ -618,40 +651,50 @@ async function loadAdminList() {
 
         container.innerHTML = html;
     } catch (error) {
-        console.error('[loadAdminList] Error:', error);
+        secureLog('[loadAdminList] Error:', error);
         container.innerHTML = '<div style="text-align: center; padding: 20px; color: var(--accent-red);">Error loading admins</div>';
     }
 }
 window.loadAdminList = loadAdminList;
 
-function populateEventCheckboxes() {
-    const container = document.getElementById('eventCheckboxes');
+// Unified checkbox populator for event assignment
+function populateEventCheckboxes(containerId = 'eventCheckboxes', inputName = 'assignedEvents', selectedEvents = []) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
 
-    // If allEvents not loaded yet, show loading message
+    // If allEvents not loaded yet, show loading message and retry
     if (!allEvents || allEvents.length === 0) {
         container.innerHTML = '<span style="color: var(--text-muted);">Loading events...</span>';
-        // Try to load events
-        loadAllEvents().then(() => {
-            populateEventCheckboxes(); // Retry after loading
-        });
+        loadAllEvents().then(() => populateEventCheckboxes(containerId, inputName, selectedEvents));
         return;
     }
 
-    // Use dynamic allEvents array - automatically includes new events
     container.innerHTML = allEvents
         .filter(e => e.isActive)
-        .map(e => `
-            <label class="event-checkbox-item">
-                <input type="checkbox" name="assignedEvents" value="${SecurityUtils.escapeHtml(e.code)}">
-                <span>${SecurityUtils.escapeHtml(e.emoji)} ${SecurityUtils.escapeHtml(e.name)}</span>
-            </label>
-        `).join('');
+        .map(e => {
+            const isChecked = selectedEvents.includes(e.code) ? 'checked' : '';
+            return `
+                <label class="event-checkbox-item">
+                    <input type="checkbox" name="${inputName}" value="${SecurityUtils.escapeHtml(e.code)}" ${isChecked}>
+                    <span>${SecurityUtils.escapeHtml(e.emoji)} ${SecurityUtils.escapeHtml(e.name)}</span>
+                </label>
+            `;
+        }).join('');
+}
+
+// Unified toggle for event assignment visibility
+function toggleEventAssignmentVisibility(roleSelectId, eventGroupId, routingGroupId = null) {
+    const roleSelect = document.getElementById(roleSelectId);
+    const eventGroup = document.getElementById(eventGroupId);
+    const routingGroup = routingGroupId ? document.getElementById(routingGroupId) : null;
+    const isNormal = roleSelect?.value === 'normal';
+    
+    if (eventGroup) eventGroup.style.display = isNormal ? '' : 'none';
+    if (routingGroup) routingGroup.style.display = isNormal ? '' : 'none';
 }
 
 function toggleEventAssignment() {
-    const roleSelect = document.getElementById('newAdminRole');
-    const eventGroup = document.getElementById('eventAssignmentGroup');
-    eventGroup.style.display = roleSelect.value === 'normal' ? '' : 'none';
+    toggleEventAssignmentVisibility('newAdminRole', 'eventAssignmentGroup');
 }
 window.toggleEventAssignment = toggleEventAssignment;
 
@@ -729,7 +772,7 @@ async function addNewAdmin() {
         await loadAdminList();
 
     } catch (error) {
-        console.error('[addNewAdmin] Error:', error);
+        secureLog('[addNewAdmin] Error:', error);
         showToast('❌ Error adding admin: ' + error.message);
     }
 }
@@ -756,7 +799,7 @@ async function removeAdmin(uid, email) {
         await logAdminAction('admin_removed', { uid, email });
         await loadAdminList();
     } catch (error) {
-        console.error('[removeAdmin] Error:', error);
+        secureLog('[removeAdmin] Error:', error);
         showToast('❌ Error removing admin: ' + error.message);
     }
 }
@@ -794,41 +837,18 @@ async function openEditAdminModal(uid) {
         // Open the modal
         document.getElementById('editAdminModal').classList.add('active');
     } catch (error) {
-        console.error('[openEditAdminModal] Error:', error);
+        secureLog('[openEditAdminModal] Error:', error);
         showToast('❌ Error loading admin data');
     }
 }
 window.openEditAdminModal = openEditAdminModal;
 
 function populateEditEventCheckboxes(selectedEvents = []) {
-    const container = document.getElementById('editEventCheckboxes');
-
-    if (!allEvents || allEvents.length === 0) {
-        container.innerHTML = '<span style="color: var(--text-muted);">No events available</span>';
-        return;
-    }
-
-    container.innerHTML = allEvents
-        .filter(e => e.isActive)
-        .map(e => {
-            const isChecked = selectedEvents.includes(e.code) ? 'checked' : '';
-            return `
-                <label class="event-checkbox-item">
-                    <input type="checkbox" name="editAssignedEvents" value="${SecurityUtils.escapeHtml(e.code)}" ${isChecked}>
-                    <span>${SecurityUtils.escapeHtml(e.emoji)} ${SecurityUtils.escapeHtml(e.name)}</span>
-                </label>
-            `;
-        }).join('');
+    populateEventCheckboxes('editEventCheckboxes', 'editAssignedEvents', selectedEvents);
 }
 
 function toggleEditEventAssignment() {
-    const roleSelect = document.getElementById('editAdminRole');
-    const eventGroup = document.getElementById('editEventAssignmentGroup');
-    const routingGroup = document.getElementById('editRoutingPermissionGroup');
-    const isNormal = roleSelect.value === 'normal';
-
-    eventGroup.style.display = isNormal ? '' : 'none';
-    routingGroup.style.display = isNormal ? '' : 'none';
+    toggleEventAssignmentVisibility('editAdminRole', 'editEventAssignmentGroup', 'editRoutingPermissionGroup');
 }
 window.toggleEditEventAssignment = toggleEditEventAssignment;
 
@@ -873,7 +893,7 @@ async function saveAdminChanges() {
         closeModal('editAdminModal');
         await loadAdminList();
     } catch (error) {
-        console.error('[saveAdminChanges] Error:', error);
+        secureLog('[saveAdminChanges] Error:', error);
         showToast('❌ Error updating admin: ' + error.message);
     }
 }
@@ -888,7 +908,7 @@ async function logAdminAction(action, details = {}) {
             timestamp: serverTimestamp(),
             userAgent: navigator.userAgent
         });
-    } catch (e) { console.warn('[Audit] Failed:', e); }
+    } catch (e) { secureLog('[Audit] Failed:', e); }
 }
 window.logAdminAction = logAdminAction;
 
@@ -896,7 +916,7 @@ window.logAdminAction = logAdminAction;
 window.deleteFromFirestore = async function (collectionPath, docId, teamName = 'Unknown') {
     // Input validation
     if (!SecurityUtils.isValidDocId(docId)) {
-        console.error('Invalid document ID');
+        secureLog('Invalid document ID');
         return { success: false, error: 'Invalid document ID' };
     }
 
@@ -931,7 +951,7 @@ window.deleteFromFirestore = async function (collectionPath, docId, teamName = '
         }
         return { success: false };
     } catch (error) {
-        console.error('Error deleting:', error);
+        secureLog('Error deleting:', error);
         return { success: false, error: error.message };
     }
 };
@@ -939,7 +959,7 @@ window.deleteFromFirestore = async function (collectionPath, docId, teamName = '
 window.updateInFirestore = async function (collectionPath, docId, data) {
     // Input validation
     if (!SecurityUtils.isValidDocId(docId)) {
-        console.error('Invalid document ID');
+        secureLog('Invalid document ID');
         return false;
     }
 
@@ -973,7 +993,7 @@ window.updateInFirestore = async function (collectionPath, docId, data) {
         await logAdminAction('UPDATE', { teamId: docId, changes: Object.keys(sanitizedData) });
         return true;
     } catch (error) {
-        console.error('Error updating:', error);
+        secureLog('Error updating:', error);
         return false;
     }
 };
@@ -991,7 +1011,7 @@ window.undoDelete = async function (docId) {
             return true;
         }
         return false;
-    } catch (error) { console.error('Error restoring:', error); return false; }
+    } catch (error) { secureLog('Error restoring:', error); return false; }
 };
 
 // ===== ATTENDANCE TRACKING =====
@@ -1014,7 +1034,7 @@ async function markAttended(docId, attended, eventCode) {
         showToast(attended ? '✅ Marked as attended' : '⬜ Marked as not attended');
         return true;
     } catch (error) {
-        console.error('Error updating attendance:', error);
+        secureLog('Error updating attendance:', error);
         showToast('⚠️ Error updating attendance');
         return false;
     }
@@ -1236,22 +1256,25 @@ function handleRowClick(event, teamId, teamDataStr) {
     if (event.target.closest('.row-checkbox, .status-pill, a.email-link')) return;
     if (event.target.closest('.action-buttons') && !event.target.closest('.action-btn.view')) return;
 
-    try {
-        const teamData = JSON.parse(decodeURIComponent(teamDataStr));
-        // Basic validation of parsed data
-        if (!teamData || typeof teamData !== 'object') {
-            throw new Error('Invalid data format');
-        }
-        openTeamDrawer(teamId, teamData);
-    } catch (e) {
-        console.error('Error parsing team data:', e);
+    // Use safeJsonParse for robust error handling
+    const teamData = SecurityUtils.safeJsonParse(decodeURIComponent(teamDataStr));
+    if (!teamData || typeof teamData !== 'object') {
+        secureLog('Error parsing team data: invalid format');
         showToast('⚠️ Could not load details');
+        return;
     }
+    openTeamDrawer(teamId, teamData);
 }
 window.handleRowClick = handleRowClick;
 
 // ===== STATUS TOGGLE (SECURED) =====
 async function toggleStatus(teamId, currentStatus) {
+    // Authorization check - verify user can modify registrations
+    if (!AdminPermissions.currentAdmin) {
+        showToast('⚠️ Not authorized');
+        return;
+    }
+
     // Validate inputs
     if (!SecurityUtils.isValidDocId(teamId)) {
         showToast('⚠️ Invalid team ID');
@@ -1285,6 +1308,12 @@ window.toggleStatus = toggleStatus;
 
 // ===== BULK ACTIONS (SECURED) =====
 async function bulkUpdateStatus(newStatus) {
+    // Authorization check - only super admins can bulk update
+    if (!AdminPermissions.isSuperAdmin()) {
+        showToast('⚠️ Only super admins can bulk update');
+        return;
+    }
+
     // Normalize status to capitalized format
     const statusMap = {
         'verified': 'Verified',
@@ -1325,6 +1354,12 @@ async function bulkUpdateStatus(newStatus) {
 window.bulkUpdateStatus = bulkUpdateStatus;
 
 async function bulkDeleteSelected() {
+    // Authorization check - only super admins can delete
+    if (!AdminPermissions.canDelete()) {
+        showToast('⚠️ Only super admins can bulk delete');
+        return;
+    }
+
     // Rate limiting
     const rateCheck = rateLimiters.bulkAction.recordAttempt('bulkdel_' + (auth.currentUser?.uid || 'anon'));
     if (!rateCheck.allowed) {
@@ -1459,111 +1494,7 @@ function switchSubTab(eventName, subName, btn) {
 window.switchSubTab = switchSubTab;
 
 // ===== DATA LOADERS (SECURED) =====
-async function loadTestingData() {
-    try {
-        const snapshot = await getDocs(query(collection(db, 'registrations'), where('eventCode', '==', 'testing'), orderBy('registeredAt', 'desc')));
-        window.testingDataCount = snapshot.size;
-        const tbody = document.getElementById('testing-tbody');
-        if (!tbody) return;
-        if (snapshot.empty) {
-            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-muted);">No registrations</td></tr>';
-            return;
-        }
-        tbody.innerHTML = '';
-        let i = 1;
-        snapshot.forEach(docSnap => {
-            const d = docSnap.data();
-            const docId = docSnap.id;
-
-            // Sanitize all data before rendering
-            const safeTeamName = SecurityUtils.escapeHtml(SecurityUtils.sanitizeTeamName(d.teamName));
-            const safeEmail = SecurityUtils.escapeHtml(SecurityUtils.sanitizeString(d.email, 254));
-            const safeM1Name = SecurityUtils.escapeHtml(SecurityUtils.sanitizeString(d.member1?.name, 100) || '-');
-            const safeM1Detail = SecurityUtils.escapeHtml(`${SecurityUtils.sanitizeString(d.member1?.usn, 20) || ''} • ${SecurityUtils.sanitizeString(d.member1?.dept, 50) || ''}`);
-            const safeM2Name = SecurityUtils.escapeHtml(SecurityUtils.sanitizeString(d.member2?.name, 100) || '-');
-            const safeM2Detail = SecurityUtils.escapeHtml(`${SecurityUtils.sanitizeString(d.member2?.usn, 20) || ''} • ${SecurityUtils.sanitizeString(d.member2?.dept, 50) || ''}`);
-            const safeM3Name = SecurityUtils.escapeHtml(SecurityUtils.sanitizeString(d.member3?.name, 100) || '-');
-            const safeM3Detail = SecurityUtils.escapeHtml(`${SecurityUtils.sanitizeString(d.member3?.usn, 20) || ''} • ${SecurityUtils.sanitizeString(d.member3?.dept, 50) || ''}`);
-            const safeStatus = ['Pending', 'Verified'].includes(d.status) ? d.status : 'Pending';
-
-            // Safely encode team data for onclick
-            const teamDataStr = encodeURIComponent(JSON.stringify(d));
-
-            tbody.innerHTML += `<tr data-team="${SecurityUtils.escapeHtml(docId)}" class="clickable-row" onclick="handleRowClick(event,'${SecurityUtils.escapeHtml(docId)}','${teamDataStr}')">
-                <td onclick="event.stopPropagation()"><input type="checkbox" class="row-checkbox" data-team-id="${SecurityUtils.escapeHtml(docId)}" onchange="toggleRowSelection()"></td>
-                <td><span class="team-badge">${i++}</span></td>
-                <td><strong>${safeTeamName || '—'}</strong></td>
-                <td><div class="member-info"><span class="name">${safeM1Name}</span><span class="detail">${safeM1Detail}</span></div></td>
-                <td><div class="member-info"><span class="name">${safeM2Name}</span><span class="detail">${safeM2Detail}</span></div></td>
-                <td><div class="member-info"><span class="name">${safeM3Name}</span><span class="detail">${safeM3Detail}</span></div></td>
-                <td><a href="mailto:${safeEmail}" class="email-link" onclick="event.stopPropagation()">${safeEmail}</a></td>
-                <td onclick="event.stopPropagation()"><span class="status-pill clickable ${safeStatus.toLowerCase()}" onclick="toggleStatus('${SecurityUtils.escapeHtml(docId)}','${safeStatus}')">${safeStatus}</span></td>
-                <td onclick="event.stopPropagation()"><div class="action-buttons">
-                    <button class="action-btn view" onclick="handleRowClick(event,'${SecurityUtils.escapeHtml(docId)}','${teamDataStr}')">👁️</button>
-                    <button class="action-btn verify" onclick="toggleStatus('${SecurityUtils.escapeHtml(docId)}','${safeStatus}')">✓</button>
-                    <button class="action-btn edit" onclick="openEditModal('${SecurityUtils.escapeHtml(docId)}','${safeTeamName.replace(/'/g, "\\'")}','${safeM1Name.replace(/'/g, "\\'")}','${safeM1Detail.replace(/'/g, "\\'")}','${safeM2Name.replace(/'/g, "\\'")}','${safeM2Detail.replace(/'/g, "\\'")}','${safeM3Name.replace(/'/g, "\\'")}','${safeM3Detail.replace(/'/g, "\\'")}','${safeEmail}')">✏️</button>
-                    <button class="action-btn delete" onclick="openDeleteModal('${SecurityUtils.escapeHtml(docId)}','${safeTeamName.replace(/'/g, "\\'")}')">🗑️</button>
-                </div></td></tr>`;
-        });
-        setTimeout(() => checkForDuplicates('testing'), 100);
-    } catch (err) {
-        console.error('Error loading testing data:', err);
-        showToast('⚠️ Error loading data');
-    }
-}
-
-async function loadUIBattleData() {
-    try {
-        const snapshot = await getDocs(query(collection(db, 'registrations'), where('eventCode', '==', 'uibattle'), orderBy('registeredAt', 'desc')));
-        window.uibattleDataCount = snapshot.size;
-        const tbody = document.getElementById('uibattle-tbody');
-        if (!tbody) return;
-        if (snapshot.empty) {
-            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text-muted);">No registrations</td></tr>';
-            return;
-        }
-        tbody.innerHTML = '';
-        let i = 1;
-        snapshot.forEach(docSnap => {
-            const d = docSnap.data();
-            const docId = docSnap.id;
-
-            // Sanitize all data before rendering
-            const safeTeamName = SecurityUtils.escapeHtml(SecurityUtils.sanitizeTeamName(d.teamName));
-            const safeEmail = SecurityUtils.escapeHtml(SecurityUtils.sanitizeString(d.email, 254));
-            const safeM1Name = SecurityUtils.escapeHtml(SecurityUtils.sanitizeString(d.member1?.name, 100) || '-');
-            const safeM1Detail = SecurityUtils.escapeHtml(`${SecurityUtils.sanitizeString(d.member1?.usn, 20) || ''} • ${SecurityUtils.sanitizeString(d.member1?.dept, 50) || ''}`);
-            const safeM2Name = SecurityUtils.escapeHtml(SecurityUtils.sanitizeString(d.member2?.name, 100) || '-');
-            const safeM2Detail = SecurityUtils.escapeHtml(`${SecurityUtils.sanitizeString(d.member2?.usn, 20) || ''} • ${SecurityUtils.sanitizeString(d.member2?.dept, 50) || ''}`);
-            const safeM3Name = SecurityUtils.escapeHtml(SecurityUtils.sanitizeString(d.member3?.name, 100) || '-');
-            const safeM3Detail = SecurityUtils.escapeHtml(`${SecurityUtils.sanitizeString(d.member3?.usn, 20) || ''} • ${SecurityUtils.sanitizeString(d.member3?.dept, 50) || ''}`);
-            const safeStatus = ['Pending', 'Verified'].includes(d.status) ? d.status : 'Pending';
-
-            // Safely encode team data for onclick
-            const teamDataStr = encodeURIComponent(JSON.stringify(d));
-
-            tbody.innerHTML += `<tr data-team="${SecurityUtils.escapeHtml(docId)}" class="clickable-row" onclick="handleRowClick(event,'${SecurityUtils.escapeHtml(docId)}','${teamDataStr}')">
-                <td onclick="event.stopPropagation()"><input type="checkbox" class="row-checkbox" data-team-id="${SecurityUtils.escapeHtml(docId)}" onchange="toggleRowSelection()"></td>
-                <td><span class="team-badge">${i++}</span></td>
-                <td><strong>${safeTeamName || '—'}</strong></td>
-                <td><div class="member-info"><span class="name">${safeM1Name}</span><span class="detail">${safeM1Detail}</span></div></td>
-                <td><div class="member-info"><span class="name">${safeM2Name}</span><span class="detail">${safeM2Detail}</span></div></td>
-                <td><div class="member-info"><span class="name">${safeM3Name}</span><span class="detail">${safeM3Detail}</span></div></td>
-                <td><a href="mailto:${safeEmail}" class="email-link" onclick="event.stopPropagation()">${safeEmail}</a></td>
-                <td onclick="event.stopPropagation()"><span class="status-pill clickable ${safeStatus.toLowerCase()}" onclick="toggleStatus('${SecurityUtils.escapeHtml(docId)}','${safeStatus}')">${safeStatus}</span></td>
-                <td onclick="event.stopPropagation()"><div class="action-buttons">
-                    <button class="action-btn view" onclick="handleRowClick(event,'${SecurityUtils.escapeHtml(docId)}','${teamDataStr}')">👁️</button>
-                    <button class="action-btn verify" onclick="toggleStatus('${SecurityUtils.escapeHtml(docId)}','${safeStatus}')">✓</button>
-                    <button class="action-btn edit" onclick="openEditModal('${SecurityUtils.escapeHtml(docId)}','${safeTeamName.replace(/'/g, "\\'")}','${safeM1Name.replace(/'/g, "\\'")}','${safeM1Detail.replace(/'/g, "\\'")}','${safeM2Name.replace(/'/g, "\\'")}','${safeM2Detail.replace(/'/g, "\\'")}','${safeM3Name.replace(/'/g, "\\'")}','${safeM3Detail.replace(/'/g, "\\'")}','${safeEmail}')">✏️</button>
-                    <button class="action-btn delete" onclick="openDeleteModal('${SecurityUtils.escapeHtml(docId)}','${safeTeamName.replace(/'/g, "\\'")}')">🗑️</button>
-                </div></td></tr>`;
-        });
-        setTimeout(() => checkForDuplicates('uibattle'), 100);
-    } catch (err) {
-        console.error('Error loading UI Battle data:', err);
-        showToast('⚠️ Error loading data');
-    }
-}
+// NOTE: loadTestingData and loadUIBattleData removed - use loadEventData('testing') and loadEventData('uibattle') instead
 
 function checkForDuplicates(tableId) {
     const tbody = document.getElementById(`${tableId}-tbody`);
@@ -1591,9 +1522,68 @@ window.checkForDuplicates = checkForDuplicates;
 
 // ===== DYNAMIC EVENT SYSTEM =====
 
+// Default events list - used for seeding Firestore
+const DEFAULT_EVENTS = [
+    { code: 'testing', name: 'Testing (Sandbox)', emoji: '🧪', isActive: true, isFeatured: false },
+    { code: 'promptquest', name: 'PromptQuest', emoji: '🎯', isActive: true, isFeatured: false },
+    { code: 'uibattle', name: 'UI Battle', emoji: '🎨', isActive: true, isFeatured: false },
+    { code: 'hackathon', name: 'Hackathon', emoji: '💻', isActive: true, isFeatured: false }
+];
+
+// Seed default events to Firestore if they don't exist, or patch existing ones missing required fields
+async function seedDefaultEvents() {
+    try {
+        const batch = writeBatch(db);
+        let updated = 0;
+
+        for (const event of DEFAULT_EVENTS) {
+            const eventRef = doc(db, 'events', event.code);
+            const eventDoc = await getDoc(eventRef);
+
+            if (!eventDoc.exists()) {
+                // Create new event
+                batch.set(eventRef, {
+                    name: event.name,
+                    emoji: event.emoji,
+                    isActive: event.isActive,
+                    isFeatured: event.isFeatured,
+                    createdAt: serverTimestamp(),
+                    createdBy: 'system'
+                });
+                updated++;
+            } else {
+                // Check if existing event is missing required fields
+                const existingData = eventDoc.data();
+                const missingFields = {};
+                
+                if (!existingData.name) missingFields.name = event.name;
+                if (!existingData.emoji) missingFields.emoji = event.emoji;
+                if (existingData.isActive === undefined) missingFields.isActive = true;
+                if (!existingData.createdAt) missingFields.createdAt = serverTimestamp();
+                
+                if (Object.keys(missingFields).length > 0) {
+                    batch.update(eventRef, missingFields);
+                    updated++;
+                    console.log(`[seedDefaultEvents] Patching ${event.code} with:`, Object.keys(missingFields));
+                }
+            }
+        }
+
+        if (updated > 0) {
+            await batch.commit();
+            console.log(`[seedDefaultEvents] Updated ${updated} events in Firestore`);
+        }
+    } catch (error) {
+        secureLog('Error seeding default events:', error);
+    }
+}
+
 // Load all events from Firestore
 async function loadAllEvents() {
     try {
+        // First, ensure default events exist
+        await seedDefaultEvents();
+
         const eventsSnapshot = await getDocs(query(collection(db, 'events'), orderBy('createdAt', 'desc')));
         allEvents = [];
 
@@ -1604,30 +1594,25 @@ async function loadAllEvents() {
                 name: eventData.name || docSnap.id,
                 emoji: eventData.emoji || '📋',
                 isActive: eventData.isActive !== false,
-                createdAt: eventData.createdAt
+                isFeatured: eventData.isFeatured || false,
+                createdAt: eventData.createdAt,
+                // Include all display fields for editing
+                eventDate: eventData.eventDate || '',
+                eventDay: eventData.eventDay || '',
+                eventTime: eventData.eventTime || '',
+                eventDateRaw: eventData.eventDateRaw || '',
+                venue: eventData.venue || '',
+                teamSize: eventData.teamSize || { min: 2, max: 3 },
+                posterUrl: eventData.posterUrl || '',
+                registrationStatus: eventData.registrationStatus || 'open'
             });
         });
 
-        // If no events in Firestore, use default events (backward compatibility)
-        if (allEvents.length === 0) {
-            allEvents = [
-                { code: 'testing', name: 'Testing', emoji: '🧪', isActive: true },
-                { code: 'promptquest', name: 'PromptQuest', emoji: '🎯', isActive: true },
-                { code: 'uibattle', name: 'UI Battle', emoji: '🎨', isActive: true },
-                { code: 'hackathon', name: 'Hackathon', emoji: '💻', isActive: true }
-            ];
-        }
-
         return allEvents;
     } catch (error) {
-        console.error('Error loading events:', error);
-        // Fallback to default events
-        allEvents = [
-            { code: 'testing', name: 'Testing', emoji: '🧪', isActive: true },
-            { code: 'promptquest', name: 'PromptQuest', emoji: '🎯', isActive: true },
-            { code: 'uibattle', name: 'UI Battle', emoji: '🎨', isActive: true },
-            { code: 'hackathon', name: 'Hackathon', emoji: '💻', isActive: true }
-        ];
+        secureLog('Error loading events:', error);
+        // Use DEFAULT_EVENTS as fallback if Firestore fails
+        allEvents = DEFAULT_EVENTS.map(e => ({ ...e }));
         return allEvents;
     }
 }
@@ -1679,7 +1664,7 @@ async function generateEventCards() {
                 window[`${event.code}DataCount`] = count;
             }
         } catch (e) {
-            console.warn(`Could not count registrations for ${event.code}`, e);
+            secureLog(`Could not count registrations for ${event.code}`, e);
         }
 
         const safeCode = SecurityUtils.escapeHtml(event.code);
@@ -1688,12 +1673,30 @@ async function generateEventCards() {
 
         // Hide delete button for normal admins
         const deleteBtn = isSuperAdmin
-            ? `<button class="event-delete-btn" onclick="event.stopPropagation(); openDeleteEventModal('${safeCode}', '${safeName}')" title="Delete Event">🗑️</button>`
+            ? `<button class="event-action-btn event-delete-btn" onclick="event.stopPropagation(); openDeleteEventModal('${safeCode}', '${safeName}')" title="Delete Event">🗑️</button>`
+            : '';
+        
+        // Edit button (for super admins)
+        const editBtn = isSuperAdmin
+            ? `<button class="event-action-btn event-edit-btn" onclick="event.stopPropagation(); openEditEventModal('${safeCode}')" title="Edit Event">✏️</button>`
+            : '';
+        
+        // Featured badge and toggle button (only for super admins)
+        const featuredBadge = event.isFeatured 
+            ? '<span class="featured-badge">⭐ Featured</span>' 
+            : '';
+        const featuredToggle = isSuperAdmin
+            ? `<button class="event-action-btn event-featured-btn ${event.isFeatured ? 'active' : ''}" onclick="event.stopPropagation(); toggleFeatured('${safeCode}')" title="${event.isFeatured ? 'Remove from main page' : 'Feature on main page'}">${event.isFeatured ? '⭐' : '☆'}</button>`
             : '';
 
         grid.innerHTML += `
-            <div class="event-select-card" data-event="${safeCode}" onclick="openEventView('${safeCode}')">
-                ${deleteBtn}
+            <div class="event-select-card ${event.isFeatured ? 'is-featured' : ''}" data-event="${safeCode}" onclick="openEventView('${safeCode}')">
+                <div class="event-card-actions">
+                    ${featuredToggle}
+                    ${editBtn}
+                    ${deleteBtn}
+                </div>
+                ${featuredBadge}
                 <div class="icon">${safeEmoji}</div>
                 <h4>${safeName}</h4>
                 <span class="count" id="${safeCode}-count">👥 ${count} teams</span>
@@ -1952,51 +1955,50 @@ async function loadEventData(eventCode) {
         snapshot.forEach(docSnap => {
             const d = docSnap.data();
             const docId = docSnap.id;
+            const safeDocId = SecurityUtils.escapeHtml(docId);
 
-            // Sanitize all data before rendering
-            const safeTeamName = SecurityUtils.escapeHtml(SecurityUtils.sanitizeTeamName(d.teamName));
-            const safeEmail = SecurityUtils.escapeHtml(SecurityUtils.sanitizeString(d.email, 254));
-            const safeM1Name = SecurityUtils.escapeHtml(SecurityUtils.sanitizeString(d.member1?.name, 100) || '-');
-            const safeM1Detail = SecurityUtils.escapeHtml(`${SecurityUtils.sanitizeString(d.member1?.usn, 20) || ''} • ${SecurityUtils.sanitizeString(d.member1?.dept, 50) || ''}`);
-            const safeM2Name = SecurityUtils.escapeHtml(SecurityUtils.sanitizeString(d.member2?.name, 100) || '-');
-            const safeM2Detail = SecurityUtils.escapeHtml(`${SecurityUtils.sanitizeString(d.member2?.usn, 20) || ''} • ${SecurityUtils.sanitizeString(d.member2?.dept, 50) || ''}`);
-            const safeM3Name = SecurityUtils.escapeHtml(SecurityUtils.sanitizeString(d.member3?.name, 100) || '-');
-            const safeM3Detail = SecurityUtils.escapeHtml(`${SecurityUtils.sanitizeString(d.member3?.usn, 20) || ''} • ${SecurityUtils.sanitizeString(d.member3?.dept, 50) || ''}`);
-            const safeStatus = ['Pending', 'Verified'].includes(d.status) ? d.status : 'Pending';
+            // Use consolidated sanitization helper
+            const safe = SecurityUtils.sanitizeTeamData(d);
             const isAttended = d.attended === true;
 
-            // Winner badge HTML
-            const winnerBadge = d.isWinner ?
-                `<span class="winner-badge ${d.winnerPosition === 1 ? 'gold' : d.winnerPosition === 2 ? 'silver' : 'bronze'}">🏆 ${d.winnerPosition === 1 ? '1st' : d.winnerPosition === 2 ? '2nd' : '3rd'}</span>` : '';
+            // Winner badge position labels
+            const POSITION_LABELS = { 1: '1st', 2: '2nd', 3: '3rd' };
+            const POSITION_CLASSES = { 1: 'gold', 2: 'silver', 3: 'bronze' };
 
-            // Winner button - shows remove option if already winner
-            const winnerBtn = d.isWinner ?
-                `<button class="action-btn winner" title="Remove Winner Status" onclick="removeWinner('${SecurityUtils.escapeHtml(docId)}', '${eventCode}')">❌</button>` :
-                `<button class="action-btn winner" title="Set as Winner" onclick="openWinnerModal('${SecurityUtils.escapeHtml(docId)}', '${safeTeamName.replace(/'/g, "\\'")}', '${eventCode}')">🏆</button>`;
+            const winnerBadge = d.isWinner
+                ? `<span class="winner-badge ${POSITION_CLASSES[d.winnerPosition] || 'bronze'}">🏆 ${POSITION_LABELS[d.winnerPosition] || '3rd'}</span>`
+                : '';
 
-            // Safely encode team data for onclick
+            const winnerBtn = d.isWinner
+                ? `<button class="action-btn winner" title="Remove Winner Status" aria-label="Remove winner status" onclick="removeWinner('${safeDocId}', '${eventCode}')">❌</button>`
+                : `<button class="action-btn winner" title="Set as Winner" aria-label="Set as winner" onclick="openWinnerModal('${safeDocId}', '${safe.teamName.replace(/'/g, "\\'")}', '${eventCode}')">🏆</button>`;
+
             const teamDataStr = encodeURIComponent(JSON.stringify(d));
+            const regDate = d.registeredAt ? (d.registeredAt.toDate ? d.registeredAt.toDate().toISOString() : new Date(d.registeredAt.seconds * 1000).toISOString()) : '';
 
-            tbody.innerHTML += `<tr data-team="${SecurityUtils.escapeHtml(docId)}" data-registered-at="${d.registeredAt ? (d.registeredAt.toDate ? d.registeredAt.toDate().toISOString() : new Date(d.registeredAt.seconds * 1000).toISOString()) : ''}" class="clickable-row" onclick="handleRowClick(event,'${SecurityUtils.escapeHtml(docId)}','${teamDataStr}')">
-                <td onclick="event.stopPropagation()"><input type="checkbox" class="row-checkbox" data-team-id="${SecurityUtils.escapeHtml(docId)}" onchange="toggleRowSelection()"></td>
+            // Escape single quotes for onclick handlers
+            const esc = str => str.replace(/'/g, "\\'");
+
+            tbody.innerHTML += `<tr data-team="${safeDocId}" data-registered-at="${regDate}" class="clickable-row" onclick="handleRowClick(event,'${safeDocId}','${teamDataStr}')">
+                <td onclick="event.stopPropagation()"><input type="checkbox" class="row-checkbox" data-team-id="${safeDocId}" onchange="toggleRowSelection()"></td>
                 <td><span class="team-badge">${i++}</span></td>
-                <td><strong>${safeTeamName || '—'}</strong>${winnerBadge}</td>
-                <td><div class="member-info"><span class="name">${safeM1Name}</span><span class="detail">${safeM1Detail}</span></div></td>
-                <td><div class="member-info"><span class="name">${safeM2Name}</span><span class="detail">${safeM2Detail}</span></div></td>
-                <td><div class="member-info"><span class="name">${safeM3Name}</span><span class="detail">${safeM3Detail}</span></div></td>
-                <td><a href="mailto:${safeEmail}" class="email-link" onclick="event.stopPropagation()">${safeEmail}</a></td>
-                <td onclick="event.stopPropagation()"><span class="status-pill clickable ${safeStatus.toLowerCase()}" onclick="toggleStatus('${SecurityUtils.escapeHtml(docId)}','${safeStatus}')">${safeStatus}</span></td>
+                <td><strong>${safe.teamName || '—'}</strong>${winnerBadge}</td>
+                <td><div class="member-info"><span class="name">${safe.m1.name}</span><span class="detail">${safe.m1.detail}</span></div></td>
+                <td><div class="member-info"><span class="name">${safe.m2.name}</span><span class="detail">${safe.m2.detail}</span></div></td>
+                <td><div class="member-info"><span class="name">${safe.m3.name}</span><span class="detail">${safe.m3.detail}</span></div></td>
+                <td><a href="mailto:${safe.email}" class="email-link" onclick="event.stopPropagation()">${safe.email}</a></td>
+                <td onclick="event.stopPropagation()"><span class="status-pill clickable ${safe.status.toLowerCase()}" onclick="toggleStatus('${safeDocId}','${safe.status}')">${safe.status}</span></td>
                 <td onclick="event.stopPropagation()" style="text-align:center;">
                     <input type="checkbox" class="attended-checkbox" ${isAttended ? 'checked' : ''} 
-                        onchange="markAttended('${SecurityUtils.escapeHtml(docId)}', this.checked, '${eventCode}')" 
+                        onchange="markAttended('${safeDocId}', this.checked, '${eventCode}')" 
                         title="${isAttended ? 'Mark as not attended' : 'Mark as attended'}">
                 </td>
                 <td onclick="event.stopPropagation()"><div class="action-buttons">
-                    <button class="action-btn view" onclick="handleRowClick(event,'${SecurityUtils.escapeHtml(docId)}','${teamDataStr}')">👁️</button>
+                    <button class="action-btn view" aria-label="View details" onclick="handleRowClick(event,'${safeDocId}','${teamDataStr}')">👁️</button>
                     ${winnerBtn}
-                    <button class="action-btn verify" onclick="toggleStatus('${SecurityUtils.escapeHtml(docId)}','${safeStatus}')">✓</button>
-                    <button class="action-btn edit" onclick="openEditModal('${SecurityUtils.escapeHtml(docId)}','${safeTeamName.replace(/'/g, "\\'")}','${safeM1Name.replace(/'/g, "\\'")}','${safeM1Detail.replace(/'/g, "\\'")}','${safeM2Name.replace(/'/g, "\\'")}','${safeM2Detail.replace(/'/g, "\\'")}','${safeM3Name.replace(/'/g, "\\'")}','${safeM3Detail.replace(/'/g, "\\'")}','${safeEmail}')">✏️</button>
-                    <button class="action-btn delete" onclick="openDeleteModal('${SecurityUtils.escapeHtml(docId)}','${safeTeamName.replace(/'/g, "\\'")}')">🗑️</button>
+                    <button class="action-btn verify" aria-label="Toggle verification status" onclick="toggleStatus('${safeDocId}','${safe.status}')">✓</button>
+                    <button class="action-btn edit" aria-label="Edit team" onclick="openEditModal('${safeDocId}','${esc(safe.teamName)}','${esc(safe.m1.name)}','${esc(safe.m1.detail)}','${esc(safe.m2.name)}','${esc(safe.m2.detail)}','${esc(safe.m3.name)}','${esc(safe.m3.detail)}','${safe.email}')">✏️</button>
+                    <button class="action-btn delete" aria-label="Delete team" onclick="openDeleteModal('${safeDocId}','${esc(safe.teamName)}')">🗑️</button>
                 </div></td></tr>`;
         });
 
@@ -2006,7 +2008,7 @@ async function loadEventData(eventCode) {
 
         setTimeout(() => checkForDuplicates(eventCode), 100);
     } catch (err) {
-        console.error(`Error loading ${eventCode} data:`, err);
+        secureLog(`Error loading ${eventCode} data:`, err);
         const tbody = document.getElementById(`${eventCode}-tbody`);
         if (tbody) {
             tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--accent-red);">Error loading data</td></tr>';
@@ -2043,6 +2045,9 @@ async function initDynamicEvents() {
         // Generate event selector cards
         await generateEventCards();
 
+        // Populate registration routing dropdown
+        populateRoutingDropdown();
+
         // Generate event tabs
         generateEventTabs();
 
@@ -2054,7 +2059,7 @@ async function initDynamicEvents() {
 
         console.log('Dynamic event system initialized with', allEvents.length, 'events');
     } catch (error) {
-        console.error('Error initializing dynamic events:', error);
+        secureLog('Error initializing dynamic events:', error);
         showToast('⚠️ Error loading events');
     }
 }
@@ -2089,6 +2094,35 @@ function toggleDropdown() {
     }
 }
 window.toggleDropdown = toggleDropdown;
+
+// Populate routing dropdown dynamically from allEvents
+function populateRoutingDropdown() {
+    const content = document.getElementById('routingSelectContent');
+    if (!content) return;
+
+    content.innerHTML = '';
+
+    for (const event of allEvents) {
+        if (!event.isActive) continue;
+
+        const safeCode = SecurityUtils.escapeHtml(event.code);
+        const safeName = SecurityUtils.escapeHtml(event.name);
+        const safeEmoji = SecurityUtils.escapeHtml(event.emoji);
+
+        content.innerHTML += `
+            <div class="select-item" data-value="${safeCode}" onclick="selectOption(this)">
+                <span class="icon">${safeEmoji}</span>
+                <span>${safeName}</span>
+                <span class="check">✓</span>
+            </div>`;
+    }
+
+    // If no events, show a placeholder
+    if (content.innerHTML === '') {
+        content.innerHTML = '<div class="select-item disabled"><span>No events available</span></div>';
+    }
+}
+window.populateRoutingDropdown = populateRoutingDropdown;
 
 function selectOption(element) {
     const value = element.dataset.value;
@@ -2128,7 +2162,7 @@ async function saveRoutingConfig(eventCode) {
         });
         await logAdminAction('UPDATE_ROUTING', { activeEvent: eventCode });
     } catch (error) {
-        console.error('Error saving routing config:', error);
+        secureLog('Error saving routing config:', error);
         showToast('⚠️ Failed to save routing config');
     }
 }
@@ -2148,7 +2182,7 @@ async function loadRoutingConfig() {
             }
         }
     } catch (error) {
-        console.error('Error loading routing config:', error);
+        secureLog('Error loading routing config:', error);
     }
 }
 window.loadRoutingConfig = loadRoutingConfig;
@@ -2164,12 +2198,22 @@ document.addEventListener('click', (e) => {
 // Alias for openCreateEventModal
 function openCreateEventModal() {
     document.getElementById('createEventModal')?.classList.add('active');
-    // Reset form
+    // Reset form - basic fields
     document.getElementById('newEventName').value = '';
     document.getElementById('newEventCode').value = '';
     document.getElementById('selectedEventEmoji').value = '🎯';
     document.querySelectorAll('.emoji-option').forEach(btn => btn.classList.remove('selected'));
     document.querySelector('.emoji-option[data-emoji="🎯"]')?.classList.add('selected');
+    
+    // Reset new fields
+    document.getElementById('newEventDate').value = '';
+    document.getElementById('newEventTime').value = '';
+    document.getElementById('newEventVenue').value = '';
+    document.getElementById('newEventTeamMin').value = '2';
+    document.getElementById('newEventTeamMax').value = '3';
+    document.getElementById('newEventPoster').value = '';
+    document.getElementById('newEventFeatured').checked = false;
+    document.getElementById('newEventRegStatus').value = 'open';
 }
 window.openCreateEventModal = openCreateEventModal;
 
@@ -2186,6 +2230,16 @@ async function createNewEvent() {
     const name = document.getElementById('newEventName').value.trim();
     const code = document.getElementById('newEventCode').value.trim().toLowerCase();
     const emoji = document.getElementById('selectedEventEmoji').value || '🎯';
+    
+    // New fields
+    const eventDate = document.getElementById('newEventDate').value;
+    const eventTime = document.getElementById('newEventTime').value;
+    const venue = document.getElementById('newEventVenue').value.trim();
+    const teamMin = parseInt(document.getElementById('newEventTeamMin').value) || 2;
+    const teamMax = parseInt(document.getElementById('newEventTeamMax').value) || 3;
+    const posterUrl = document.getElementById('newEventPoster').value.trim();
+    const isFeatured = document.getElementById('newEventFeatured').checked;
+    const registrationStatus = document.getElementById('newEventRegStatus').value || 'open';
 
     // Validation
     if (!name || name.length < 2) {
@@ -2200,6 +2254,18 @@ async function createNewEvent() {
         showToast('⚠️ Event code can only contain lowercase letters, numbers and underscores');
         return;
     }
+    
+    // Validate poster path - prevent path traversal (same as team member pics)
+    if (posterUrl && (posterUrl.includes('..') || posterUrl.includes('\\') || /^[a-z]+:/i.test(posterUrl))) {
+        showToast('⚠️ Invalid poster path. Use relative paths like "images/poster.jpg"');
+        return;
+    }
+    
+    // Validate team size
+    if (teamMin > teamMax) {
+        showToast('⚠️ Minimum team size cannot be greater than maximum');
+        return;
+    }
 
     try {
         // Check if event code already exists
@@ -2208,28 +2274,98 @@ async function createNewEvent() {
             showToast('⚠️ An event with this code already exists');
             return;
         }
+        
+        // If featuring, ask for confirmation and un-feature others
+        if (isFeatured) {
+            const confirmFeature = confirm(
+                '⭐ Feature this event on the main page?\n\n' +
+                'This will:\n' +
+                '• Replace the currently featured event\n' +
+                '• Update registration routing to this event\n\n' +
+                'The previous featured event will still be accessible in the admin panel.'
+            );
+            if (!confirmFeature) {
+                document.getElementById('newEventFeatured').checked = false;
+                return;
+            }
+            
+            // Un-feature all other events using batch
+            const batch = writeBatch(db);
+            const eventsSnapshot = await getDocs(collection(db, 'events'));
+            eventsSnapshot.forEach(eventDoc => {
+                if (eventDoc.data().isFeatured) {
+                    batch.update(doc(db, 'events', eventDoc.id), { isFeatured: false });
+                }
+            });
+            await batch.commit();
+        }
+        
+        // Format date for display
+        let formattedDate = '';
+        let dayOfWeek = '';
+        if (eventDate) {
+            const dateObj = new Date(eventDate + 'T00:00:00');
+            formattedDate = dateObj.toLocaleDateString('en-US', { 
+                year: 'numeric', month: 'long', day: 'numeric' 
+            });
+            dayOfWeek = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+        }
+        
+        // Format time for display (12-hour format)
+        let formattedTime = '';
+        if (eventTime) {
+            const [hours, minutes] = eventTime.split(':');
+            const hour = parseInt(hours);
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            const hour12 = hour % 12 || 12;
+            formattedTime = `${hour12}:${minutes} ${ampm}`;
+        }
 
-        // Create event in Firestore
+        // Create event in Firestore with all fields
         await setDoc(doc(db, 'events', code), {
             name: SecurityUtils.sanitizeString(name, 100),
             code: code,
             emoji: emoji,
             createdAt: serverTimestamp(),
             createdBy: auth.currentUser?.email || 'unknown',
-            isActive: true
+            isActive: true,
+            
+            // Display fields for main page
+            isFeatured: isFeatured,
+            eventDate: formattedDate,
+            eventDay: dayOfWeek,
+            eventTime: formattedTime,
+            eventDateRaw: eventDate || '',  // ISO format for sorting
+            venue: SecurityUtils.sanitizeString(venue, 200),
+            teamSize: { min: teamMin, max: teamMax },
+            posterUrl: posterUrl ? SecurityUtils.sanitizeString(posterUrl, 500) : '',
+            registrationStatus: registrationStatus
         });
+        
+        // If featured, also update activeEvent for registration routing
+        if (isFeatured) {
+            await setDoc(doc(db, 'config', 'registration'), {
+                activeEvent: code
+            }, { merge: true });
+        }
 
-        await logAdminAction('CREATE_EVENT', { eventCode: code, eventName: name });
+        await logAdminAction('CREATE_EVENT', { 
+            eventCode: code, 
+            eventName: name,
+            isFeatured: isFeatured 
+        });
+        
         showToast(`✅ Event "${name}" created successfully!`);
+        if (isFeatured) {
+            showToast('⭐ Now featured on the main page!');
+        }
         closeModal('createEventModal');
 
         // Dynamically update the UI without page reload
-        showToast('🔄 Updating event list...');
         await initDynamicEvents();
-        showToast(`🎉 "${name}" is now ready to accept registrations!`);
 
     } catch (error) {
-        console.error('Error creating event:', error);
+        secureLog('Error creating event:', error);
         showToast('⚠️ Failed to create event');
     }
 }
@@ -2278,7 +2414,7 @@ async function deleteEvent(eventCode) {
         // Go back to event selector if currently viewing the deleted event
         backToEventSelector();
     } catch (error) {
-        console.error('Error deleting event:', error);
+        secureLog('Error deleting event:', error);
         showToast('⚠️ Failed to delete event');
     }
 }
@@ -2292,6 +2428,241 @@ function openDeleteEventModal(eventCode, eventName) {
     deleteEvent(eventCode);
 }
 window.openDeleteEventModal = openDeleteEventModal;
+
+// Toggle featured status for an event
+async function toggleFeatured(eventCode) {
+    if (!eventCode) {
+        showToast('⚠️ Invalid event code');
+        return;
+    }
+    
+    // Only super admins can feature events
+    if (!AdminPermissions.isSuperAdmin()) {
+        showToast('⚠️ Only super admins can feature events');
+        return;
+    }
+    
+    try {
+        const eventRef = doc(db, 'events', eventCode);
+        const eventDoc = await getDoc(eventRef);
+        
+        if (!eventDoc.exists()) {
+            showToast('⚠️ Event not found');
+            return;
+        }
+        
+        const eventData = eventDoc.data();
+        const currentlyFeatured = eventData.isFeatured;
+        
+        if (!currentlyFeatured) {
+            // Confirm before featuring
+            const confirmFeature = confirm(
+                `⭐ Feature "${eventData.name}" on the main page?\n\n` +
+                'This will:\n' +
+                '• Replace the current featured event\n' +
+                '• Update registration routing\n\n' +
+                'The previous featured event will still be accessible.'
+            );
+            if (!confirmFeature) return;
+            
+            // Un-feature all other events using batch
+            const batch = writeBatch(db);
+            const eventsSnapshot = await getDocs(collection(db, 'events'));
+            eventsSnapshot.forEach(docSnap => {
+                if (docSnap.data().isFeatured && docSnap.id !== eventCode) {
+                    batch.update(doc(db, 'events', docSnap.id), { isFeatured: false });
+                }
+            });
+            
+            // Feature this event
+            batch.update(eventRef, { isFeatured: true });
+            await batch.commit();
+            
+            // Update routing to this event
+            await setDoc(doc(db, 'config', 'registration'), { 
+                activeEvent: eventCode 
+            }, { merge: true });
+            
+            await logAdminAction('FEATURE_EVENT', { eventCode, eventName: eventData.name });
+            showToast(`⭐ "${eventData.name}" is now featured on the main page!`);
+        } else {
+            // Just remove featured status
+            await updateDoc(eventRef, { isFeatured: false });
+            await logAdminAction('UNFEATURE_EVENT', { eventCode, eventName: eventData.name });
+            showToast(`Removed "${eventData.name}" from main page`);
+        }
+        
+        // Refresh UI
+        await initDynamicEvents();
+        
+    } catch (error) {
+        secureLog('Error toggling featured:', error);
+        showToast('⚠️ Failed to update featured status');
+    }
+}
+window.toggleFeatured = toggleFeatured;
+
+// ===== EDIT EVENT FUNCTIONS =====
+// Open edit event modal and populate with existing data
+function openEditEventModal(eventCode) {
+    if (!eventCode) {
+        showToast('⚠️ Invalid event code');
+        return;
+    }
+    
+    // Find the event in allEvents array
+    const event = allEvents.find(e => e.code === eventCode);
+    if (!event) {
+        showToast('⚠️ Event not found');
+        return;
+    }
+    
+    // Populate form fields
+    document.getElementById('editEventCode').value = eventCode;
+    document.getElementById('editEventCodeDisplay').value = eventCode;
+    document.getElementById('editEventName').value = event.name || '';
+    document.getElementById('editEventVenue').value = event.venue || '';
+    document.getElementById('editEventTeamMin').value = event.teamSize?.min || 2;
+    document.getElementById('editEventTeamMax').value = event.teamSize?.max || 3;
+    document.getElementById('editEventPoster').value = event.posterUrl || '';
+    document.getElementById('editEventRegStatus').value = event.registrationStatus || 'open';
+    document.getElementById('editEventActive').checked = event.isActive !== false;
+    
+    // Handle date - convert from formatted date to ISO format for input
+    if (event.eventDateRaw) {
+        document.getElementById('editEventDate').value = event.eventDateRaw;
+    } else {
+        document.getElementById('editEventDate').value = '';
+    }
+    
+    // Handle time - convert from 12-hour to 24-hour format for input
+    if (event.eventTime) {
+        const time24 = convertTo24Hour(event.eventTime);
+        document.getElementById('editEventTime').value = time24;
+    } else {
+        document.getElementById('editEventTime').value = '';
+    }
+    
+    // Set emoji selection
+    document.getElementById('editSelectedEventEmoji').value = event.emoji || '🎯';
+    document.querySelectorAll('#editEmojiPicker .emoji-option').forEach(btn => {
+        btn.classList.remove('selected');
+        if (btn.dataset.emoji === event.emoji) {
+            btn.classList.add('selected');
+        }
+    });
+    
+    // Open modal
+    document.getElementById('editEventModal')?.classList.add('active');
+}
+window.openEditEventModal = openEditEventModal;
+
+// Convert 12-hour time to 24-hour format
+function convertTo24Hour(time12) {
+    if (!time12) return '';
+    const match = time12.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+    if (!match) return '';
+    let hours = parseInt(match[1]);
+    const minutes = match[2];
+    const period = match[3].toUpperCase();
+    
+    if (period === 'PM' && hours !== 12) hours += 12;
+    if (period === 'AM' && hours === 12) hours = 0;
+    
+    return `${hours.toString().padStart(2, '0')}:${minutes}`;
+}
+
+// Select emoji for edit event
+function selectEditEventEmoji(emoji, btn) {
+    document.getElementById('editSelectedEventEmoji').value = emoji;
+    document.querySelectorAll('#editEmojiPicker .emoji-option').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+}
+window.selectEditEventEmoji = selectEditEventEmoji;
+
+// Save event edit
+async function saveEventEdit() {
+    const eventCode = document.getElementById('editEventCode').value;
+    const name = document.getElementById('editEventName').value.trim();
+    const emoji = document.getElementById('editSelectedEventEmoji').value || '🎯';
+    const eventDate = document.getElementById('editEventDate').value;
+    const eventTime = document.getElementById('editEventTime').value;
+    const venue = document.getElementById('editEventVenue').value.trim();
+    const teamMin = parseInt(document.getElementById('editEventTeamMin').value) || 2;
+    const teamMax = parseInt(document.getElementById('editEventTeamMax').value) || 3;
+    const posterUrl = document.getElementById('editEventPoster').value.trim();
+    const registrationStatus = document.getElementById('editEventRegStatus').value || 'open';
+    const isActive = document.getElementById('editEventActive').checked;
+    
+    // Validation
+    if (!name || name.length < 2) {
+        showToast('⚠️ Event name must be at least 2 characters');
+        return;
+    }
+    
+    // Validate poster path
+    if (posterUrl && (posterUrl.includes('..') || posterUrl.includes('\\') || /^[a-z]+:/i.test(posterUrl))) {
+        showToast('⚠️ Invalid poster path. Use relative paths like "images/poster.jpg"');
+        return;
+    }
+    
+    if (teamMin > teamMax) {
+        showToast('⚠️ Minimum team size cannot be greater than maximum');
+        return;
+    }
+    
+    try {
+        // Format date for display
+        let formattedDate = '';
+        let dayOfWeek = '';
+        if (eventDate) {
+            const dateObj = new Date(eventDate + 'T00:00:00');
+            formattedDate = dateObj.toLocaleDateString('en-US', { 
+                year: 'numeric', month: 'long', day: 'numeric' 
+            });
+            dayOfWeek = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+        }
+        
+        // Format time for display (12-hour format)
+        let formattedTime = '';
+        if (eventTime) {
+            const [hours, minutes] = eventTime.split(':');
+            const hour = parseInt(hours);
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            const hour12 = hour % 12 || 12;
+            formattedTime = `${hour12}:${minutes} ${ampm}`;
+        }
+        
+        // Update event in Firestore
+        await updateDoc(doc(db, 'events', eventCode), {
+            name: SecurityUtils.sanitizeString(name, 100),
+            emoji: emoji,
+            isActive: isActive,
+            eventDate: formattedDate,
+            eventDay: dayOfWeek,
+            eventTime: formattedTime,
+            eventDateRaw: eventDate || '',
+            venue: SecurityUtils.sanitizeString(venue, 200),
+            teamSize: { min: teamMin, max: teamMax },
+            posterUrl: posterUrl ? SecurityUtils.sanitizeString(posterUrl, 500) : '',
+            registrationStatus: registrationStatus,
+            updatedAt: serverTimestamp(),
+            updatedBy: auth.currentUser?.email || 'unknown'
+        });
+        
+        await logAdminAction('UPDATE_EVENT', { eventCode, eventName: name });
+        showToast(`✅ Event "${name}" updated successfully!`);
+        closeModal('editEventModal');
+        
+        // Refresh UI
+        await initDynamicEvents();
+        
+    } catch (error) {
+        secureLog('Error updating event:', error);
+        showToast('⚠️ Failed to update event');
+    }
+}
+window.saveEventEdit = saveEventEdit;
 
 // ===== WINNER MODAL FUNCTIONS =====
 function openWinnerModal(teamId, teamName, eventCode) {
@@ -2351,7 +2722,7 @@ async function confirmSetWinner() {
             showToast('⚠️ Failed to set winner (permission denied)');
         }
     } catch (err) {
-        console.error('Set winner error:', err);
+        secureLog('Set winner error:', err);
         showToast('❌ Error setting winner');
     }
 }
@@ -2378,7 +2749,7 @@ async function removeWinner(teamId, eventCode) {
             }
         }
     } catch (err) {
-        console.error('Remove winner error:', err);
+        secureLog('Remove winner error:', err);
         showToast('❌ Error removing winner');
     }
 }
@@ -2644,13 +3015,13 @@ window.handleLogin = function (event) {
             // Start session countdown timer
             resetInactivityTimer();
 
-            console.log('[Login] Success:', adminData.email, 'Role:', adminData.role);
+            secureLog('[Login] Success. Role:', adminData.role);
         })
         .catch((error) => {
             errorEl.style.display = 'block';
             // Generic error message to prevent user enumeration
             errorEl.textContent = 'Invalid email or password';
-            console.warn('Login failed:', error.code);
+            secureLog('Login failed:', error.code);
         })
         .finally(() => {
             loginBtn.disabled = false;
@@ -2776,7 +3147,7 @@ async function renderRegistrationsChart() {
 
         console.log('[Chart] Rendered with data:', { labels, data });
     } catch (err) {
-        console.error('[Chart] Render error:', err);
+        secureLog('[Chart] Render error:', err);
     }
 }
 
@@ -2895,7 +3266,7 @@ async function updateAnalyticsHub() {
 
         console.log('[Hub] Analytics updated:', { newToday, pendingCount, verifiedCount, verificationRate });
     } catch (err) {
-        console.error('[Hub] Update error:', err);
+        secureLog('[Hub] Update error:', err);
     }
 }
 
@@ -3244,7 +3615,7 @@ async function updateDashboardStats(eventCode = null) {
                 const eventName = allEvents.find(e => e.code === eventsToQuery[0])?.name || eventsToQuery[0];
                 statsLabel = `📊 ${eventName}`;
             } catch (e) {
-                console.warn('[Stats] Could not load routing config, using first accessible event');
+                secureLog('[Stats] Could not load routing config, using first accessible event');
                 eventsToQuery = accessibleEvents && accessibleEvents.length > 0 ? [accessibleEvents[0]] : ['testing'];
                 statsLabel = 'Current event';
             }
@@ -3279,7 +3650,7 @@ async function updateDashboardStats(eventCode = null) {
                     }
                 });
             } catch (e) {
-                console.warn(`[Stats] Could not fetch stats for ${code}:`, e.message);
+                secureLog(`[Stats] Could not fetch stats for ${code}:`, e.message);
             }
         }
 
@@ -3319,7 +3690,7 @@ async function updateDashboardStats(eventCode = null) {
 
         console.log('[Stats] Dashboard stats updated for:', eventsToQuery.join(', '));
     } catch (error) {
-        console.error('Error updating dashboard stats:', error);
+        secureLog('Error updating dashboard stats:', error);
         // Set fallback values
         const fallbackStats = ['stat-totalTeams', 'stat-participants', 'stat-events', 'stat-gallery'];
         fallbackStats.forEach(id => {
@@ -3429,7 +3800,7 @@ async function loadTeamMembers() {
 
         renderTeamMembersList();
     } catch (error) {
-        console.error('Error loading team members:', error);
+        secureLog('Error loading team members:', error);
         listContainer.innerHTML = `
             <div class="team-mgmt-empty">
                 <div class="team-mgmt-empty-icon">⚠️</div>
@@ -3543,6 +3914,12 @@ async function addTeamMember() {
         return;
     }
 
+    // Validate image path - prevent path traversal
+    if (imageUrl && (imageUrl.includes('..') || imageUrl.includes('\\') || /^[a-z]+:/i.test(imageUrl))) {
+        showToast('Invalid image path. Use relative paths like "images/name.png"', 'error');
+        return;
+    }
+
     // Only super admins can manage team members
     if (!AdminPermissions.isSuperAdmin()) {
         showToast('Only super admins can add team members', 'error');
@@ -3581,7 +3958,7 @@ async function addTeamMember() {
         showToast('Team member added successfully!', 'success');
         loadTeamMembers();
     } catch (error) {
-        console.error('Error adding team member:', error);
+        secureLog('Error adding team member:', error);
         showToast('Error adding team member', 'error');
     }
 }
@@ -3652,7 +4029,7 @@ async function saveTeamMemberEdit() {
         showToast('Team member updated successfully!', 'success');
         loadTeamMembers();
     } catch (error) {
-        console.error('Error updating team member:', error);
+        secureLog('Error updating team member:', error);
         showToast('Error updating team member', 'error');
     }
 }
@@ -3687,7 +4064,7 @@ async function confirmDeleteMember() {
             const adminDocRef = doc(db, 'admins', currentUser.uid);
             const adminDoc = await getDoc(adminDocRef);
             if (!adminDoc.exists()) {
-                console.error('[Delete] Admin doc not found for UID:', currentUser.uid, '- Firestore rules will reject. Attempting migration...');
+                secureLog('[Delete] Admin doc not found for UID:', currentUser.uid, '- Firestore rules will reject. Attempting migration...');
                 // Try to find and migrate admin doc by email
                 const adminsRef = collection(db, 'admins');
                 const emailQuery = query(adminsRef, where('email', '==', currentUser.email));
@@ -3724,7 +4101,7 @@ async function confirmDeleteMember() {
         showToast('Team member deleted successfully!', 'success');
         loadTeamMembers();
     } catch (error) {
-        console.error('Error deleting team member:', error);
+        secureLog('Error deleting team member:', error);
         if (error.code === 'permission-denied') {
             showToast('Permission denied. Check Firestore rules & admin doc.', 'error');
         } else {
@@ -3822,7 +4199,7 @@ async function loadFeedback() {
         }).join('');
         
     } catch (error) {
-        console.error('Error loading feedback:', error);
+        secureLog('Error loading feedback:', error);
         feedbackList.innerHTML = `
             <div class="feedback-empty">
                 <div class="feedback-empty-icon">❌</div>
@@ -3874,7 +4251,7 @@ async function deleteFeedback(feedbackId) {
         showToast('Feedback deleted', 'success');
         await loadFeedback(); // Refresh list
     } catch (error) {
-        console.error('Error deleting feedback:', error);
+        secureLog('Error deleting feedback:', error);
         showToast('Error deleting feedback: ' + error.message, 'error');
     }
 }
@@ -3899,7 +4276,7 @@ async function clearAllFeedback() {
         showToast(`Cleared ${count} feedback entries`, 'success');
         await loadFeedback(); // Refresh list
     } catch (error) {
-        console.error('Error clearing feedback:', error);
+        secureLog('Error clearing feedback:', error);
         showToast('Error clearing feedback: ' + error.message, 'error');
     }
 }
