@@ -14,8 +14,12 @@
  * @see security.js for implementation details
  */
 
-// SECURITY: reCAPTCHA v3 Site Key
-const RECAPTCHA_SITE_KEY = '6LeeoD8sAAAAAGKAdRH9D4ca5FHGsip-XXGcXOzM';
+// SECURITY: reCAPTCHA v3 Site Key (centralized in config.js)
+const RECAPTCHA_SITE_KEY = window.RECAPTCHA_SITE_KEY || '6LeeoD8sAAAAAGKAdRH9D4ca5FHGsip-XXGcXOzM';
+
+// SECURITY: Debug logging disabled in production
+const DEBUG_MODE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const secureLog = (...args) => { if (DEBUG_MODE) console.log(...args); };
 
 // Initialize Firebase with error handling
 let db;
@@ -23,19 +27,19 @@ try {
     if (typeof firebase !== 'undefined' && typeof firebaseConfig !== 'undefined') {
         firebase.initializeApp(firebaseConfig);
         db = firebase.firestore();
-        console.log('[Firebase] Initialized successfully');
+        secureLog('[Firebase] Initialized successfully');
     } else {
-        console.error('[Firebase] Configuration not found. Please create config.js from config.example.js');
+        secureLog('[Firebase] Configuration not found. Please create config.js from config.example.js');
     }
 } catch (error) {
-    console.error('[Firebase] Initialization error:', error);
+    secureLog('[Firebase] Initialization error:', error);
 }
 
 // ===== SECURITY INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', function () {
     // Check if Firebase is configured
     if (!db) {
-        console.warn('[App] Firebase not configured. Some features will be unavailable.');
+        secureLog('[App] Firebase not configured. Some features will be unavailable.');
         // Show a subtle warning banner (optional - you can remove this if you don't want visible warnings)
         const registerBtn = document.getElementById('registerBtn');
         if (registerBtn) {
@@ -48,7 +52,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Initialize security module for registration
     if (window.ISTESecurity) {
         window.ISTESecurity.init('registration');
-        console.log('[App] Security module initialized');
+        secureLog('[App] Security module initialized');
     }
 
     // ===== PAGE PRELOADER =====
@@ -60,22 +64,17 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
-// ===== SCROLL PROGRESS BAR =====
+// ===== CACHED DOM ELEMENTS =====
 const scrollProgress = document.getElementById('scrollProgress');
-
-function updateScrollProgress() {
-    const scrollTop = window.scrollY;
-    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-    const scrollPercent = (scrollTop / docHeight) * 100;
-    if (scrollProgress) {
-        scrollProgress.style.width = scrollPercent + '%';
-    }
-}
-
-window.addEventListener('scroll', updateScrollProgress);
-
-// ===== BACK TO TOP BUTTON =====
 const backToTop = document.getElementById('backToTop');
+const navbar = document.getElementById('navbar');
+
+// ===== SCROLL HANDLERS =====
+function updateScrollProgress() {
+    if (!scrollProgress) return;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    scrollProgress.style.width = `${(window.scrollY / docHeight) * 100}%`;
+}
 
 function toggleBackToTop() {
     if (backToTop) {
@@ -83,56 +82,54 @@ function toggleBackToTop() {
     }
 }
 
+function updateNavbarScroll() {
+    if (navbar) {
+        navbar.classList.toggle('scrolled', window.scrollY > 80);
+    }
+}
+
+// Unified scroll handler for better performance
+function handleScroll() {
+    updateScrollProgress();
+    toggleBackToTop();
+    updateNavbarScroll();
+}
+
+window.addEventListener('scroll', handleScroll);
+
 if (backToTop) {
     backToTop.addEventListener('click', () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 }
 
-window.addEventListener('scroll', toggleBackToTop);
-
-// Navbar scroll effect
-window.addEventListener('scroll', function () {
-    const navbar = document.getElementById('navbar');
-    navbar.classList.toggle('scrolled', window.scrollY > 80);
-});
-
 // ===== SCROLL SPY - Active nav link based on section =====
+const NAV_OFFSET = 150;
+const SECTION_TO_NAV = {
+    'main-content': '#',
+    'hero': '#',
+    'about': '#about',
+    'activity': '#activity',
+    'winners': '#winners',
+    'gallery': '#gallery',
+    'team': '#team'
+};
+
 function updateActiveNavLink() {
     const sections = document.querySelectorAll('section[id], .hero');
     const navLinks = document.querySelectorAll('.nav-links a:not(.nav-cta)');
+    const scrollPosition = window.scrollY + NAV_OFFSET;
     
-    let currentSection = '';
-    const scrollPosition = window.scrollY + 150; // Offset for navbar height
-    
-    sections.forEach(section => {
-        const sectionTop = section.offsetTop;
-        const sectionHeight = section.offsetHeight;
-        const sectionId = section.getAttribute('id') || 'main-content';
-        
-        if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
-            currentSection = sectionId;
-        }
+    // Find current section
+    const currentSection = Array.from(sections).find(section => {
+        const top = section.offsetTop;
+        return scrollPosition >= top && scrollPosition < top + section.offsetHeight;
     });
     
-    // Map section IDs to nav href
-    const sectionToNav = {
-        'main-content': '#',
-        'hero': '#',
-        'about': '#about',
-        'activity': '#activity',
-        'winners': '#winners',
-        'gallery': '#gallery',
-        'team': '#team'
-    };
-    
-    const activeHref = sectionToNav[currentSection] || '#';
+    const activeHref = SECTION_TO_NAV[currentSection?.id || 'main-content'] || '#';
     
     navLinks.forEach(link => {
-        link.classList.remove('active');
-        if (link.getAttribute('href') === activeHref) {
-            link.classList.add('active');
-        }
+        link.classList.toggle('active', link.getAttribute('href') === activeHref);
     });
 }
 
@@ -141,8 +138,11 @@ window.addEventListener('load', updateActiveNavLink);
 
 // Mobile navigation
 function toggleNav() {
-    document.getElementById('navLinks').classList.toggle('active');
-    document.getElementById('hamburger').classList.toggle('active');
+    const navLinks = document.getElementById('navLinks');
+    const hamburger = document.getElementById('hamburger');
+    const isExpanded = navLinks.classList.toggle('active');
+    hamburger.classList.toggle('active');
+    hamburger.setAttribute('aria-expanded', isExpanded);
 }
 
 // Close menu when clicking outside
@@ -153,20 +153,23 @@ document.addEventListener('click', function (event) {
     if (!navbar.contains(event.target) && navLinks.classList.contains('active')) {
         navLinks.classList.remove('active');
         hamburger.classList.remove('active');
+        hamburger.setAttribute('aria-expanded', 'false');
     }
 });
 
 // Reveal on scroll
 const reveals = document.querySelectorAll('.reveal');
+const REVEAL_THRESHOLD = 100;
+
 function revealOnScroll() {
+    const windowHeight = window.innerHeight;
     reveals.forEach(el => {
-        const windowHeight = window.innerHeight;
-        const top = el.getBoundingClientRect().top;
-        if (top < windowHeight - 100) {
+        if (el.getBoundingClientRect().top < windowHeight - REVEAL_THRESHOLD) {
             el.classList.add('active');
         }
     });
 }
+
 window.addEventListener('scroll', revealOnScroll);
 revealOnScroll();
 
@@ -228,29 +231,37 @@ function closeSuccessModal() {
 function launchConfetti() {
     const container = document.getElementById('confettiContainer');
     const colors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6'];
-    const confettiCount = 100;
+    const CONFETTI_COUNT = 100;
+    const CLEAR_DELAY_MS = 5000;
 
-    for (let i = 0; i < confettiCount; i++) {
+    // Shape styles: [borderRadius, width]
+    const shapeStyles = {
+        circle: ['50%', null],
+        square: [null, null],
+        rectangle: [null, '6px']
+    };
+    const shapeNames = Object.keys(shapeStyles);
+
+    for (let i = 0; i < CONFETTI_COUNT; i++) {
         const confetti = document.createElement('div');
         confetti.className = 'confetti';
-        confetti.style.left = Math.random() * 100 + '%';
-        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-        confetti.style.animationDelay = Math.random() * 2 + 's';
-        confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
-
-        // Random shapes
-        const shapes = ['circle', 'square', 'rectangle'];
-        const shape = shapes[Math.floor(Math.random() * shapes.length)];
-        if (shape === 'circle') confetti.style.borderRadius = '50%';
-        if (shape === 'rectangle') confetti.style.width = '6px';
+        
+        const shape = shapeNames[Math.floor(Math.random() * shapeNames.length)];
+        const [borderRadius, width] = shapeStyles[shape];
+        
+        Object.assign(confetti.style, {
+            left: `${Math.random() * 100}%`,
+            backgroundColor: colors[Math.floor(Math.random() * colors.length)],
+            animationDelay: `${Math.random() * 2}s`,
+            animationDuration: `${Math.random() * 2 + 2}s`,
+            ...(borderRadius && { borderRadius }),
+            ...(width && { width })
+        });
 
         container.appendChild(confetti);
     }
 
-    // Clear confetti after animation
-    setTimeout(() => {
-        container.innerHTML = '';
-    }, 5000);
+    setTimeout(() => { container.innerHTML = ''; }, CLEAR_DELAY_MS);
 }
 
 // ===== SECTION REVEAL ON SCROLL =====
@@ -511,85 +522,71 @@ async function checkDuplicate(field, value, errorElementId) {
             return false;
         }
     } catch (err) {
-        console.error('Duplicate check error:', err);
+        secureLog('Duplicate check error:', err);
         return false;
     }
 }
 
 // Add duplicate check event listeners on DOM load
 document.addEventListener('DOMContentLoaded', function () {
-    // Email duplicate check
-    const teamEmailInput = document.getElementById('teamEmail');
-    if (teamEmailInput) {
-        teamEmailInput.addEventListener('blur', (e) =>
-            checkDuplicate('email', e.target.value, 'teamEmailError'));
-    }
+    // Configure all duplicate checks
+    const duplicateChecks = [
+        { id: 'teamEmail', field: 'email', errorId: 'teamEmailError' },
+        { id: 'member1USN', field: 'member1.usn', errorId: 'member1USNError' },
+        { id: 'member2USN', field: 'member2.usn', errorId: 'member2USNError' },
+        { id: 'member3USN', field: 'member3.usn', errorId: 'member3USNError' }
+    ];
 
-    // USN duplicate checks for all members
-    const member1USNInput = document.getElementById('member1USN');
-    if (member1USNInput) {
-        member1USNInput.addEventListener('blur', (e) =>
-            checkDuplicate('member1.usn', e.target.value, 'member1USNError'));
-    }
-
-    const member2USNInput = document.getElementById('member2USN');
-    if (member2USNInput) {
-        member2USNInput.addEventListener('blur', (e) =>
-            checkDuplicate('member2.usn', e.target.value, 'member2USNError'));
-    }
-
-    const member3USNInput = document.getElementById('member3USN');
-    if (member3USNInput) {
-        member3USNInput.addEventListener('blur', (e) =>
-            checkDuplicate('member3.usn', e.target.value, 'member3USNError'));
-    }
+    duplicateChecks.forEach(({ id, field, errorId }) => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.addEventListener('blur', (e) => checkDuplicate(field, e.target.value, errorId));
+        }
+    });
 });
 
 // ===== DYNAMIC WINNERS LOADING =====
 async function loadWinners() {
-    try {
-        console.log('[Winners] Loading winners from Firestore...');
+    const winnersEmpty = document.getElementById('winnersEmpty');
+    const winnerCards = [1, 2, 3].map(i => document.getElementById(`winner-${i}`));
 
-        // Query all winners (without orderBy to avoid composite index requirement)
+    function showEmptyState() {
+        winnersEmpty.style.display = 'block';
+        hideSkeletonsShowWinners();
+        winnerCards.forEach(card => { if (card) card.style.display = 'none'; });
+    }
+
+    function getMemberNames(winner) {
+        return ['member1', 'member2', 'member3']
+            .map(key => winner[key]?.name)
+            .filter(Boolean);
+    }
+
+    try {
+        secureLog('[Winners] Loading winners from Firestore...');
+
         const winnersSnapshot = await db.collection('registrations')
             .where('isWinner', '==', true)
             .get();
 
         if (winnersSnapshot.empty) {
-            console.log('[Winners] No winners found, showing empty state');
-            // Show empty state, hide winner cards and skeletons
-            document.getElementById('winnersEmpty').style.display = 'block';
-            hideSkeletonsShowWinners();
-            // Hide actual winner cards
-            document.getElementById('winner-1').style.display = 'none';
-            document.getElementById('winner-2').style.display = 'none';
-            document.getElementById('winner-3').style.display = 'none';
+            secureLog('[Winners] No winners found, showing empty state');
+            showEmptyState();
             return;
         }
 
-        // Sort winners by position and limit to top 3
-        const winners = [];
-        winnersSnapshot.forEach(doc => {
-            const data = doc.data();
-            if (data.winnerPosition && data.winnerPosition <= 3) {
-                winners.push({ id: doc.id, ...data });
-            }
-        });
-        winners.sort((a, b) => a.winnerPosition - b.winnerPosition);
+        // Filter and sort winners by position
+        const winners = winnersSnapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .filter(w => w.winnerPosition && w.winnerPosition <= 3)
+            .sort((a, b) => a.winnerPosition - b.winnerPosition);
 
-        // Hide empty state when winners exist
-        document.getElementById('winnersEmpty').style.display = 'none';
+        winnersEmpty.style.display = 'none';
 
         winners.forEach(winner => {
             const position = winner.winnerPosition;
+            const members = getMemberNames(winner);
 
-            // Get member names
-            const members = [];
-            if (winner.member1?.name) members.push(winner.member1.name);
-            if (winner.member2?.name) members.push(winner.member2.name);
-            if (winner.member3?.name) members.push(winner.member3.name);
-
-            // Update the winner card
             const nameEl = document.getElementById(`winner-${position}-name`);
             const membersEl = document.getElementById(`winner-${position}-members`);
 
@@ -597,17 +594,22 @@ async function loadWinners() {
                 nameEl.textContent = winner.teamName || 'Winner';
             }
             if (membersEl) {
-                membersEl.innerHTML = members.map(m => `${m}`).join('<br>');
+                // SECURITY: Use textContent or escapeHtml to prevent XSS from Firestore data
+                membersEl.innerHTML = members.map(m => {
+                    const div = document.createElement('div');
+                    div.textContent = m;
+                    return div.innerHTML;
+                }).join('<br>');
             }
 
-            console.log(`[Winners] Loaded position ${position}: ${winner.teamName}`);
+            secureLog(`[Winners] Loaded position ${position}: ${winner.teamName}`);
         });
 
         // Hide skeletons and show winner cards after loading
         hideSkeletonsShowWinners();
 
     } catch (err) {
-        console.error('[Winners] Error loading winners:', err);
+        secureLog('[Winners] Error loading winners:', err);
         // Hide skeletons and show TBA on error
         document.getElementById('winner-1-name').textContent = 'TBA';
         document.getElementById('winner-2-name').textContent = 'TBA';
@@ -743,13 +745,13 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
             btn.querySelector('.btn-text').textContent = 'Verifying...';
 
             recaptchaToken = await grecaptcha.execute(RECAPTCHA_SITE_KEY, { action: 'register' });
-            console.log('[Security] reCAPTCHA v3 token generated');
+            secureLog('[Security] reCAPTCHA v3 token generated');
 
             btn.querySelector('.btn-text').textContent = 'Register Team 🚀';
             btn.disabled = false;
         }
     } catch (recaptchaError) {
-        console.warn('[Security] reCAPTCHA failed, continuing:', recaptchaError);
+        secureLog('[Security] reCAPTCHA failed, continuing:', recaptchaError);
         // Continue without reCAPTCHA if it fails (fallback to other protections)
     }
 
@@ -777,14 +779,14 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
         // Handle rate limiting
         if (result.type === 'RATE_LIMITED') {
             window.ISTESecurity.showRateLimitError(formContainer, result.message);
-            console.warn('[Security] Rate limit triggered:', result.message);
+            secureLog('[Security] Rate limit triggered:', result.message);
             return;
         }
 
         // Handle validation errors
         if (result.type === 'VALIDATION_ERROR') {
             window.ISTESecurity.displayValidationErrors(result.errors);
-            console.warn('[Security] Validation failed:', result.errors);
+            secureLog('[Security] Validation failed:', result.errors);
             ButtonDebouncer.restoreFromLoading(btn);
             return;
         }
@@ -843,10 +845,10 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
             const configDoc = await db.collection('config').doc('registration').get();
             if (configDoc.exists && configDoc.data().activeEvent) {
                 activeEvent = configDoc.data().activeEvent;
-                console.log('[Routing] Registering to event:', activeEvent);
+                secureLog('[Routing] Registering to event:', activeEvent);
             }
         } catch (configErr) {
-            console.log('[Routing] Using default event: testing');
+            secureLog('[Routing] Using default event: testing');
         }
 
         await db.collection('registrations').add({
@@ -878,17 +880,15 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
 
         document.getElementById('registrationForm').style.display = 'none';
         document.getElementById('formSuccess').classList.add('show');
-        console.log('[App] Registration successful for team:', formData.teamName);
+        secureLog('[App] Registration successful for team:', formData.teamName);
 
         // Reset error count on successful registration
         if (window.ISTESecurity && window.ISTESecurity.registrationLimiter) {
             window.ISTESecurity.registrationLimiter.resetErrorCount();
         }
 
-        // Count members
-        let memberCount = 1;
-        if (formData.member2Name) memberCount++;
-        if (formData.member3Name) memberCount++;
+        // Count members (1 required + optional 2 and 3)
+        const memberCount = 1 + [formData.member2Name, formData.member3Name].filter(Boolean).length;
 
         // Close registration modal and show success modal with confetti
         closeModal();
@@ -897,7 +897,7 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
         }, 300);
 
     } catch (err) {
-        console.error('[App] Registration error:', err);
+        secureLog('[App] Registration error:', err);
 
         // Increment error count
         if (window.ISTESecurity && window.ISTESecurity.registrationLimiter) {
@@ -1004,7 +1004,7 @@ teamTabs.forEach(tab => {
 async function loadTeamFromFirebase() {
     // Check if Firebase is available
     if (typeof firebase === 'undefined' || typeof db === 'undefined') {
-        console.warn('Firebase not initialized for team loading');
+        secureLog('Firebase not initialized for team loading');
         // Show error message in all team grids
         ['faculty', 'core', 'volunteers'].forEach(category => {
             const grid = document.getElementById(`team-grid-${category}`);
@@ -1041,17 +1041,21 @@ async function loadTeamFromFirebase() {
             }
         });
         
-        // Role class mapping
-        const getRoleClass = (role) => {
+        // Role class mapping - pattern-based lookup
+        const ROLE_PATTERNS = [
+            { keywords: ['president', 'hod', 'principal'], className: 'role-president' },
+            { keywords: ['vice', 'coordinator'], className: 'role-vp' },
+            { keywords: ['tech', 'developer'], className: 'role-tech' },
+            { keywords: ['design', 'creative'], className: 'role-design' },
+            { keywords: ['event', 'management'], className: 'role-event' },
+            { keywords: ['social', 'media', 'content'], className: 'role-social' }
+        ];
+
+        function getRoleClass(role) {
             const roleLower = role.toLowerCase();
-            if (roleLower.includes('president') || roleLower.includes('hod') || roleLower.includes('principal')) return 'role-president';
-            if (roleLower.includes('vice') || roleLower.includes('coordinator')) return 'role-vp';
-            if (roleLower.includes('tech') || roleLower.includes('developer')) return 'role-tech';
-            if (roleLower.includes('design') || roleLower.includes('creative')) return 'role-design';
-            if (roleLower.includes('event') || roleLower.includes('management')) return 'role-event';
-            if (roleLower.includes('social') || roleLower.includes('media') || roleLower.includes('content')) return 'role-social';
-            return 'role-tech'; // default
-        };
+            const match = ROLE_PATTERNS.find(p => p.keywords.some(k => roleLower.includes(k)));
+            return match?.className || 'role-tech';
+        }
         
         // Escape HTML for security
         const escapeHtml = (str) => {
@@ -1093,8 +1097,11 @@ async function loadTeamFromFirebase() {
                     </a>`;
                 }
                 // Build image path - prepend images/ if not already a full URL
+                // URL encode the path to handle spaces and special characters
                 const imagePath = member.imageUrl 
-                    ? (member.imageUrl.startsWith('http') ? member.imageUrl : `images/${member.imageUrl}`)
+                    ? (member.imageUrl.startsWith('http') 
+                        ? member.imageUrl 
+                        : `images/${encodeURIComponent(member.imageUrl)}`)
                     : '';
                 
                 return `
@@ -1118,7 +1125,7 @@ async function loadTeamFromFirebase() {
         });
         
     } catch (error) {
-        console.error('Error loading team members:', error);
+        secureLog('Error loading team members:', error);
         ['faculty', 'core', 'volunteers'].forEach(category => {
             const grid = document.getElementById(`team-grid-${category}`);
             if (grid) {
@@ -1130,6 +1137,165 @@ async function loadTeamFromFirebase() {
 
 // Load team members when DOM is ready
 document.addEventListener('DOMContentLoaded', loadTeamFromFirebase);
+
+// ===== FEATURED EVENT LOADER =====
+// Load the featured event dynamically from Firestore
+async function loadFeaturedEvent() {
+    if (!db) {
+        secureLog('[FeaturedEvent] Firebase not initialized');
+        showNoFeaturedEvent();
+        return;
+    }
+    
+    try {
+        // Query for the featured event
+        const eventsRef = db.collection('events');
+        const featuredQuery = eventsRef.where('isFeatured', '==', true).limit(1);
+        const snapshot = await featuredQuery.get();
+        
+        if (snapshot.empty) {
+            secureLog('[FeaturedEvent] No featured event found');
+            showNoFeaturedEvent();
+            return;
+        }
+        
+        const eventData = snapshot.docs[0].data();
+        secureLog('[FeaturedEvent] Loaded:', eventData.name);
+        renderFeaturedEvent(eventData);
+        
+    } catch (error) {
+        secureLog('[FeaturedEvent] Error loading:', error);
+        showEventLoadError();
+    }
+}
+
+// Render the featured event on the main page
+function renderFeaturedEvent(event) {
+    const titleEl = document.getElementById('featuredEventTitle');
+    const detailsEl = document.getElementById('featuredEventDetails');
+    const posterEl = document.getElementById('featuredEventPoster');
+    const statusBadge = document.getElementById('eventStatusBadge');
+    const registerBtn = document.getElementById('registerBtn');
+    const contentEl = document.querySelector('.activity-content');
+    const noEventEl = document.getElementById('noFeaturedEvent');
+    
+    // Show content, hide no-event state
+    if (contentEl) contentEl.style.display = '';
+    if (noEventEl) noEventEl.style.display = 'none';
+    
+    // Update title - handle both "Name - Subtitle" and simple names
+    if (titleEl) {
+        const nameParts = event.name.split(' - ');
+        if (nameParts.length > 1) {
+            titleEl.innerHTML = `${escapeHtml(nameParts[0])} - <span class="gradient-text">${escapeHtml(nameParts.slice(1).join(' - '))}</span>`;
+        } else {
+            titleEl.innerHTML = `<span class="gradient-text">${escapeHtml(event.name)}</span>`;
+        }
+    }
+    
+    // Update details
+    if (detailsEl) {
+        const teamSizeText = event.teamSize 
+            ? (event.teamSize.min === event.teamSize.max 
+                ? `${event.teamSize.min} Members` 
+                : `${event.teamSize.min}-${event.teamSize.max} Members`)
+            : 'Individual or Team';
+        
+        const dateDisplay = event.eventDate 
+            ? `${event.eventDate}${event.eventDay ? ` (${event.eventDay})` : ''}`
+            : 'Date TBA';
+        
+        detailsEl.innerHTML = `
+            <div class="activity-detail">
+                <div class="activity-detail-icon">📅</div>
+                <span>${escapeHtml(dateDisplay)}</span>
+            </div>
+            <div class="activity-detail">
+                <div class="activity-detail-icon">🕐</div>
+                <span>${escapeHtml(event.eventTime || 'Time TBA')}</span>
+            </div>
+            <div class="activity-detail">
+                <div class="activity-detail-icon">📍</div>
+                <span>${escapeHtml(event.venue || 'Venue TBA')}</span>
+            </div>
+            <div class="activity-detail">
+                <div class="activity-detail-icon">👥</div>
+                <span>Team Size: ${escapeHtml(teamSizeText)}</span>
+            </div>
+        `;
+    }
+    
+    // Update poster image
+    if (posterEl && event.posterUrl) {
+        posterEl.innerHTML = `<img src="${escapeHtml(event.posterUrl)}" alt="${escapeHtml(event.name)} Poster" loading="lazy" />`;
+    } else if (posterEl) {
+        // Show placeholder if no poster
+        posterEl.innerHTML = `
+            <div style="width: 100%; height: 400px; background: var(--gradient-soft); border-radius: 16px; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px;">
+                <span style="font-size: 64px;">${event.emoji || '🎉'}</span>
+                <span style="color: var(--text-muted); font-size: 14px;">Event Poster Coming Soon</span>
+            </div>
+        `;
+    }
+    
+    // Update registration button status
+    if (statusBadge && registerBtn) {
+        const statusConfig = {
+            'open': { class: 'open', text: '🟢 Open', btnEnabled: true, btnText: 'Register Now 🎉' },
+            'closed': { class: 'closed', text: '🔴 Closed', btnEnabled: false, btnText: 'Registration Closed' },
+            'coming_soon': { class: 'coming-soon', text: '🟡 Coming Soon', btnEnabled: false, btnText: 'Coming Soon' }
+        };
+        
+        const status = statusConfig[event.registrationStatus] || statusConfig['open'];
+        statusBadge.className = `event-status-badge ${status.class}`;
+        statusBadge.textContent = status.text;
+        registerBtn.disabled = !status.btnEnabled;
+        registerBtn.textContent = status.btnText;
+    }
+}
+
+// Show "no featured event" state
+function showNoFeaturedEvent() {
+    const contentEl = document.querySelector('.activity-content');
+    const noEventEl = document.getElementById('noFeaturedEvent');
+    
+    if (contentEl) contentEl.style.display = 'none';
+    if (noEventEl) noEventEl.style.display = 'flex';
+}
+
+// Show error state
+function showEventLoadError() {
+    const titleEl = document.getElementById('featuredEventTitle');
+    const detailsEl = document.getElementById('featuredEventDetails');
+    const registerBtn = document.getElementById('registerBtn');
+    const statusBadge = document.getElementById('eventStatusBadge');
+    
+    if (titleEl) titleEl.textContent = 'Unable to Load Event';
+    if (detailsEl) detailsEl.innerHTML = '<p style="color: var(--text-muted);">Please refresh the page or check back later.</p>';
+    if (registerBtn) {
+        registerBtn.disabled = true;
+        registerBtn.textContent = 'Unavailable';
+    }
+    if (statusBadge) {
+        statusBadge.className = 'event-status-badge';
+        statusBadge.textContent = '⚠️ Error';
+    }
+}
+
+// Simple HTML escape for security
+function escapeHtml(str) {
+    if (!str) return '';
+    const div = document.createElement('div');
+    div.textContent = String(str);
+    return div.innerHTML;
+}
+
+// Load featured event when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    if (db) {
+        loadFeaturedEvent();
+    }
+});
 
 // ===== FEEDBACK WIDGET =====
 document.addEventListener('DOMContentLoaded', function() {
@@ -1225,7 +1391,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }, 3000);
                 
             } catch (error) {
-                console.error('Error submitting feedback:', error);
+                secureLog('Error submitting feedback:', error);
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Try Again';
             }
