@@ -466,8 +466,10 @@ window.dismissSessionWarning = dismissSessionWarning;
 // ===== SETTINGS DROPDOWN =====
 function toggleSettingsDropdown() {
     const dropdown = document.getElementById('settingsDropdown');
+    const wrapper = document.querySelector('.settings-wrapper');
     if (dropdown) {
         dropdown.classList.toggle('active');
+        if (wrapper) wrapper.classList.toggle('dropdown-open');
     }
 }
 window.toggleSettingsDropdown = toggleSettingsDropdown;
@@ -476,8 +478,10 @@ window.toggleSettingsDropdown = toggleSettingsDropdown;
 document.addEventListener('click', (e) => {
     const dropdown = document.getElementById('settingsDropdown');
     const btn = document.querySelector('.settings-btn');
+    const wrapper = document.querySelector('.settings-wrapper');
     if (dropdown && btn && !dropdown.contains(e.target) && !btn.contains(e.target)) {
         dropdown.classList.remove('active');
+        if (wrapper) wrapper.classList.remove('dropdown-open');
     }
 });
 
@@ -579,6 +583,12 @@ function applyRoleBasedUI() {
     const adminMgmtAction = document.getElementById('admin-management-action');
     if (adminMgmtAction) {
         adminMgmtAction.style.display = isSuperAdmin ? '' : 'none';
+    }
+
+    // === TEAM MANAGEMENT QUICK ACTION: Only visible to super admin ===
+    const teamMgmtAction = document.getElementById('team-management-action');
+    if (teamMgmtAction) {
+        teamMgmtAction.style.display = isSuperAdmin ? '' : 'none';
     }
 
     // === CREATE EVENT BUTTON: Only visible to super admin ===
@@ -688,7 +698,7 @@ function toggleEventAssignmentVisibility(roleSelectId, eventGroupId, routingGrou
     const eventGroup = document.getElementById(eventGroupId);
     const routingGroup = routingGroupId ? document.getElementById(routingGroupId) : null;
     const isNormal = roleSelect?.value === 'normal';
-    
+
     if (eventGroup) eventGroup.style.display = isNormal ? '' : 'none';
     if (routingGroup) routingGroup.style.display = isNormal ? '' : 'none';
 }
@@ -1555,12 +1565,12 @@ async function seedDefaultEvents() {
                 // Check if existing event is missing required fields
                 const existingData = eventDoc.data();
                 const missingFields = {};
-                
+
                 if (!existingData.name) missingFields.name = event.name;
                 if (!existingData.emoji) missingFields.emoji = event.emoji;
                 if (existingData.isActive === undefined) missingFields.isActive = true;
                 if (!existingData.createdAt) missingFields.createdAt = serverTimestamp();
-                
+
                 if (Object.keys(missingFields).length > 0) {
                     batch.update(eventRef, missingFields);
                     updated++;
@@ -1634,7 +1644,14 @@ async function generateEventCards() {
     // Clear grid and generate cards
     grid.innerHTML = '';
 
-    for (const event of allEvents) {
+    // Sort events by event date (latest first)
+    const sortedEvents = [...allEvents].sort((a, b) => {
+        const dateA = a.eventDateRaw ? new Date(a.eventDateRaw) : new Date(0);
+        const dateB = b.eventDateRaw ? new Date(b.eventDateRaw) : new Date(0);
+        return dateB - dateA; // Descending order (latest first)
+    });
+
+    for (const event of sortedEvents) {
         if (!event.isActive) continue;
 
         // Skip events that normal admin doesn't have access to
@@ -1675,15 +1692,15 @@ async function generateEventCards() {
         const deleteBtn = isSuperAdmin
             ? `<button class="event-action-btn event-delete-btn" onclick="event.stopPropagation(); openDeleteEventModal('${safeCode}', '${safeName}')" title="Delete Event">🗑️</button>`
             : '';
-        
+
         // Edit button (for super admins)
         const editBtn = isSuperAdmin
             ? `<button class="event-action-btn event-edit-btn" onclick="event.stopPropagation(); openEditEventModal('${safeCode}')" title="Edit Event">✏️</button>`
             : '';
-        
+
         // Featured badge and toggle button (only for super admins)
-        const featuredBadge = event.isFeatured 
-            ? '<span class="featured-badge">⭐ Featured</span>' 
+        const featuredBadge = event.isFeatured
+            ? '<span class="featured-badge">⭐ Featured</span>'
             : '';
         const featuredToggle = isSuperAdmin
             ? `<button class="event-action-btn event-featured-btn ${event.isFeatured ? 'active' : ''}" onclick="event.stopPropagation(); toggleFeatured('${safeCode}')" title="${event.isFeatured ? 'Remove from main page' : 'Feature on main page'}">${event.isFeatured ? '⭐' : '☆'}</button>`
@@ -2204,10 +2221,9 @@ function openCreateEventModal() {
     document.getElementById('selectedEventEmoji').value = '🎯';
     document.querySelectorAll('.emoji-option').forEach(btn => btn.classList.remove('selected'));
     document.querySelector('.emoji-option[data-emoji="🎯"]')?.classList.add('selected');
-    
-    // Reset new fields
-    document.getElementById('newEventDate').value = '';
-    document.getElementById('newEventTime').value = '';
+
+    // Reset new fields - use calendar widget
+    eventCalClear('newEvent');
     document.getElementById('newEventVenue').value = '';
     document.getElementById('newEventTeamMin').value = '2';
     document.getElementById('newEventTeamMax').value = '3';
@@ -2230,7 +2246,7 @@ async function createNewEvent() {
     const name = document.getElementById('newEventName').value.trim();
     const code = document.getElementById('newEventCode').value.trim().toLowerCase();
     const emoji = document.getElementById('selectedEventEmoji').value || '🎯';
-    
+
     // New fields
     const eventDate = document.getElementById('newEventDate').value;
     const eventTime = document.getElementById('newEventTime').value;
@@ -2254,13 +2270,13 @@ async function createNewEvent() {
         showToast('⚠️ Event code can only contain lowercase letters, numbers and underscores');
         return;
     }
-    
+
     // Validate poster path - prevent path traversal (same as team member pics)
     if (posterUrl && (posterUrl.includes('..') || posterUrl.includes('\\') || /^[a-z]+:/i.test(posterUrl))) {
         showToast('⚠️ Invalid poster path. Use relative paths like "images/poster.jpg"');
         return;
     }
-    
+
     // Validate team size
     if (teamMin > teamMax) {
         showToast('⚠️ Minimum team size cannot be greater than maximum');
@@ -2274,7 +2290,7 @@ async function createNewEvent() {
             showToast('⚠️ An event with this code already exists');
             return;
         }
-        
+
         // If featuring, ask for confirmation and un-feature others
         if (isFeatured) {
             const confirmFeature = confirm(
@@ -2288,7 +2304,7 @@ async function createNewEvent() {
                 document.getElementById('newEventFeatured').checked = false;
                 return;
             }
-            
+
             // Un-feature all other events using batch
             const batch = writeBatch(db);
             const eventsSnapshot = await getDocs(collection(db, 'events'));
@@ -2299,18 +2315,18 @@ async function createNewEvent() {
             });
             await batch.commit();
         }
-        
+
         // Format date for display
         let formattedDate = '';
         let dayOfWeek = '';
         if (eventDate) {
             const dateObj = new Date(eventDate + 'T00:00:00');
-            formattedDate = dateObj.toLocaleDateString('en-US', { 
-                year: 'numeric', month: 'long', day: 'numeric' 
+            formattedDate = dateObj.toLocaleDateString('en-US', {
+                year: 'numeric', month: 'long', day: 'numeric'
             });
             dayOfWeek = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
         }
-        
+
         // Format time for display (12-hour format)
         let formattedTime = '';
         if (eventTime) {
@@ -2329,7 +2345,7 @@ async function createNewEvent() {
             createdAt: serverTimestamp(),
             createdBy: auth.currentUser?.email || 'unknown',
             isActive: true,
-            
+
             // Display fields for main page
             isFeatured: isFeatured,
             eventDate: formattedDate,
@@ -2341,7 +2357,7 @@ async function createNewEvent() {
             posterUrl: posterUrl ? SecurityUtils.sanitizeString(posterUrl, 500) : '',
             registrationStatus: registrationStatus
         });
-        
+
         // If featured, also update activeEvent for registration routing
         if (isFeatured) {
             await setDoc(doc(db, 'config', 'registration'), {
@@ -2349,12 +2365,12 @@ async function createNewEvent() {
             }, { merge: true });
         }
 
-        await logAdminAction('CREATE_EVENT', { 
-            eventCode: code, 
+        await logAdminAction('CREATE_EVENT', {
+            eventCode: code,
             eventName: name,
-            isFeatured: isFeatured 
+            isFeatured: isFeatured
         });
-        
+
         showToast(`✅ Event "${name}" created successfully!`);
         if (isFeatured) {
             showToast('⭐ Now featured on the main page!');
@@ -2435,25 +2451,25 @@ async function toggleFeatured(eventCode) {
         showToast('⚠️ Invalid event code');
         return;
     }
-    
+
     // Only super admins can feature events
     if (!AdminPermissions.isSuperAdmin()) {
         showToast('⚠️ Only super admins can feature events');
         return;
     }
-    
+
     try {
         const eventRef = doc(db, 'events', eventCode);
         const eventDoc = await getDoc(eventRef);
-        
+
         if (!eventDoc.exists()) {
             showToast('⚠️ Event not found');
             return;
         }
-        
+
         const eventData = eventDoc.data();
         const currentlyFeatured = eventData.isFeatured;
-        
+
         if (!currentlyFeatured) {
             // Confirm before featuring
             const confirmFeature = confirm(
@@ -2464,7 +2480,7 @@ async function toggleFeatured(eventCode) {
                 'The previous featured event will still be accessible.'
             );
             if (!confirmFeature) return;
-            
+
             // Un-feature all other events using batch
             const batch = writeBatch(db);
             const eventsSnapshot = await getDocs(collection(db, 'events'));
@@ -2473,16 +2489,16 @@ async function toggleFeatured(eventCode) {
                     batch.update(doc(db, 'events', docSnap.id), { isFeatured: false });
                 }
             });
-            
+
             // Feature this event
             batch.update(eventRef, { isFeatured: true });
             await batch.commit();
-            
+
             // Update routing to this event
-            await setDoc(doc(db, 'config', 'registration'), { 
-                activeEvent: eventCode 
+            await setDoc(doc(db, 'config', 'registration'), {
+                activeEvent: eventCode
             }, { merge: true });
-            
+
             await logAdminAction('FEATURE_EVENT', { eventCode, eventName: eventData.name });
             showToast(`⭐ "${eventData.name}" is now featured on the main page!`);
         } else {
@@ -2491,10 +2507,10 @@ async function toggleFeatured(eventCode) {
             await logAdminAction('UNFEATURE_EVENT', { eventCode, eventName: eventData.name });
             showToast(`Removed "${eventData.name}" from main page`);
         }
-        
+
         // Refresh UI
         await initDynamicEvents();
-        
+
     } catch (error) {
         secureLog('Error toggling featured:', error);
         showToast('⚠️ Failed to update featured status');
@@ -2509,14 +2525,14 @@ function openEditEventModal(eventCode) {
         showToast('⚠️ Invalid event code');
         return;
     }
-    
+
     // Find the event in allEvents array
     const event = allEvents.find(e => e.code === eventCode);
     if (!event) {
         showToast('⚠️ Event not found');
         return;
     }
-    
+
     // Populate form fields
     document.getElementById('editEventCode').value = eventCode;
     document.getElementById('editEventCodeDisplay').value = eventCode;
@@ -2527,22 +2543,15 @@ function openEditEventModal(eventCode) {
     document.getElementById('editEventPoster').value = event.posterUrl || '';
     document.getElementById('editEventRegStatus').value = event.registrationStatus || 'open';
     document.getElementById('editEventActive').checked = event.isActive !== false;
-    
-    // Handle date - convert from formatted date to ISO format for input
-    if (event.eventDateRaw) {
-        document.getElementById('editEventDate').value = event.eventDateRaw;
-    } else {
-        document.getElementById('editEventDate').value = '';
-    }
-    
-    // Handle time - convert from 12-hour to 24-hour format for input
+
+    // Handle date and time - use calendar widget
+    const editDateRaw = event.eventDateRaw || '';
+    let editTime24 = '';
     if (event.eventTime) {
-        const time24 = convertTo24Hour(event.eventTime);
-        document.getElementById('editEventTime').value = time24;
-    } else {
-        document.getElementById('editEventTime').value = '';
+        editTime24 = convertTo24Hour(event.eventTime);
     }
-    
+    setEventCalDateTime('editEvent', editDateRaw, editTime24);
+
     // Set emoji selection
     document.getElementById('editSelectedEventEmoji').value = event.emoji || '🎯';
     document.querySelectorAll('#editEmojiPicker .emoji-option').forEach(btn => {
@@ -2551,7 +2560,7 @@ function openEditEventModal(eventCode) {
             btn.classList.add('selected');
         }
     });
-    
+
     // Open modal
     document.getElementById('editEventModal')?.classList.add('active');
 }
@@ -2565,10 +2574,10 @@ function convertTo24Hour(time12) {
     let hours = parseInt(match[1]);
     const minutes = match[2];
     const period = match[3].toUpperCase();
-    
+
     if (period === 'PM' && hours !== 12) hours += 12;
     if (period === 'AM' && hours === 12) hours = 0;
-    
+
     return `${hours.toString().padStart(2, '0')}:${minutes}`;
 }
 
@@ -2593,36 +2602,36 @@ async function saveEventEdit() {
     const posterUrl = document.getElementById('editEventPoster').value.trim();
     const registrationStatus = document.getElementById('editEventRegStatus').value || 'open';
     const isActive = document.getElementById('editEventActive').checked;
-    
+
     // Validation
     if (!name || name.length < 2) {
         showToast('⚠️ Event name must be at least 2 characters');
         return;
     }
-    
+
     // Validate poster path
     if (posterUrl && (posterUrl.includes('..') || posterUrl.includes('\\') || /^[a-z]+:/i.test(posterUrl))) {
         showToast('⚠️ Invalid poster path. Use relative paths like "images/poster.jpg"');
         return;
     }
-    
+
     if (teamMin > teamMax) {
         showToast('⚠️ Minimum team size cannot be greater than maximum');
         return;
     }
-    
+
     try {
         // Format date for display
         let formattedDate = '';
         let dayOfWeek = '';
         if (eventDate) {
             const dateObj = new Date(eventDate + 'T00:00:00');
-            formattedDate = dateObj.toLocaleDateString('en-US', { 
-                year: 'numeric', month: 'long', day: 'numeric' 
+            formattedDate = dateObj.toLocaleDateString('en-US', {
+                year: 'numeric', month: 'long', day: 'numeric'
             });
             dayOfWeek = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
         }
-        
+
         // Format time for display (12-hour format)
         let formattedTime = '';
         if (eventTime) {
@@ -2632,7 +2641,7 @@ async function saveEventEdit() {
             const hour12 = hour % 12 || 12;
             formattedTime = `${hour12}:${minutes} ${ampm}`;
         }
-        
+
         // Update event in Firestore
         await updateDoc(doc(db, 'events', eventCode), {
             name: SecurityUtils.sanitizeString(name, 100),
@@ -2649,14 +2658,14 @@ async function saveEventEdit() {
             updatedAt: serverTimestamp(),
             updatedBy: auth.currentUser?.email || 'unknown'
         });
-        
+
         await logAdminAction('UPDATE_EVENT', { eventCode, eventName: name });
         showToast(`✅ Event "${name}" updated successfully!`);
         closeModal('editEventModal');
-        
+
         // Refresh UI
         await initDynamicEvents();
-        
+
     } catch (error) {
         secureLog('Error updating event:', error);
         showToast('⚠️ Failed to update event');
@@ -3556,9 +3565,9 @@ function calendarClear(eventCode) {
 }
 window.calendarClear = calendarClear;
 
-// Close calendar on outside click
+// Close calendar on outside click (exclude event datetime pickers)
 document.addEventListener('click', (e) => {
-    if (!e.target.closest('.animated-calendar')) {
+    if (!e.target.closest('.animated-calendar') && !e.target.closest('.event-datetime-picker')) {
         document.querySelectorAll('.calendar-dropdown.open').forEach(d => {
             d.classList.remove('open');
             d.previousElementSibling?.classList.remove('active');
@@ -3775,6 +3784,10 @@ let currentTeamFilter = 'all';
 
 // Open Team Management Modal
 function openTeamManagement() {
+    if (!AdminPermissions.isSuperAdmin()) {
+        showToast('❌ Only Super Admins can manage team members.');
+        return;
+    }
     document.getElementById('teamManagementModal').classList.add('active');
     loadTeamMembers();
 }
@@ -3858,20 +3871,20 @@ function renderTeamMembersList() {
     // };
 
     const getAdminImagePath = (path) => {
-    if (!path) return '';
-    // If it's already a full URL, use as-is
-    if (path.startsWith('http://') || path.startsWith('https://')) return path;
-    // Normalize backslashes to forward slashes
-    const normalizedPath = path.replace(/\\/g, '/');
-    // For local paths like "Name.png", prepend "images/" and "../" for admin folder
-    if (!normalizedPath.startsWith('images/')) {
-        return '../images/' + normalizedPath;
-    }
-    // If already has images/ prefix
-    return '../' + normalizedPath;
+        if (!path) return '';
+        // If it's already a full URL, use as-is
+        if (path.startsWith('http://') || path.startsWith('https://')) return path;
+        // Normalize backslashes to forward slashes
+        const normalizedPath = path.replace(/\\/g, '/');
+        // For local paths like "Name.png", prepend "images/" and "../" for admin folder
+        if (!normalizedPath.startsWith('images/')) {
+            return '../images/' + normalizedPath;
+        }
+        // If already has images/ prefix
+        return '../' + normalizedPath;
     };
 
-    
+
     listContainer.innerHTML = filteredMembers.map(member => `
         <div class="team-mgmt-item" data-id="${member.id}">
             ${member.imageUrl
@@ -4122,15 +4135,15 @@ window.openFeedbackViewer = openFeedbackViewer;
 
 async function loadFeedback() {
     const feedbackList = document.getElementById('feedbackList');
-    
+
     try {
         const snapshot = await getDocs(
             query(collection(db, 'feedback'), orderBy('timestamp', 'desc'), limit(100))
         );
-        
+
         feedbackData = [];
         const ratingCounts = { 1: 0, 2: 0, 3: 0, 4: 0 };
-        
+
         snapshot.forEach(doc => {
             const data = { id: doc.id, ...doc.data() };
             feedbackData.push(data);
@@ -4138,13 +4151,13 @@ async function loadFeedback() {
                 ratingCounts[data.rating]++;
             }
         });
-        
+
         // Update stats
         document.getElementById('rating4Count').textContent = ratingCounts[4];
         document.getElementById('rating3Count').textContent = ratingCounts[3];
         document.getElementById('rating2Count').textContent = ratingCounts[2];
         document.getElementById('rating1Count').textContent = ratingCounts[1];
-        
+
         // Render feedback list
         if (feedbackData.length === 0) {
             feedbackList.innerHTML = `
@@ -4155,29 +4168,29 @@ async function loadFeedback() {
             `;
             return;
         }
-        
+
         const ratingEmojis = {
             1: '😢',
             2: '😕',
             3: '🙂',
             4: '😄'
         };
-        
+
         const ratingLabels = {
             1: 'Very Unhappy',
             2: 'Unhappy',
             3: 'Happy',
             4: 'Very Happy'
         };
-        
+
         feedbackList.innerHTML = feedbackData.map(item => {
-            const date = item.timestamp?.toDate?.() 
-                ? item.timestamp.toDate().toLocaleDateString('en-US', { 
-                    year: 'numeric', month: 'short', day: 'numeric', 
-                    hour: '2-digit', minute: '2-digit' 
-                }) 
+            const date = item.timestamp?.toDate?.()
+                ? item.timestamp.toDate().toLocaleDateString('en-US', {
+                    year: 'numeric', month: 'short', day: 'numeric',
+                    hour: '2-digit', minute: '2-digit'
+                })
                 : 'Unknown date';
-            
+
             return `
                 <div class="feedback-item" data-id="${item.id}">
                     <div class="feedback-item-header">
@@ -4197,7 +4210,7 @@ async function loadFeedback() {
                 </div>
             `;
         }).join('');
-        
+
     } catch (error) {
         secureLog('Error loading feedback:', error);
         feedbackList.innerHTML = `
@@ -4214,14 +4227,14 @@ function exportFeedback() {
         showToast('No feedback to export', 'error');
         return;
     }
-    
+
     const ratingLabels = { 1: 'Very Unhappy', 2: 'Unhappy', 3: 'Happy', 4: 'Very Happy' };
-    
+
     const csvContent = [
         ['Date', 'Rating', 'Rating Label', 'Feedback', 'Page'].join(','),
         ...feedbackData.map(item => {
-            const date = item.timestamp?.toDate?.() 
-                ? item.timestamp.toDate().toISOString() 
+            const date = item.timestamp?.toDate?.()
+                ? item.timestamp.toDate().toISOString()
                 : '';
             return [
                 `"${date}"`,
@@ -4232,20 +4245,20 @@ function exportFeedback() {
             ].join(',');
         })
     ].join('\n');
-    
+
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = `feedback_export_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
-    
+
     showToast('Feedback exported successfully!', 'success');
 }
 window.exportFeedback = exportFeedback;
 
 async function deleteFeedback(feedbackId) {
     if (!confirm('Delete this feedback?')) return;
-    
+
     try {
         await deleteDoc(doc(db, 'feedback', feedbackId));
         showToast('Feedback deleted', 'success');
@@ -4263,16 +4276,16 @@ async function clearAllFeedback() {
         showToast('No feedback to clear', 'error');
         return;
     }
-    
+
     if (!confirm(`Are you sure you want to delete ALL ${count} feedback entries? This cannot be undone.`)) return;
-    
+
     try {
         // Delete all feedback documents
-        const deletePromises = feedbackData.map(item => 
+        const deletePromises = feedbackData.map(item =>
             deleteDoc(doc(db, 'feedback', item.id))
         );
         await Promise.all(deletePromises);
-        
+
         showToast(`Cleared ${count} feedback entries`, 'success');
         await loadFeedback(); // Refresh list
     } catch (error) {
@@ -4281,3 +4294,381 @@ async function clearAllFeedback() {
     }
 }
 window.clearAllFeedback = clearAllFeedback;
+
+// ===== EVENT CALENDAR DATETIME PICKER =====
+// State management for event calendar pickers
+const eventCalState = {};
+
+function initEventCalState(prefix) {
+    if (!eventCalState[prefix]) {
+        const now = new Date();
+        eventCalState[prefix] = {
+            currentMonth: now.getMonth(),
+            currentYear: now.getFullYear(),
+            selectedDate: null,
+            selectedTime: '00:00'
+        };
+    }
+    return eventCalState[prefix];
+}
+
+// Toggle calendar dropdown open/close
+function toggleEventCalendar(prefix) {
+    const dropdown = document.getElementById(`${prefix}CalendarDropdown`);
+    const trigger = dropdown?.previousElementSibling;
+    if (!dropdown) return;
+
+    const isOpen = dropdown.classList.contains('open');
+
+    // Close all other event calendar dropdowns first
+    document.querySelectorAll('.event-cal-dropdown.open').forEach(d => {
+        d.classList.remove('open');
+        d.previousElementSibling?.classList.remove('active');
+    });
+
+    if (!isOpen) {
+        dropdown.classList.add('open');
+        trigger?.classList.add('active');
+        renderEventCalendar(prefix);
+    }
+}
+window.toggleEventCalendar = toggleEventCalendar;
+
+// Render the calendar grid
+function renderEventCalendar(prefix) {
+    const state = initEventCalState(prefix);
+    const daysContainer = document.getElementById(`${prefix}CalendarDays`);
+    const titleEl = document.getElementById(`${prefix}CalendarTitle`);
+
+    if (!daysContainer || !titleEl) return;
+
+    const months = ['January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December'];
+
+    titleEl.textContent = `${months[state.currentMonth]} ${state.currentYear}`;
+
+    const firstDay = new Date(state.currentYear, state.currentMonth, 1);
+    const lastDay = new Date(state.currentYear, state.currentMonth + 1, 0);
+    const startDay = firstDay.getDay();
+    const daysInMonth = lastDay.getDate();
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    daysContainer.innerHTML = '';
+
+    // Empty cells before first day
+    for (let i = 0; i < startDay; i++) {
+        daysContainer.innerHTML += '<button class="calendar-day empty"></button>';
+    }
+
+    // Days of the month
+    for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(state.currentYear, state.currentMonth, day);
+        date.setHours(0, 0, 0, 0);
+
+        let classes = 'calendar-day';
+
+        if (date.getTime() === today.getTime()) {
+            classes += ' today';
+        }
+
+        // Check if this day is selected
+        if (state.selectedDate) {
+            const sel = new Date(state.selectedDate);
+            sel.setHours(0, 0, 0, 0);
+            if (date.getTime() === sel.getTime()) {
+                classes += ' selected range-start range-end';
+            }
+        }
+
+        daysContainer.innerHTML += `<button type="button" class="${classes}" onclick="selectEventCalDay('${prefix}', ${day})">${day}</button>`;
+    }
+}
+window.renderEventCalendar = renderEventCalendar;
+
+// Select a day
+function selectEventCalDay(prefix, day) {
+    const state = initEventCalState(prefix);
+    state.selectedDate = new Date(state.currentYear, state.currentMonth, day);
+
+    renderEventCalendar(prefix);
+    updateEventDateTime(prefix);
+}
+window.selectEventCalDay = selectEventCalDay;
+
+// Update the hidden inputs and display text
+function updateEventDateTime(prefix) {
+    const state = initEventCalState(prefix);
+
+    // Get time from the wheel elements (12h with AM/PM)
+    const hourEl = document.getElementById(`${prefix}Hour`);
+    const minEl = document.getElementById(`${prefix}Min`);
+    const ampmEl = document.getElementById(`${prefix}AmPm`);
+    if (hourEl && minEl && ampmEl) {
+        let h = parseInt(hourEl.value) || 12;
+        const m = parseInt(minEl.value) || 0;
+        const isPM = ampmEl.textContent === 'PM';
+        
+        // Convert to 24h
+        let h24 = h;
+        if (isPM && h !== 12) h24 = h + 12;
+        if (!isPM && h === 12) h24 = 0;
+        
+        state.selectedTime = `${String(h24).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    }
+
+    const dateInput = document.getElementById(`${prefix.replace('Event', 'Event')}Date`);
+    const timeHidden = document.getElementById(`${prefix.replace('Event', 'Event')}Time`);
+    const calendarText = document.getElementById(`${prefix}CalendarText`);
+    const selectedText = document.getElementById(`${prefix}SelectedText`);
+    const selectedBar = document.getElementById(`${prefix}SelectedBar`);
+
+    // Map prefix to correct hidden input IDs
+    const dateId = prefix === 'newEvent' ? 'newEventDate' : 'editEventDate';
+    const timeId = prefix === 'newEvent' ? 'newEventTime' : 'editEventTime';
+    const dateEl = document.getElementById(dateId);
+    const timeEl = document.getElementById(timeId);
+
+    if (state.selectedDate) {
+        // Format date for hidden input (YYYY-MM-DD)
+        const year = state.selectedDate.getFullYear();
+        const month = String(state.selectedDate.getMonth() + 1).padStart(2, '0');
+        const day = String(state.selectedDate.getDate()).padStart(2, '0');
+        const isoDate = `${year}-${month}-${day}`;
+
+        if (dateEl) dateEl.value = isoDate;
+        if (timeEl) timeEl.value = state.selectedTime;
+
+        // Format for display
+        const months = ['January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'];
+
+        // Get ordinal suffix
+        const dayNum = state.selectedDate.getDate();
+        const suffix = (dayNum === 1 || dayNum === 21 || dayNum === 31) ? 'st' :
+            (dayNum === 2 || dayNum === 22) ? 'nd' :
+                (dayNum === 3 || dayNum === 23) ? 'rd' : 'th';
+
+        // Format time for display
+        const [hours, minutes] = state.selectedTime.split(':');
+        const hour = parseInt(hours);
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        const hour12 = hour % 12 || 12;
+        const displayTime = `${hour12}:${minutes} ${ampm}`;
+
+        const displayDate = `${months[state.selectedDate.getMonth()]} ${dayNum}${suffix}, ${year} ${displayTime}`;
+        const shortDisplay = `${months[state.selectedDate.getMonth()]} ${dayNum}${suffix}, ${year} • ${displayTime}`;
+
+        if (calendarText) {
+            calendarText.textContent = shortDisplay;
+            calendarText.classList.remove('placeholder');
+        }
+        if (selectedText) {
+            selectedText.textContent = displayDate;
+        }
+        if (selectedBar) {
+            selectedBar.classList.add('has-date');
+        }
+    } else {
+        if (dateEl) dateEl.value = '';
+        if (timeEl) timeEl.value = '';
+        if (calendarText) {
+            calendarText.textContent = 'Select date and time';
+            calendarText.classList.add('placeholder');
+        }
+        if (selectedText) {
+            selectedText.textContent = 'No date selected';
+        }
+        if (selectedBar) {
+            selectedBar.classList.remove('has-date');
+        }
+    }
+}
+window.updateEventDateTime = updateEventDateTime;
+
+// Time wheel adjustment (12-hour format)
+function adjustTime(prefix, type, delta) {
+    const hourEl = document.getElementById(`${prefix}Hour`);
+    const minEl = document.getElementById(`${prefix}Min`);
+    if (!hourEl || !minEl) return;
+    
+    let h = parseInt(hourEl.value) || 12;
+    let m = parseInt(minEl.value) || 0;
+    
+    if (type === 'hour') {
+        h = h + delta;
+        if (h > 12) h = 1;
+        if (h < 1) h = 12;
+    } else {
+        m = (m + delta + 60) % 60;
+    }
+    
+    hourEl.value = String(h).padStart(2, '0');
+    minEl.value = String(m).padStart(2, '0');
+    
+    updateTimeState(prefix);
+}
+window.adjustTime = adjustTime;
+
+function toggleAmPm(prefix) {
+    const ampmEl = document.getElementById(`${prefix}AmPm`);
+    if (!ampmEl) return;
+    ampmEl.textContent = ampmEl.textContent === 'AM' ? 'PM' : 'AM';
+    updateTimeState(prefix);
+}
+window.toggleAmPm = toggleAmPm;
+
+function updateTimeState(prefix) {
+    const hourEl = document.getElementById(`${prefix}Hour`);
+    const minEl = document.getElementById(`${prefix}Min`);
+    const ampmEl = document.getElementById(`${prefix}AmPm`);
+    if (!hourEl || !minEl || !ampmEl) return;
+    
+    let h = parseInt(hourEl.value) || 12;
+    const m = parseInt(minEl.value) || 0;
+    const isPM = ampmEl.textContent === 'PM';
+    
+    // Convert to 24h for storage
+    let h24 = h;
+    if (isPM && h !== 12) h24 = h + 12;
+    if (!isPM && h === 12) h24 = 0;
+    
+    const state = initEventCalState(prefix);
+    state.selectedTime = `${String(h24).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    updateEventDateTime(prefix);
+}
+
+function validateTimeInput(prefix, type) {
+    const hourEl = document.getElementById(`${prefix}Hour`);
+    const minEl = document.getElementById(`${prefix}Min`);
+    if (!hourEl || !minEl) return;
+    
+    if (type === 'hour') {
+        let h = parseInt(hourEl.value) || 0;
+        if (h < 1) h = 12;
+        if (h > 12) h = 12;
+        hourEl.value = String(h).padStart(2, '0');
+    } else {
+        let m = parseInt(minEl.value) || 0;
+        if (m < 0) m = 0;
+        if (m > 59) m = 59;
+        minEl.value = String(m).padStart(2, '0');
+    }
+    updateTimeState(prefix);
+}
+window.validateTimeInput = validateTimeInput;
+
+function setTimeWheel(prefix, time24) {
+    const [hStr, mStr] = (time24 || '00:00').split(':');
+    let h = parseInt(hStr) || 0;
+    const m = mStr || '00';
+    
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    if (h === 0) h = 12;
+    else if (h > 12) h = h - 12;
+    
+    const hourEl = document.getElementById(`${prefix}Hour`);
+    const minEl = document.getElementById(`${prefix}Min`);
+    const ampmEl = document.getElementById(`${prefix}AmPm`);
+    if (hourEl) hourEl.value = String(h).padStart(2, '0');
+    if (minEl) minEl.value = m.padStart(2, '0');
+    if (ampmEl) ampmEl.textContent = ampm;
+}
+
+// Navigation functions
+function eventCalPrevMonth(prefix) {
+    const state = initEventCalState(prefix);
+    state.currentMonth--;
+    if (state.currentMonth < 0) {
+        state.currentMonth = 11;
+        state.currentYear--;
+    }
+    renderEventCalendar(prefix);
+}
+window.eventCalPrevMonth = eventCalPrevMonth;
+
+function eventCalNextMonth(prefix) {
+    const state = initEventCalState(prefix);
+    state.currentMonth++;
+    if (state.currentMonth > 11) {
+        state.currentMonth = 0;
+        state.currentYear++;
+    }
+    renderEventCalendar(prefix);
+}
+window.eventCalNextMonth = eventCalNextMonth;
+
+function eventCalPrevYear(prefix) {
+    const state = initEventCalState(prefix);
+    state.currentYear--;
+    renderEventCalendar(prefix);
+}
+window.eventCalPrevYear = eventCalPrevYear;
+
+function eventCalNextYear(prefix) {
+    const state = initEventCalState(prefix);
+    state.currentYear++;
+    renderEventCalendar(prefix);
+}
+window.eventCalNextYear = eventCalNextYear;
+
+// Select today
+function eventCalSelectToday(prefix) {
+    const state = initEventCalState(prefix);
+    const now = new Date();
+    state.currentMonth = now.getMonth();
+    state.currentYear = now.getFullYear();
+    state.selectedDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    state.selectedTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+    setTimeWheel(prefix, state.selectedTime);
+
+    renderEventCalendar(prefix);
+    updateEventDateTime(prefix);
+}
+window.eventCalSelectToday = eventCalSelectToday;
+
+// Clear selection
+function eventCalClear(prefix) {
+    const state = initEventCalState(prefix);
+    state.selectedDate = null;
+    state.selectedTime = '00:00';
+
+    setTimeWheel(prefix, '00:00');
+
+    renderEventCalendar(prefix);
+    updateEventDateTime(prefix);
+}
+window.eventCalClear = eventCalClear;
+
+// Set the event calendar to a specific date and time (for edit modal)
+function setEventCalDateTime(prefix, dateStr, timeStr) {
+    const state = initEventCalState(prefix);
+
+    if (dateStr) {
+        const d = new Date(dateStr + 'T00:00:00');
+        state.selectedDate = d;
+        state.currentMonth = d.getMonth();
+        state.currentYear = d.getFullYear();
+    } else {
+        state.selectedDate = null;
+    }
+
+    state.selectedTime = timeStr || '00:00';
+    setTimeWheel(prefix, state.selectedTime);
+
+    renderEventCalendar(prefix);
+    updateEventDateTime(prefix);
+}
+window.setEventCalDateTime = setEventCalDateTime;
+
+// Close event calendar on outside click
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.event-datetime-picker')) {
+        document.querySelectorAll('.event-cal-dropdown.open').forEach(d => {
+            d.classList.remove('open');
+            d.previousElementSibling?.classList.remove('active');
+        });
+    }
+});
