@@ -3541,7 +3541,7 @@ body.light-theme .settings-dropdown {
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-card);
     padding: 20px;
-    z-index: 1000;
+    z-index: 10000;
     opacity: 0;
     visibility: hidden;
     transform: translateY(-10px);
@@ -5179,6 +5179,205 @@ body.light-theme .settings-dropdown {
     color: rgba(255, 255, 255, 0.5);
 }
 
+/* ===== EVENT DATETIME PICKER (Create/Edit Modals) ===== */
+.event-datetime-picker {
+    position: relative;
+    width: 100%;
+}
+
+.event-datetime-picker .calendar-trigger {
+    width: 100%;
+}
+
+.event-datetime-picker .calendar-trigger .calendar-chevron {
+    font-size: 12px;
+    color: var(--text-muted);
+    transition: transform 0.3s ease;
+}
+
+.event-datetime-picker .calendar-trigger.active .calendar-chevron {
+    transform: rotate(180deg);
+}
+
+/* Event calendar dropdown - absolute positioned like filter calendar */
+.event-datetime-picker .event-cal-dropdown {
+    position: absolute;
+    top: 100%;
+    left: -15px;
+    margin-top: 4px;
+    z-index: 9999;
+    min-width: 320px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px) scale(0.95);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.event-datetime-picker .event-cal-dropdown.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+}
+
+/* Time picker row inside calendar */
+.event-cal-time-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    margin-top: 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.event-cal-time-icon {
+    font-size: 16px;
+    opacity: 0.8;
+}
+
+.event-cal-time-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 15px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    padding: 4px 8px;
+    border-radius: 6px;
+    outline: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.event-cal-time-input:focus {
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.15);
+}
+
+.event-cal-time-input::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    opacity: 0.5;
+    cursor: pointer;
+}
+
+/* Time Wheel Picker */
+.time-wheel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 0;
+    width: 100%;
+}
+
+.time-wheel-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.time-wheel-btn {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 12px;
+    transition: all 0.15s ease;
+}
+
+.time-wheel-btn:hover {
+    color: white;
+}
+
+.time-wheel-input {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 20px;
+    font-weight: 600;
+    color: white;
+    width: 40px;
+    text-align: center;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    outline: none;
+    padding: 2px 0;
+    transition: border-color 0.15s ease;
+}
+
+.time-wheel-input:focus {
+    border-bottom-color: rgba(255, 255, 255, 0.4);
+}
+
+.time-wheel-input::-webkit-inner-spin-button,
+.time-wheel-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.time-wheel-sep {
+    font-size: 20px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.time-wheel-ampm {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-left: 8px;
+    transition: all 0.15s ease;
+}
+
+.time-wheel-ampm:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Selected date display bar */
+.event-cal-selected-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+    padding: 12px 16px;
+    background: rgba(0, 0, 0, 0.35);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.2s ease;
+}
+
+.event-cal-selected-bar.has-date {
+    background: rgba(0, 0, 0, 0.45);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.event-cal-selected-icon {
+    font-size: 16px;
+    opacity: 0.7;
+}
+
+.event-cal-selected-text {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.6);
+    letter-spacing: 0.3px;
+}
+
+.event-cal-selected-bar.has-date .event-cal-selected-text {
+    color: white;
+    font-weight: 600;
+}
+
 /* Filter bar improvements */
 .filter-bar {
     display: none;
@@ -5549,6 +5748,8 @@ body.light-theme .settings-dropdown {
     color: var(--text-primary);
     transition: all 0.3s ease;
     white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 .settings-btn:hover {
@@ -5566,13 +5767,17 @@ body.light-theme .settings-dropdown {
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-card);
     padding: 16px;
-    z-index: 1000;
-    display: none;
-    animation: slideDown 0.2s ease;
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
 }
 
 .settings-dropdown.active {
-    display: block;
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
 }
 
 .settings-dropdown h4 {
@@ -5812,10 +6017,64 @@ body.light-theme .settings-dropdown {
         grid-template-columns: 1fr !important;
     }
 
+    .settings-wrapper {
+        position: static;
+    }
+
     .settings-dropdown {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        right: auto;
+        bottom: auto;
         width: calc(100vw - 32px);
-        right: 50%;
-        transform: translateX(50%);
+        max-width: 320px;
+        transform: translate(-50%, -50%) scale(0.95);
+        z-index: 10001;
+        opacity: 0;
+        visibility: hidden;
+    }
+
+    .settings-dropdown.active {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+        visibility: visible;
+    }
+}
+
+/* Settings overlay for mobile */
+@media (max-width: 768px) {
+    .settings-wrapper::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+        z-index: 10000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        pointer-events: none;
+    }
+
+    .settings-wrapper.dropdown-open::before {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+    }
+
+    .settings-dropdown {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        right: auto;
+        bottom: auto;
+        transform: translate(-50%, -50%) scale(0.95);
+        z-index: 10001;
+    }
+
+    .settings-dropdown.active {
+        transform: translate(-50%, -50%) scale(1);
     }
 }
 
@@ -5929,6 +6188,7 @@ body.light-theme .settings-dropdown {
     .dashboard-header {
         box-sizing: border-box !important;
         max-width: 100% !important;
+        overflow: visible !important;
     }
 
     .login-page {
@@ -5952,6 +6212,14 @@ body.light-theme .settings-dropdown {
         max-width: 100vw !important;
         overflow-x: auto !important;
     }
+
+    /* Settings wrapper must allow overflow for dropdown */
+    .settings-wrapper {
+        overflow: visible !important;
+        position: relative !important;
+        z-index: 100 !important;
+    }
+
 
     /* Nav should not scroll */
     nav {
