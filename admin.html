@@ -1,22 +1,1362 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <!-- X-Frame-Options removed: can only be set via HTTP header, not meta tag -->
+    <!-- X-XSS-Protection removed: deprecated header, CSP provides XSS protection -->
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.google.com https://www.gstatic.com https://*.gstatic.com https://cdn.sheetjs.com https://cdn.jsdelivr.net https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://*.gstatic.com wss://*.firebaseio.com https://firestore.googleapis.com https://cdn.jsdelivr.net; frame-src https://www.google.com https://apis.google.com;" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <title>ISTE Admin Portal</title>
+    <meta name="description" content="ISTE Club Admin Portal - Manage events, registrations, and winners." />
+    <script src="https://www.google.com/recaptcha/api.js?render=6LeeoD8sAAAAAGKAdRH9D4ca5FHGsip-XXGcXOzM"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet" />
+    <style>
+        /* Nyght Serif — Local Font */
+        @font-face {
+            font-family: 'Nyght Serif';
+            src: url('css/nyght-serif-main/nyght-serif-main/fonts/WEB/NyghtSerif-Light.woff2') format('woff2');
+            font-weight: 300;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Nyght Serif';
+            src: url('css/nyght-serif-main/nyght-serif-main/fonts/WEB/NyghtSerif-Regular.woff2') format('woff2');
+            font-weight: 400;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Nyght Serif';
+            src: url('css/nyght-serif-main/nyght-serif-main/fonts/WEB/NyghtSerif-Medium.woff2') format('woff2');
+            font-weight: 500;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Nyght Serif';
+            src: url('css/nyght-serif-main/nyght-serif-main/fonts/WEB/NyghtSerif-Bold.woff2') format('woff2');
+            font-weight: 700;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Nyght Serif';
+            src: url('css/nyght-serif-main/nyght-serif-main/fonts/WEB/NyghtSerif-Dark.woff2') format('woff2');
+            font-weight: 900;
+            font-style: normal;
+        }
+
+        /* Accessibility: Screen reader only text */
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+    </style>
+    <link rel="stylesheet" href="css/admin.css" />
 </head>
+
 <body>
-    <nav>
-        <a href="index.html" class="logo">Logo</a>
-        <ul>
-            <li><a href="index.html">Home</a></li>
-            <li><a href="index.html#about">About</a></li>
-            <li><a href="index.html#activity">Activity</a></li>
-            <li><a href="index.html#winners">Winners</a></li>
-            <li><a href="index.html#gallery">Gallery</a></li>
-            <li><a href="index.html#team">Team</a></li>
-        </ul>
+    <div class="bg-animation">
+        <div class="bg-orb bg-orb-1"></div>
+        <div class="bg-orb bg-orb-2"></div>
+        <div class="bg-orb bg-orb-3"></div>
+    </div>
+
+    <div class="toast" id="toast">Action completed!</div>
+
+    <div class="bulk-action-bar" id="bulkActionBar">
+        <span class="bulk-count" id="bulkCount">0 selected</span>
+        <div class="bulk-actions">
+            <button class="bulk-btn verify" onclick="bulkUpdateStatus('verified')">✓ Verify</button>
+            <button class="bulk-btn delete" onclick="bulkDeleteSelected()">🗑️ Delete</button>
+            <button class="bulk-btn cancel" onclick="clearBulkSelection()">Cancel</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="editModal">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <span class="modal-title">✏️ Edit Team</span>
+                <button class="modal-close" onclick="closeModal('editModal')">&times;</button>
+            </div>
+            <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+                <input type="hidden" id="editTeamId">
+                <p
+                    style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px;">
+                    🏷️ Team Info</p>
+                <div class="form-group">
+                    <label>Team Name <span class="required">*</span></label>
+                    <input type="text" id="editTeamName" placeholder="e.g. Code Crushers" required maxlength="100"
+                        pattern="[A-Za-z0-9 ]+" title="Only letters, numbers, and spaces allowed">
+                </div>
+                <p
+                    style="font-size: 12px; color: var(--text-muted); margin: 20px 0 16px; text-transform: uppercase; letter-spacing: 1px;">
+                    👤 Member 1</p>
+                <div class="form-group">
+                    <label>Name <span class="required">*</span></label>
+                    <input type="text" id="editM1Name" placeholder="Enter name" required maxlength="100"
+                        pattern="[A-Za-z ]+" title="Only letters and spaces allowed">
+                </div>
+                <div class="form-group">
+                    <label>Details (USN • Dept)</label>
+                    <input type="text" id="editM1Detail" placeholder="1CR23CS001 • CSE" maxlength="100">
+                </div>
+                <p
+                    style="font-size: 12px; color: var(--text-muted); margin: 20px 0 16px; text-transform: uppercase; letter-spacing: 1px;">
+                    👤 Member 2</p>
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="editM2Name" placeholder="Enter name" maxlength="100" pattern="[A-Za-z ]*"
+                        title="Only letters and spaces allowed">
+                </div>
+                <div class="form-group">
+                    <label>Details (USN • Dept)</label>
+                    <input type="text" id="editM2Detail" placeholder="1CR23CS002 • CSE" maxlength="100">
+                </div>
+                <p
+                    style="font-size: 12px; color: var(--text-muted); margin: 20px 0 16px; text-transform: uppercase; letter-spacing: 1px;">
+                    👤 Member 3</p>
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="editM3Name" placeholder="Enter name (optional)" maxlength="100"
+                        pattern="[A-Za-z ]*" title="Only letters and spaces allowed">
+                </div>
+                <div class="form-group">
+                    <label>Details (USN • Dept)</label>
+                    <input type="text" id="editM3Detail" placeholder="1CR23CS003 • CSE" maxlength="100">
+                </div>
+                <p
+                    style="font-size: 12px; color: var(--text-muted); margin: 20px 0 16px; text-transform: uppercase; letter-spacing: 1px;">
+                    📧 Contact</p>
+                <div class="form-group">
+                    <label>Team Email <span class="required">*</span></label>
+                    <input type="email" id="editEmail" placeholder="team@example.com" required maxlength="254"
+                        title="Enter a valid email address">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('editModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveEdit()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">🗑️ Delete Team</span>
+                <button class="modal-close" onclick="closeModal('deleteModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="deleteTeamId">
+                <div class="delete-warning">
+                    <div class="icon">⚠️</div>
+                    <p>Are you sure you want to delete</p>
+                    <p><strong id="deleteTeamName">Team 1</strong>?</p>
+                    <p style="color: var(--accent-red); font-size: 12px; margin-top: 12px;">This action cannot be
+                        undone.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('deleteModal')">Cancel</button>
+                <button class="btn btn-danger" onclick="confirmDelete()">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feedback Viewer Modal -->
+    <div class="modal-overlay" id="feedbackModal">
+        <div class="modal" style="max-width: 800px;">
+            <div class="modal-header">
+                <span class="modal-title">💬 User Feedback</span>
+                <button class="modal-close" onclick="closeModal('feedbackModal')">&times;</button>
+            </div>
+            <div class="modal-body" style="max-height: 70vh; overflow-y: auto; padding: 0;">
+                <div class="feedback-stats" id="feedbackStats">
+                    <div class="feedback-stat-item">
+                        <span class="stat-emoji">😄</span>
+                        <span class="stat-count" id="rating4Count">0</span>
+                    </div>
+                    <div class="feedback-stat-item">
+                        <span class="stat-emoji">🙂</span>
+                        <span class="stat-count" id="rating3Count">0</span>
+                    </div>
+                    <div class="feedback-stat-item">
+                        <span class="stat-emoji">😕</span>
+                        <span class="stat-count" id="rating2Count">0</span>
+                    </div>
+                    <div class="feedback-stat-item">
+                        <span class="stat-emoji">😢</span>
+                        <span class="stat-count" id="rating1Count">0</span>
+                    </div>
+                </div>
+                <div class="feedback-list" id="feedbackList">
+                    <div class="feedback-loading">
+                        <div class="spinner"></div>
+                        <p>Loading feedback...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" onclick="clearAllFeedback()" style="margin-right: auto;">🗑️ Clear
+                    All</button>
+                <button class="btn btn-secondary" onclick="closeModal('feedbackModal')">Close</button>
+                <button class="btn btn-primary" onclick="exportFeedback()">📥 Export CSV</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="winnerModal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">🏆 Set Winner</span>
+                <button class="modal-close" onclick="closeModal('winnerModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="winnerTeamId">
+                <input type="hidden" id="winnerEventCode">
+                <p style="text-align: center; margin-bottom: 8px;">Setting winner for:</p>
+                <p style="text-align: center; font-weight: 700; font-size: 18px; color: var(--text-primary);"
+                    id="winnerTeamName">Team Name</p>
+                <div class="winner-position-grid">
+                    <button type="button" class="winner-position-btn gold" onclick="selectWinnerPosition(1, this)">
+                        <div class="medal">🥇</div>
+                        <div class="label">1st Place</div>
+                    </button>
+                    <button type="button" class="winner-position-btn silver" onclick="selectWinnerPosition(2, this)">
+                        <div class="medal">🥈</div>
+                        <div class="label">2nd Place</div>
+                    </button>
+                    <button type="button" class="winner-position-btn bronze" onclick="selectWinnerPosition(3, this)">
+                        <div class="medal">🥉</div>
+                        <div class="label">3rd Place</div>
+                    </button>
+                </div>
+                <input type="hidden" id="selectedWinnerPosition" value="">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('winnerModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="confirmSetWinner()" id="confirmWinnerBtn">Set as
+                    Winner</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="createEventModal">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <span class="modal-title">➕ Create New Event</span>
+                <button class="modal-close" onclick="closeModal('createEventModal')">&times;</button>
+            </div>
+            <div class="modal-body create-event-form" style="max-height: 70vh; overflow-y: auto;">
+                <!-- Basic Info -->
+                <p
+                    style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">
+                    📋 Basic Info</p>
+                <div class="form-group">
+                    <label>Event Name <span class="required">*</span></label>
+                    <input type="text" id="newEventName" placeholder="e.g. Code Sprint 2.0">
+                </div>
+                <div class="form-group">
+                    <label>Event Code (lowercase, no spaces) <span class="required">*</span></label>
+                    <input type="text" id="newEventCode" placeholder="e.g. codesprint" pattern="[a-z0-9_]+"
+                        oninput="this.value = this.value.toLowerCase().replace(/[^a-z0-9_]/g, '')">
+                </div>
+                <div class="form-group">
+                    <label>Select Icon</label>
+                    <div class="emoji-picker" id="emojiPicker">
+                        <button type="button" class="emoji-option selected" data-emoji="🎯"
+                            onclick="selectEventEmoji('🎯', this)">🎯</button>
+                        <button type="button" class="emoji-option" data-emoji="💻"
+                            onclick="selectEventEmoji('💻', this)">💻</button>
+                        <button type="button" class="emoji-option" data-emoji="🎨"
+                            onclick="selectEventEmoji('🎨', this)">🎨</button>
+                        <button type="button" class="emoji-option" data-emoji="🚀"
+                            onclick="selectEventEmoji('🚀', this)">🚀</button>
+                        <button type="button" class="emoji-option" data-emoji="⚡"
+                            onclick="selectEventEmoji('⚡', this)">⚡</button>
+                        <button type="button" class="emoji-option" data-emoji="🔥"
+                            onclick="selectEventEmoji('🔥', this)">🔥</button>
+                        <button type="button" class="emoji-option" data-emoji="🧪"
+                            onclick="selectEventEmoji('🧪', this)">🧪</button>
+                        <button type="button" class="emoji-option" data-emoji="🎮"
+                            onclick="selectEventEmoji('🎮', this)">🎮</button>
+                        <button type="button" class="emoji-option" data-emoji="📱"
+                            onclick="selectEventEmoji('📱', this)">📱</button>
+                        <button type="button" class="emoji-option" data-emoji="🤖"
+                            onclick="selectEventEmoji('🤖', this)">🤖</button>
+                        <button type="button" class="emoji-option" data-emoji="🎪"
+                            onclick="selectEventEmoji('🎪', this)">🎪</button>
+                        <button type="button" class="emoji-option" data-emoji="🏆"
+                            onclick="selectEventEmoji('🏆', this)">🏆</button>
+                    </div>
+                    <input type="hidden" id="selectedEventEmoji" value="🎯">
+                </div>
+
+                <!-- Event Details -->
+                <p
+                    style="font-size: 11px; color: var(--text-muted); margin: 20px 0 12px; text-transform: uppercase; letter-spacing: 1px;">
+                    📅 Event Details</p>
+                <div class="form-group">
+                    <label>Event Date & Time</label>
+                    <div class="event-datetime-picker" id="newEventDateTimePicker">
+                        <button type="button" class="calendar-trigger" onclick="toggleEventCalendar('newEvent')">
+                            <span class="calendar-icon">📅</span>
+                            <span class="calendar-text placeholder" id="newEventCalendarText">Select date and
+                                time</span>
+                            <span class="calendar-chevron">▾</span>
+                        </button>
+                        <div class="calendar-dropdown event-cal-dropdown" id="newEventCalendarDropdown">
+                            <div class="calendar-header">
+                                <button type="button" class="calendar-nav-btn" onclick="eventCalPrevYear('newEvent')"
+                                    title="Previous Year">«</button>
+                                <button type="button" class="calendar-nav-btn" onclick="eventCalPrevMonth('newEvent')"
+                                    title="Previous Month">‹</button>
+                                <span class="calendar-title" id="newEventCalendarTitle">February 2026</span>
+                                <button type="button" class="calendar-nav-btn" onclick="eventCalNextMonth('newEvent')"
+                                    title="Next Month">›</button>
+                                <button type="button" class="calendar-nav-btn" onclick="eventCalNextYear('newEvent')"
+                                    title="Next Year">»</button>
+                            </div>
+                            <div class="calendar-weekdays">
+                                <span class="calendar-weekday">Su</span>
+                                <span class="calendar-weekday">Mo</span>
+                                <span class="calendar-weekday">Tu</span>
+                                <span class="calendar-weekday">We</span>
+                                <span class="calendar-weekday">Th</span>
+                                <span class="calendar-weekday">Fr</span>
+                                <span class="calendar-weekday">Sa</span>
+                            </div>
+                            <div class="calendar-days" id="newEventCalendarDays"></div>
+                            <!-- Time Picker -->
+                            <div class="event-cal-time-row">
+                                <span class="event-cal-time-icon">🕐</span>
+                                <input type="time" class="event-cal-time-input" id="newEventCalTimeInput" value="00:00"
+                                    onchange="updateEventDateTime('newEvent')">
+                            </div>
+                            <div class="calendar-footer">
+                                <button type="button" class="calendar-footer-btn"
+                                    onclick="eventCalSelectToday('newEvent')">
+                                    <span class="check-icon">✓</span> Today
+                                </button>
+                                <button type="button" class="calendar-footer-btn" onclick="eventCalClear('newEvent')">
+                                    × Clear
+                                </button>
+                            </div>
+                            <!-- Selected display bar -->
+                            <div class="event-cal-selected-bar" id="newEventSelectedBar">
+                                <span class="event-cal-selected-icon">📅</span>
+                                <span class="event-cal-selected-text" id="newEventSelectedText">No date selected</span>
+                            </div>
+                        </div>
+                        <input type="hidden" id="newEventDate">
+                        <input type="hidden" id="newEventTime">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Venue</label>
+                    <input type="text" id="newEventVenue" placeholder="e.g. N408, Department of ISE, TOCE">
+                </div>
+                <div class="form-group">
+                    <label>Team Size</label>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <input type="number" id="newEventTeamMin" placeholder="Min" min="1" max="10" value="2"
+                            style="width: 80px;">
+                        <span style="color: var(--text-muted);">to</span>
+                        <input type="number" id="newEventTeamMax" placeholder="Max" min="1" max="10" value="3"
+                            style="width: 80px;">
+                        <span style="color: var(--text-muted);">members</span>
+                    </div>
+                </div>
+
+                <!-- Poster Image -->
+                <p
+                    style="font-size: 11px; color: var(--text-muted); margin: 20px 0 12px; text-transform: uppercase; letter-spacing: 1px;">
+                    🖼️ Event Poster</p>
+                <div class="form-group">
+                    <label>Poster Image Path</label>
+                    <input type="text" id="newEventPoster" placeholder="images/event-poster.jpg">
+                    <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Upload the image to images/
+                        folder first, then enter the path here</p>
+                </div>
+
+                <!-- Featured Toggle -->
+                <p
+                    style="font-size: 11px; color: var(--text-muted); margin: 20px 0 12px; text-transform: uppercase; letter-spacing: 1px;">
+                    ⭐ Main Page Display</p>
+                <div class="form-group"
+                    style="background: rgba(255, 193, 7, 0.1); border: 1px solid rgba(255, 193, 7, 0.3); border-radius: 8px; padding: 12px;">
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin: 0;">
+                        <input type="checkbox" id="newEventFeatured"
+                            style="width: 18px; height: 18px; cursor: pointer;">
+                        <span style="font-weight: 500;">Feature this event on the main page</span>
+                    </label>
+                    <p style="font-size: 11px; color: var(--text-muted); margin: 8px 0 0 28px;">This will replace the
+                        current featured event and update registration routing</p>
+                </div>
+
+                <!-- Registration Status -->
+                <div class="form-group" style="margin-top: 12px;">
+                    <label>Registration Status</label>
+                    <select id="newEventRegStatus"
+                        style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary);">
+                        <option value="open">🟢 Open</option>
+                        <option value="coming_soon">🟡 Coming Soon</option>
+                        <option value="closed">🔴 Closed</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('createEventModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="createNewEvent()">Create Event</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Event Modal -->
+    <div class="modal-overlay" id="editEventModal">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <span class="modal-title">✏️ Edit Event</span>
+                <button class="modal-close" onclick="closeModal('editEventModal')">&times;</button>
+            </div>
+            <div class="modal-body create-event-form" style="max-height: 70vh; overflow-y: auto;">
+                <input type="hidden" id="editEventCode">
+
+                <!-- Basic Info -->
+                <p
+                    style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px;">
+                    📋 Basic Info</p>
+                <div class="form-group">
+                    <label>Event Name <span class="required">*</span></label>
+                    <input type="text" id="editEventName" placeholder="e.g. Code Sprint 2.0">
+                </div>
+                <div class="form-group">
+                    <label>Event Code</label>
+                    <input type="text" id="editEventCodeDisplay" disabled style="opacity: 0.6; cursor: not-allowed;">
+                    <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Event code cannot be changed
+                    </p>
+                </div>
+                <div class="form-group">
+                    <label>Select Icon</label>
+                    <div class="emoji-picker" id="editEmojiPicker">
+                        <button type="button" class="emoji-option" data-emoji="🎯"
+                            onclick="selectEditEventEmoji('🎯', this)">🎯</button>
+                        <button type="button" class="emoji-option" data-emoji="💻"
+                            onclick="selectEditEventEmoji('💻', this)">💻</button>
+                        <button type="button" class="emoji-option" data-emoji="🎨"
+                            onclick="selectEditEventEmoji('🎨', this)">🎨</button>
+                        <button type="button" class="emoji-option" data-emoji="🚀"
+                            onclick="selectEditEventEmoji('🚀', this)">🚀</button>
+                        <button type="button" class="emoji-option" data-emoji="⚡"
+                            onclick="selectEditEventEmoji('⚡', this)">⚡</button>
+                        <button type="button" class="emoji-option" data-emoji="🔥"
+                            onclick="selectEditEventEmoji('🔥', this)">🔥</button>
+                        <button type="button" class="emoji-option" data-emoji="🧪"
+                            onclick="selectEditEventEmoji('🧪', this)">🧪</button>
+                        <button type="button" class="emoji-option" data-emoji="🎮"
+                            onclick="selectEditEventEmoji('🎮', this)">🎮</button>
+                        <button type="button" class="emoji-option" data-emoji="📱"
+                            onclick="selectEditEventEmoji('📱', this)">📱</button>
+                        <button type="button" class="emoji-option" data-emoji="🤖"
+                            onclick="selectEditEventEmoji('🤖', this)">🤖</button>
+                        <button type="button" class="emoji-option" data-emoji="🎪"
+                            onclick="selectEditEventEmoji('🎪', this)">🎪</button>
+                        <button type="button" class="emoji-option" data-emoji="🏆"
+                            onclick="selectEditEventEmoji('🏆', this)">🏆</button>
+                    </div>
+                    <input type="hidden" id="editSelectedEventEmoji" value="🎯">
+                </div>
+
+                <!-- Event Details -->
+                <p
+                    style="font-size: 11px; color: var(--text-muted); margin: 20px 0 12px; text-transform: uppercase; letter-spacing: 1px;">
+                    📅 Event Details</p>
+                <div class="form-group">
+                    <label>Event Date & Time</label>
+                    <div class="event-datetime-picker" id="editEventDateTimePicker">
+                        <button type="button" class="calendar-trigger" onclick="toggleEventCalendar('editEvent')">
+                            <span class="calendar-icon">📅</span>
+                            <span class="calendar-text placeholder" id="editEventCalendarText">Select date and
+                                time</span>
+                            <span class="calendar-chevron">▾</span>
+                        </button>
+                        <div class="calendar-dropdown event-cal-dropdown" id="editEventCalendarDropdown">
+                            <div class="calendar-header">
+                                <button type="button" class="calendar-nav-btn" onclick="eventCalPrevYear('editEvent')"
+                                    title="Previous Year">«</button>
+                                <button type="button" class="calendar-nav-btn" onclick="eventCalPrevMonth('editEvent')"
+                                    title="Previous Month">‹</button>
+                                <span class="calendar-title" id="editEventCalendarTitle">February 2026</span>
+                                <button type="button" class="calendar-nav-btn" onclick="eventCalNextMonth('editEvent')"
+                                    title="Next Month">›</button>
+                                <button type="button" class="calendar-nav-btn" onclick="eventCalNextYear('editEvent')"
+                                    title="Next Year">»</button>
+                            </div>
+                            <div class="calendar-weekdays">
+                                <span class="calendar-weekday">Su</span>
+                                <span class="calendar-weekday">Mo</span>
+                                <span class="calendar-weekday">Tu</span>
+                                <span class="calendar-weekday">We</span>
+                                <span class="calendar-weekday">Th</span>
+                                <span class="calendar-weekday">Fr</span>
+                                <span class="calendar-weekday">Sa</span>
+                            </div>
+                            <div class="calendar-days" id="editEventCalendarDays"></div>
+                            <!-- Time Picker -->
+                            <div class="event-cal-time-row">
+                                <span class="event-cal-time-icon">🕐</span>
+                                <input type="time" class="event-cal-time-input" id="editEventCalTimeInput" value="00:00"
+                                    onchange="updateEventDateTime('editEvent')">
+                            </div>
+                            <div class="calendar-footer">
+                                <button type="button" class="calendar-footer-btn"
+                                    onclick="eventCalSelectToday('editEvent')">
+                                    <span class="check-icon">✓</span> Today
+                                </button>
+                                <button type="button" class="calendar-footer-btn" onclick="eventCalClear('editEvent')">
+                                    × Clear
+                                </button>
+                            </div>
+                            <!-- Selected display bar -->
+                            <div class="event-cal-selected-bar" id="editEventSelectedBar">
+                                <span class="event-cal-selected-icon">📅</span>
+                                <span class="event-cal-selected-text" id="editEventSelectedText">No date selected</span>
+                            </div>
+                        </div>
+                        <input type="hidden" id="editEventDate">
+                        <input type="hidden" id="editEventTime">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Venue</label>
+                    <input type="text" id="editEventVenue" placeholder="e.g. N408, Department of ISE, TOCE">
+                </div>
+                <div class="form-group">
+                    <label>Team Size</label>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <input type="number" id="editEventTeamMin" placeholder="Min" min="1" max="10"
+                            style="width: 80px;">
+                        <span style="color: var(--text-muted);">to</span>
+                        <input type="number" id="editEventTeamMax" placeholder="Max" min="1" max="10"
+                            style="width: 80px;">
+                        <span style="color: var(--text-muted);">members</span>
+                    </div>
+                </div>
+
+                <!-- Poster Image -->
+                <p
+                    style="font-size: 11px; color: var(--text-muted); margin: 20px 0 12px; text-transform: uppercase; letter-spacing: 1px;">
+                    🖼️ Event Poster</p>
+                <div class="form-group">
+                    <label>Poster Image Path</label>
+                    <input type="text" id="editEventPoster" placeholder="images/event-poster.jpg">
+                    <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Upload the image to images/
+                        folder first, then enter the path here</p>
+                </div>
+
+                <!-- Registration Status -->
+                <div class="form-group" style="margin-top: 12px;">
+                    <label>Registration Status</label>
+                    <select id="editEventRegStatus"
+                        style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-secondary); color: var(--text-primary);">
+                        <option value="open">🟢 Open</option>
+                        <option value="coming_soon">🟡 Coming Soon</option>
+                        <option value="closed">🔴 Closed</option>
+                    </select>
+                </div>
+
+                <!-- Active Status -->
+                <div class="form-group"
+                    style="margin-top: 12px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; padding: 12px;">
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin: 0;">
+                        <input type="checkbox" id="editEventActive" style="width: 18px; height: 18px; cursor: pointer;"
+                            checked>
+                        <span style="font-weight: 500;">Event is Active</span>
+                    </label>
+                    <p style="font-size: 11px; color: var(--text-muted); margin: 8px 0 0 28px;">Inactive events won't
+                        appear in the event selector</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('editEventModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveEventEdit()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Management Modal -->
+    <div class="modal-overlay" id="teamManagementModal">
+        <div class="modal" style="max-width: 900px;">
+            <div class="modal-header">
+                <span class="modal-title">👥 Team Management</span>
+                <button class="modal-close" onclick="closeModal('teamManagementModal')">&times;</button>
+            </div>
+            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                <!-- Add New Team Member Form -->
+                <div class="team-mgmt-form-section">
+                    <h4 style="margin-bottom: 12px; color: var(--text-primary); font-size: 15px;">➕ Add New Team Member
+                    </h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label>Full Name *</label>
+                            <input type="text" id="newMemberName" placeholder="e.g. Dr. John Doe">
+                        </div>
+                        <div class="form-group">
+                            <label>Category *</label>
+                            <select id="newMemberCategory">
+                                <option value="faculty">Faculty Coordinator</option>
+                                <option value="core">Core Team</option>
+                                <option value="volunteers">Volunteer</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Role/Position *</label>
+                            <input type="text" id="newMemberRole" placeholder="e.g. President, Tech Lead">
+                        </div>
+                        <div class="form-group">
+                            <label>Department/Year</label>
+                            <input type="text" id="newMemberDept" placeholder="e.g. 3rd Year ISE">
+                        </div>
+                        <div class="form-group">
+                            <label>Image Path</label>
+                            <input type="text" id="newMemberImage" placeholder="images/Name.png">
+                        </div>
+                        <div class="form-group">
+                            <label>Display Order</label>
+                            <input type="number" id="newMemberOrder" placeholder="1" value="1" min="1">
+                        </div>
+                    </div>
+                    <p
+                        style="font-size: 11px; color: var(--text-muted); margin: 12px 0 6px; text-transform: uppercase; letter-spacing: 1px;">
+                        🔗 Social Links (optional)
+                    </p>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                        <div class="form-group">
+                            <label>LinkedIn URL</label>
+                            <input type="text" id="newMemberLinkedin" placeholder="https://linkedin.com/in/...">
+                        </div>
+                        <div class="form-group">
+                            <label>GitHub URL</label>
+                            <input type="text" id="newMemberGithub" placeholder="https://github.com/...">
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="newMemberEmail" placeholder="email@example.com">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="addTeamMember()"
+                        style="width: 100%; margin-top: 10px; padding: 10px;">
+                        ➕ Add Team Member
+                    </button>
+                </div>
+
+                <hr style="border: none; border-top: 1px solid var(--border-color); margin: 16px 0;">
+
+                <!-- Team Members List -->
+                <div class="team-mgmt-list-section">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <h4 style="color: var(--text-primary); font-size: 15px;">📋 Current Team Members</h4>
+                        <div class="team-mgmt-tabs">
+                            <button class="team-mgmt-tab active" data-category="all"
+                                onclick="filterTeamMembers('all', this)">All</button>
+                            <button class="team-mgmt-tab" data-category="faculty"
+                                onclick="filterTeamMembers('faculty', this)">Faculty</button>
+                            <button class="team-mgmt-tab" data-category="core"
+                                onclick="filterTeamMembers('core', this)">Core</button>
+                            <button class="team-mgmt-tab" data-category="volunteers"
+                                onclick="filterTeamMembers('volunteers', this)">Volunteers</button>
+                        </div>
+                    </div>
+                    <div class="team-mgmt-list" id="teamMembersList">
+                        <div style="text-align: center; padding: 20px; color: var(--text-muted);">
+                            Loading team members...
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('teamManagementModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Team Member Modal -->
+    <div class="modal-overlay" id="editMemberModal">
+        <div class="modal" style="max-width: 600px;">
+            <div class="modal-header">
+                <span class="modal-title">✏️ Edit Team Member</span>
+                <button class="modal-close" onclick="closeModal('editMemberModal')">&times;</button>
+            </div>
+            <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+                <input type="hidden" id="editMemberId">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div class="form-group">
+                        <label>Full Name *</label>
+                        <input type="text" id="editMemberName" placeholder="e.g. Dr. John Doe">
+                    </div>
+                    <div class="form-group">
+                        <label>Category *</label>
+                        <select id="editMemberCategory">
+                            <option value="faculty">Faculty Coordinator</option>
+                            <option value="core">Core Team</option>
+                            <option value="volunteers">Volunteer</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Role/Position *</label>
+                        <input type="text" id="editMemberRole" placeholder="e.g. President, Tech Lead">
+                    </div>
+                    <div class="form-group">
+                        <label>Department/Year</label>
+                        <input type="text" id="editMemberDept" placeholder="e.g. 3rd Year ISE">
+                    </div>
+                    <div class="form-group">
+                        <label>Image URL</label>
+                        <input type="text" id="editMemberImage" placeholder="images/Name.png">
+                    </div>
+                    <div class="form-group">
+                        <label>Display Order</label>
+                        <input type="number" id="editMemberOrder" placeholder="1" min="1">
+                    </div>
+                </div>
+                <p
+                    style="font-size: 12px; color: var(--text-muted); margin: 16px 0 8px; text-transform: uppercase; letter-spacing: 1px;">
+                    🔗 Social Links (optional)
+                </p>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+                    <div class="form-group">
+                        <label>LinkedIn URL</label>
+                        <input type="text" id="editMemberLinkedin" placeholder="https://linkedin.com/in/...">
+                    </div>
+                    <div class="form-group">
+                        <label>GitHub URL</label>
+                        <input type="text" id="editMemberGithub" placeholder="https://github.com/...">
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="editMemberEmailAddr" placeholder="email@example.com">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('editMemberModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveTeamMemberEdit()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Team Member Modal -->
+    <div class="modal-overlay" id="deleteMemberModal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">🗑️ Delete Team Member</span>
+                <button class="modal-close" onclick="closeModal('deleteMemberModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="deleteMemberId">
+                <div class="delete-warning">
+                    <div class="icon">⚠️</div>
+                    <p>Are you sure you want to remove</p>
+                    <p><strong id="deleteMemberName">Member Name</strong>?</p>
+                    <p style="color: var(--accent-red); font-size: 12px; margin-top: 12px;">This action cannot be
+                        undone.</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('deleteMemberModal')">Cancel</button>
+                <button class="btn btn-danger" onclick="confirmDeleteMember()">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Management Modal (Super Admin Only) -->
+    <div class="modal-overlay" id="adminManagementModal">
+        <div class="modal" style="max-width: 700px;">
+            <div class="modal-header">
+                <span class="modal-title">👥 Admin Management</span>
+                <button class="modal-close" onclick="closeModal('adminManagementModal')">&times;</button>
+            </div>
+            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                <!-- Add New Admin Form -->
+                <div class="admin-form-section">
+                    <h4 style="margin-bottom: 16px; color: var(--text-primary);">➕ Add New Admin</h4>
+                    <div class="form-group">
+                        <label>Admin Email (must exist in Firebase Auth)</label>
+                        <input type="email" id="newAdminEmail" placeholder="admin@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Display Name</label>
+                        <input type="text" id="newAdminDisplayName" placeholder="John Doe">
+                    </div>
+                    <div class="form-group">
+                        <label>Role</label>
+                        <select id="newAdminRole" onchange="toggleEventAssignment()">
+                            <option value="normal">🟡 Normal Admin</option>
+                            <option value="super">🔴 Super Admin</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="eventAssignmentGroup">
+                        <label>Assign Events (Normal Admin only)</label>
+                        <div class="event-checkboxes" id="eventCheckboxes">
+                            <!-- Event checkboxes will be dynamically populated -->
+                        </div>
+                    </div>
+                    <div class="form-group" id="routingPermissionGroup" style="margin-top: 12px;">
+                        <label class="event-checkbox-item" style="display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="newAdminCanManageRouting">
+                            <span>🎯 Can Manage Registration Routing</span>
+                        </label>
+                        <small style="color: var(--text-muted); font-size: 11px; margin-top: 4px; display: block;">
+                            Allow this admin to change where new registrations are routed
+                        </small>
+                    </div>
+                    <button class="btn btn-primary" onclick="addNewAdmin()" style="width: 100%;">
+                        ➕ Add Admin
+                    </button>
+                </div>
+
+                <hr style="border: none; border-top: 1px solid var(--border-color); margin: 24px 0;">
+
+                <!-- Current Admins List -->
+                <div class="admin-list-section">
+                    <h4 style="margin-bottom: 16px; color: var(--text-primary);">📋 Current Admins</h4>
+                    <div class="admin-list-container" id="adminListContainer">
+                        <div style="text-align: center; padding: 20px; color: var(--text-muted);">
+                            Loading admins...
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('adminManagementModal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Admin Modal -->
+    <div class="modal-overlay" id="editAdminModal">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <span class="modal-title">✏️ Edit Admin Permissions</span>
+                <button class="modal-close" onclick="closeModal('editAdminModal')">&times;</button>
+            </div>
+            <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+                <input type="hidden" id="editAdminUid">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="editAdminEmail" disabled
+                        style="background: var(--bg-tertiary); cursor: not-allowed;">
+                </div>
+                <div class="form-group">
+                    <label>Role</label>
+                    <select id="editAdminRole" onchange="toggleEditEventAssignment()">
+                        <option value="normal">🟡 Normal Admin</option>
+                        <option value="super">🔴 Super Admin</option>
+                    </select>
+                </div>
+                <div class="form-group" id="editEventAssignmentGroup">
+                    <label>Assigned Events</label>
+                    <div class="event-checkboxes" id="editEventCheckboxes">
+                        <!-- Dynamic event checkboxes -->
+                    </div>
+                </div>
+                <div class="form-group" id="editRoutingPermissionGroup" style="margin-top: 12px;">
+                    <label class="event-checkbox-item" style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="editAdminCanManageRouting">
+                        <span>🎯 Can Manage Registration Routing</span>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('editAdminModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="saveAdminChanges()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Detail Drawer -->
+    <div class="team-drawer-overlay" id="teamDrawerOverlay" onclick="closeTeamDrawer()"></div>
+    <div class="team-drawer" id="teamDrawer">
+        <div class="drawer-header">
+            <h3>📋 Team Details</h3>
+            <button class="drawer-close" onclick="closeTeamDrawer()">×</button>
+        </div>
+        <div class="drawer-content">
+            <!-- Team Info Section -->
+            <div class="drawer-section">
+                <div class="drawer-section-title">TEAM INFORMATION</div>
+                <div class="drawer-info-row">
+                    <span class="drawer-label">Team Name</span>
+                    <span class="drawer-value" id="drawerTeamName">-</span>
+                </div>
+                <div class="drawer-info-row">
+                    <span class="drawer-label">Status</span>
+                    <span class="drawer-value" id="drawerStatus">-</span>
+                </div>
+                <div class="drawer-info-row">
+                    <span class="drawer-label">Email</span>
+                    <span class="drawer-value" id="drawerEmail">-</span>
+                </div>
+                <div class="drawer-info-row">
+                    <span class="drawer-label">Registered</span>
+                    <span class="drawer-value" id="drawerRegisteredAt">-</span>
+                </div>
+            </div>
+
+            <!-- Members Section -->
+            <div class="drawer-section">
+                <div class="drawer-section-title">TEAM MEMBERS</div>
+                <div id="drawerMembers">
+                    <!-- Member cards dynamically populated -->
+                </div>
+            </div>
+
+            <!-- Quick Actions Section -->
+            <div class="drawer-section">
+                <div class="drawer-section-title">QUICK ACTIONS</div>
+                <div class="drawer-quick-actions">
+                    <button class="drawer-action-btn edit" id="drawerEditBtn" onclick="editFromDrawer()">✏️
+                        Edit</button>
+                    <button class="drawer-action-btn verify" id="drawerVerifyBtn" onclick="verifyFromDrawer()">✓
+                        Verify</button>
+                    <button class="drawer-action-btn delete" id="drawerDeleteBtn" onclick="deleteFromDrawer()">🗑️
+                        Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <nav id="navbar">
+        <a href="index.html" class="logo">
+            <img src="../images/download.png" alt="ISTE Logo" />
+            <div class="logo-text">
+                <span>ISTE</span>
+                <small>Indian Society for Technical Education</small>
+            </div>
+        </a>
+        <div class="nav-links" id="navLinks">
+            <a href="index.html">Home</a>
+            <a href="index.html#about">About</a>
+            <a href="index.html#activity">Events</a>
+            <a href="index.html#winners">Winners</a>
+            <a href="index.html#gallery">Gallery</a>
+            <a href="index.html#team">Team</a>
+            <a href="#" class="nav-cta active">Admin</a>
+        </div>
+        <div class="hamburger" id="hamburger" onclick="toggleNav()" aria-label="Toggle navigation menu" role="button"
+            tabindex="0" aria-expanded="false" aria-controls="navLinks">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
     </nav>
-    <img src="images/download.png" alt="Download">
+
+    <!-- Login Page (shown by default, hidden after auth) -->
+    <div class="login-page" id="login-page">
+        <div class="login-container">
+            <div class="login-header">
+                <div class="login-logo">🛡️</div>
+                <h1>Admin Portal</h1>
+                <p>ISTE Club Management System</p>
+            </div>
+            <form id="loginForm" onsubmit="handleLogin(event)" aria-label="Admin login form">
+                <div class="login-form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" placeholder="Username" required
+                        autocomplete="username" aria-required="true" aria-describedby="usernameHelp">
+                    <span id="usernameHelp" class="visually-hidden">Enter your admin email address</span>
+                </div>
+                <div class="login-form-group">
+                    <label for="password">Password</label>
+                    <div class="password-wrapper">
+                        <input type="password" id="password" name="password" placeholder="Password" required
+                            autocomplete="current-password" aria-required="true" aria-describedby="passwordHelp">
+                        <span id="passwordHelp" class="visually-hidden">Enter your admin password</span>
+                        <button type="button" class="password-toggle" onclick="togglePasswordVisibility()"
+                            aria-label="Toggle password visibility">👁️</button>
+                    </div>
+                </div>
+                <div class="login-error" id="errorMessage" style="display: none;" role="alert" aria-live="polite">
+                    <span>Invalid credentials</span>
+                </div>
+                <button type="submit" class="login-btn" id="loginBtn" aria-label="Sign in to admin portal">
+                    <span class="login-btn-text">Sign In</span>
+                </button>
+            </form>
+            <div class="login-footer">
+                <p>Authorized personnel only</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-wrapper">
+
+        <div id="admin-dashboard" class="dashboard">
+            <div class="dashboard-header">
+                <div class="dashboard-header-left">
+                    <h2>📊 Dashboard Overview</h2>
+                    <p>Welcome back! Here's what's happening with your events.</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span id="admin-role-badge" class="role-badge-container"></span>
+                    <div class="settings-wrapper">
+                        <button class="settings-btn" onclick="toggleSettingsDropdown()">⚙️ Settings</button>
+                        <div class="settings-dropdown" id="settingsDropdown">
+                            <h4>⚙️ Admin Settings</h4>
+                            <div class="settings-item">
+                                <div class="settings-item-label">
+                                    <span>📧 Email Notifications</span>
+                                    <small>Send email alerts for new registrations</small>
+                                </div>
+                                <label class="settings-toggle">
+                                    <input type="checkbox" id="emailNotifications" onchange="saveSettings()">
+                                    <span class="settings-toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="settings-item">
+                                <div class="settings-item-label">
+                                    <span>📝 Registration Open</span>
+                                    <small>Allow new team registrations</small>
+                                </div>
+                                <label class="settings-toggle">
+                                    <input type="checkbox" id="registrationOpen" checked onchange="saveSettings()">
+                                    <span class="settings-toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="settings-item">
+                                <div class="settings-item-label">
+                                    <span>🔧 Maintenance Mode</span>
+                                    <small>Show maintenance page to visitors</small>
+                                </div>
+                                <label class="settings-toggle">
+                                    <input type="checkbox" id="maintenanceMode" onchange="saveSettings()">
+                                    <span class="settings-toggle-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="session-timer" id="sessionTimer" title="Session timeout">
+                        <span class="timer-icon">⏱️</span>
+                        <span id="sessionTimeRemaining">10:00</span>
+                    </div>
+                    <button id="logoutBtn" class="logout-btn" onclick="handleLogout()">Logout</button>
+                </div>
+            </div>
+
+            <!-- Session Warning Banner -->
+            <div class="session-warning" id="sessionWarning">
+                <div class="session-warning-content">
+                    <span>⚠️ Session expires in <strong id="warningCountdown">5:00</strong></span>
+                    <button class="stay-logged-in-btn" onclick="refreshSession()">Stay Logged In</button>
+                    <button class="dismiss-warning-btn" onclick="dismissSessionWarning()">✕</button>
+                </div>
+            </div>
+
+            <div class="overview-grid">
+                <div class="overview-card purple skeleton-loading" id="card-totalTeams">
+                    <div class="overview-card-icon">👥</div>
+                    <h3>Total Teams</h3>
+                    <div class="number" id="stat-totalTeams">
+                        <div class="skeleton-bar skeleton-number"></div>
+                    </div>
+                    <div class="change positive" id="stat-teamsChange">
+                        <div class="skeleton-bar skeleton-label"></div>
+                    </div>
+                </div>
+                <div class="overview-card green skeleton-loading" id="card-participants">
+                    <div class="overview-card-icon">🎯</div>
+                    <h3>Participants</h3>
+                    <div class="number" id="stat-participants">
+                        <div class="skeleton-bar skeleton-number"></div>
+                    </div>
+                    <div class="change positive" id="stat-participantsChange">
+                        <div class="skeleton-bar skeleton-label"></div>
+                    </div>
+                </div>
+                <div class="overview-card orange skeleton-loading" id="card-events">
+                    <div class="overview-card-icon">🏆</div>
+                    <h3>Events</h3>
+                    <div class="number" id="stat-events">
+                        <div class="skeleton-bar skeleton-number"></div>
+                    </div>
+                    <div class="change info" id="stat-eventsChange">
+                        <div class="skeleton-bar skeleton-label"></div>
+                    </div>
+                </div>
+                <div class="overview-card pink skeleton-loading" id="card-gallery">
+                    <div class="overview-card-icon">📸</div>
+                    <h3>Gallery Photos</h3>
+                    <div class="number" id="stat-gallery">
+                        <div class="skeleton-bar skeleton-number"></div>
+                    </div>
+                    <div class="change info" id="stat-galleryChange">
+                        <div class="skeleton-bar skeleton-label"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-grid three-column">
+                <div class="event-tabs-container">
+                    <div class="event-tabs-header">
+                        <h3>📋 Event Management</h3>
+                    </div>
+
+                    <div id="event-selector-view" class="event-selector-view">
+                        <div class="routing-config-card">
+                            <h4>🎯 Registration Routing</h4>
+                            <div class="custom-select" id="routingDropdown">
+                                <button type="button" class="select-trigger" onclick="toggleDropdown()">
+                                    <span class="selected-value">
+                                        <span class="icon">🧪</span>
+                                        <span id="selectedEventText">Testing (Sandbox)</span>
+                                    </span>
+                                    <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <polyline points="6 9 12 15 18 9"></polyline>
+                                    </svg>
+                                </button>
+                                <div class="select-content" id="routingSelectContent">
+                                    <!-- Populated dynamically by populateRoutingDropdown() -->
+                                </div>
+                            </div>
+                            <div class="routing-status" id="routingStatus">
+                                <span class="dot"></span>
+                                <span>New registrations → <strong id="activeEventName">Testing</strong></span>
+                            </div>
+                        </div>
+
+                        <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 8px;">Select an event to
+                            manage:</p>
+                        <div class="event-selector-grid" id="eventSelectorGrid">
+                            <!-- Event cards will be dynamically generated -->
+                            <div class="event-loading" id="eventCardsLoader">
+                                <div class="spinner"></div>
+                                <p>Loading events...</p>
+                            </div>
+                        </div>
+
+                        <div style="text-align: center; margin-top: 24px;">
+                            <button class="btn btn-secondary" onclick="openCreateEventModal()"
+                                style="display: inline-flex; align-items: center; gap: 8px;">
+                                ➕ Create New Event
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="event-detail-view" class="event-detail-view">
+                        <button class="back-to-events" onclick="backToEventSelector()">← Back to Events</button>
+
+                        <div class="event-tabs" id="dynamicEventTabs">
+                            <!-- Event tabs will be dynamically generated -->
+                        </div>
+
+                        <!-- Dynamic Event Content Container -->
+                        <div id="dynamicEventContents">
+                            <!-- Event content sections will be dynamically generated -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Center Hub Section -->
+                <div class="center-hub">
+                    <div class="hub-card welcome-card">
+                        <div class="hub-card-header">
+                            <span class="hub-icon">🎯</span>
+                            <h3>Analytics Hub</h3>
+                        </div>
+                        <p class="hub-description">Real-time insights and trends across all events</p>
+                    </div>
+
+                    <div class="hub-card stats-summary">
+                        <div class="mini-stat">
+                            <span class="mini-stat-value" id="totalTeamsToday">+5</span>
+                            <span class="mini-stat-label">New Today</span>
+                        </div>
+                        <div class="mini-stat">
+                            <span class="mini-stat-value" id="pendingVerifications">12</span>
+                            <span class="mini-stat-label">Pending</span>
+                        </div>
+                        <div class="mini-stat">
+                            <span class="mini-stat-value" id="verificationRate">78%</span>
+                            <span class="mini-stat-label">Verified</span>
+                        </div>
+                    </div>
+
+                    <div class="hub-card upcoming-deadlines">
+                        <h4>📅 Upcoming Deadlines</h4>
+                        <div class="deadline-item">
+                            <span class="deadline-event">UI Battle</span>
+                            <span class="deadline-date urgent">Feb 10</span>
+                        </div>
+                        <div class="deadline-item">
+                            <span class="deadline-event">PromptQuest</span>
+                            <span class="deadline-date">Feb 15</span>
+                        </div>
+                        <div class="deadline-item">
+                            <span class="deadline-event">Hackathon</span>
+                            <span class="deadline-date">Feb 20</span>
+                        </div>
+                    </div>
+
+                    <div class="hub-card top-performers">
+                        <h4>🏆 Top Events This Week</h4>
+                        <div class="performer-item">
+                            <span class="performer-rank">1</span>
+                            <span class="performer-name">UI Battle</span>
+                            <span class="performer-count">15 teams</span>
+                        </div>
+                        <div class="performer-item">
+                            <span class="performer-rank">2</span>
+                            <span class="performer-name">Testing</span>
+                            <span class="performer-count">4 teams</span>
+                        </div>
+                        <div class="performer-item">
+                            <span class="performer-rank">3</span>
+                            <span class="performer-name">PromptQuest</span>
+                            <span class="performer-count">0 teams</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar">
+                    <div class="sidebar-card">
+                        <h3>⚡ Quick Actions</h3>
+                        <div class="quick-action" onclick="handleExport()">
+                            <div class="quick-action-icon purple">📥</div>
+                            <div class="quick-action-text">
+                                <h4>Export Data</h4>
+                                <p>Download as Excel</p>
+                            </div>
+                        </div>
+                        <div class="quick-action" onclick="handleAddEvent()">
+                            <div class="quick-action-icon green">➕</div>
+                            <div class="quick-action-text">
+                                <h4>Add Event</h4>
+                                <p>Create new event</p>
+                            </div>
+                        </div>
+                        <div class="quick-action" onclick="handleSendEmail()">
+                            <div class="quick-action-icon orange">📧</div>
+                            <div class="quick-action-text">
+                                <h4>Send Emails</h4>
+                                <p>Notify participants</p>
+                            </div>
+                        </div>
+                        <div class="quick-action" id="admin-management-action" onclick="openAdminManagement()"
+                            style="display: none;">
+                            <div class="quick-action-icon" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">
+                                👥</div>
+                            <div class="quick-action-text">
+                                <h4>Manage Admins</h4>
+                                <p>Add/remove admins</p>
+                            </div>
+                        </div>
+                        <div class="quick-action" onclick="openTeamManagement()">
+                            <div class="quick-action-icon"
+                                style="background: rgba(168, 85, 247, 0.15); color: #a855f7;">
+                                🧑‍🤝‍🧑</div>
+                            <div class="quick-action-text">
+                                <h4>Team Members</h4>
+                                <p>Manage Our People</p>
+                            </div>
+                        </div>
+                        <div class="quick-action" onclick="openFeedbackViewer()">
+                            <div class="quick-action-icon"
+                                style="background: rgba(236, 72, 153, 0.15); color: #ec4899;">
+                                💬</div>
+                            <div class="quick-action-text">
+                                <h4>User Feedback</h4>
+                                <p>View visitor responses</p>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="sidebar-card">
+                        <h3>🕐 Recent Activity</h3>
+                        <div class="activity-item">
+                            <div class="activity-dot purple"></div>
+                            <div class="activity-info">
+                                <h4>New registration</h4>
+                                <p>Team 18 joined PromptQuest</p>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-dot green"></div>
+                            <div class="activity-info">
+                                <h4>Winners announced</h4>
+                                <p>UI Battle results published</p>
+                            </div>
+                        </div>
+                        <div class="activity-item">
+                            <div class="activity-dot orange"></div>
+                            <div class="activity-info">
+                                <h4>Photos uploaded</h4>
+                                <p>6 new gallery images</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bar Chart Card -->
+                    <div class="chart-card">
+                        <h3>📊 Registrations by Event</h3>
+                        <div class="chart-container">
+                            <canvas id="registrationsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Toggle navigation for mobile hamburger menu
+        function toggleNav() {
+            const navLinks = document.getElementById('navLinks');
+            const hamburger = document.getElementById('hamburger');
+            const isExpanded = navLinks.classList.toggle('active');
+            hamburger.classList.toggle('active');
+            hamburger.setAttribute('aria-expanded', isExpanded);
+        }
+
+        // Close nav when clicking outside
+        document.addEventListener('click', function (e) {
+            const navLinks = document.getElementById('navLinks');
+            const hamburger = document.getElementById('hamburger');
+            if (!navLinks.contains(e.target) && !hamburger.contains(e.target) && navLinks.classList.contains('active')) {
+                navLinks.classList.remove('active');
+                hamburger.classList.remove('active');
+                hamburger.setAttribute('aria-expanded', 'false');
+            }
+        });
+    </script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"
+        integrity="sha384-QCIdq2UMVEoSRhR3ZWZwdz2/pivLowr+eokFMdYyukq7qI26VYRxFa4Nl16FKetmL"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"
+        integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4"
+        crossorigin="anonymous"></script>
+    <script src="config.js"></script>
+    <script src="security.js"></script>
+    <script src="js/admin.js" type="module"></script>
 </body>
+
 </html>
