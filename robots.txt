@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://iste-toce.github.io/Club-Acitivity/sitemap.xml
