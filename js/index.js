@@ -24,15 +24,17 @@ const secureLog = (...args) => { if (DEBUG_MODE) console.log(...args); };
 // Initialize Firebase with error handling
 let db;
 try {
-    if (typeof firebase !== 'undefined' && typeof firebaseConfig !== 'undefined') {
-        firebase.initializeApp(firebaseConfig);
+    if (typeof firebase !== 'undefined' && typeof window.firebaseConfig !== 'undefined') {
+        firebase.initializeApp(window.firebaseConfig);
         db = firebase.firestore();
         secureLog('[Firebase] Initialized successfully');
     } else {
-        secureLog('[Firebase] Configuration not found. Please create config.js from config.example.js');
+        console.error('[Firebase] Configuration not found. Please create config.js from config.example.js');
+        console.error('firebase defined:', typeof firebase !== 'undefined');
+        console.error('firebaseConfig defined:', typeof window.firebaseConfig !== 'undefined');
     }
 } catch (error) {
-    secureLog('[Firebase] Initialization error:', error);
+    console.error('[Firebase] Initialization error:', error);
 }
 
 // ===== SECURITY INITIALIZATION =====
@@ -807,6 +809,14 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
         // Fallback: basic button disable
         btn.classList.add('loading');
         btn.disabled = true;
+    }
+
+    // Check if Firebase is initialized
+    if (!db) {
+        console.error('[App] Firebase not initialized. Cannot submit registration.');
+        window.ISTESecurity.showRateLimitError(formContainer, 'Registration service unavailable. Please refresh the page.');
+        ButtonDebouncer.restoreFromLoading(btn);
+        return;
     }
 
     try {
