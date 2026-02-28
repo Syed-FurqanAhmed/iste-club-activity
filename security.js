@@ -79,9 +79,9 @@ const SECURITY_CONFIG = {
     allowedFields: {
         registration: [
             'teamEmail', 'teamName',
-            'member1Name', 'member1USN', 'member1Dept',
-            'member2Name', 'member2USN', 'member2Dept',
-            'member3Name', 'member3USN', 'member3Dept'
+            'member1Name', 'member1USN', 'member1Dept', 'member1Sem',
+            'member2Name', 'member2USN', 'member2Dept', 'member2Sem',
+            'member3Name', 'member3USN', 'member3Dept', 'member3Sem'
         ],
         login: ['username', 'password']
     }
