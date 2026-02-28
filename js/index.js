@@ -493,59 +493,9 @@ document.addEventListener('DOMContentLoaded', function() {
     initLightboxSwipe();
 });
 
-// ===== DUPLICATE REGISTRATION CHECK =====
-async function checkDuplicate(field, value, errorElementId) {
-    if (!value || value.trim() === '') {
-        document.getElementById(errorElementId).style.display = 'none';
-        const inputEl = document.getElementById(errorElementId.replace('Error', ''));
-        if (inputEl) inputEl.style.borderColor = '';
-        return false;
-    }
-
-    try {
-        // Query for existing registration with this value
-        const snapshot = await db.collection('registrations')
-            .where(field, '==', value.trim().toUpperCase())
-            .limit(1)
-            .get();
-
-        const errorEl = document.getElementById(errorElementId);
-        const inputEl = document.getElementById(errorElementId.replace('Error', ''));
-
-        if (!snapshot.empty) {
-            // Duplicate found
-            errorEl.style.display = 'block';
-            inputEl.style.borderColor = '#EF4444';
-            return true;
-        } else {
-            // No duplicate
-            errorEl.style.display = 'none';
-            inputEl.style.borderColor = '';
-            return false;
-        }
-    } catch (err) {
-        secureLog('Duplicate check error:', err);
-        return false;
-    }
-}
-
-// Add duplicate check event listeners on DOM load
-document.addEventListener('DOMContentLoaded', function () {
-    // Configure all duplicate checks
-    const duplicateChecks = [
-        { id: 'teamEmail', field: 'email', errorId: 'teamEmailError' },
-        { id: 'member1USN', field: 'member1.usn', errorId: 'member1USNError' },
-        { id: 'member2USN', field: 'member2.usn', errorId: 'member2USNError' },
-        { id: 'member3USN', field: 'member3.usn', errorId: 'member3USNError' }
-    ];
-
-    duplicateChecks.forEach(({ id, field, errorId }) => {
-        const input = document.getElementById(id);
-        if (input) {
-            input.addEventListener('blur', (e) => checkDuplicate(field, e.target.value, errorId));
-        }
-    });
-});
+// ===== DUPLICATE CHECKS REMOVED =====
+// Duplicate checking removed to keep Firestore read rules secure.
+// Duplicates are handled on the admin side instead.
 
 // ===== DYNAMIC WINNERS LOADING =====
 async function loadWinners() {
@@ -731,13 +681,7 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
     e.preventDefault();
 
     const btn = document.getElementById('submitBtn');
-    const teamNameInput = document.getElementById('teamName');
-    const teamNameError = document.getElementById('teamNameError');
     const formContainer = document.querySelector('.modal-body');
-
-    // Reset error states
-    teamNameError.style.display = 'none';
-    teamNameInput.style.borderColor = '';
 
     // SECURITY: Execute reCAPTCHA v3 (invisible to user)
     let recaptchaToken = null;
@@ -820,34 +764,6 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
     }
 
     try {
-        // Check for duplicate team name
-        const existingTeams = await db.collection('registrations')
-            .where('teamName', '==', formData.teamName)
-            .get();
-
-        if (!existingTeams.empty) {
-            // Team name already exists
-            teamNameError.style.display = 'block';
-            teamNameInput.style.borderColor = '#ef4444';
-
-            // Scroll to error field
-            teamNameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            setTimeout(() => teamNameInput.focus(), 300);
-
-            // Increment error count for dynamic cooldown
-            if (window.ISTESecurity && window.ISTESecurity.registrationLimiter) {
-                window.ISTESecurity.registrationLimiter.incrementErrorCount();
-            }
-
-            if (window.ButtonDebouncer) {
-                ButtonDebouncer.restoreFromLoading(btn);
-            } else {
-                btn.classList.remove('loading');
-                btn.disabled = false;
-            }
-            return;
-        }
-
         // SECURITY: Save sanitized data to Firestore
         // Dynamic routing: Read active event from config
         let activeEvent = 'testing'; // Default fallback
