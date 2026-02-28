@@ -692,9 +692,7 @@
                                 <label for="teamEmail">Team Email <span class="required">*</span></label>
                                 <!-- SECURITY: maxlength prevents buffer overflow, pattern validates format -->
                                 <input type="email" id="teamEmail" placeholder="team@email.com" required maxlength="100"
-                                    autocomplete="email" aria-required="true" aria-describedby="teamEmailError">
-                                <span class="field-error" id="teamEmailError" style="display: none;" role="alert">⚠️ This email is
-                                    already registered for this event</span>
+                                    autocomplete="email" aria-required="true">
                             </div>
                         </div>
                         <div class="form-row single">
@@ -703,9 +701,7 @@
                                 <!-- SECURITY: pattern restricts to alphanumeric + spaces only -->
                                 <input type="text" id="teamName" placeholder="e.g. Code Crushers" required
                                     maxlength="50" pattern="[A-Za-z0-9 ]+"
-                                    title="Only letters, numbers, and spaces allowed" aria-required="true" aria-describedby="teamNameError">
-                                <small id="teamNameError" style="color: #ef4444; font-size: 12px; display: none;" role="alert">This
-                                    team name is already taken!</small>
+                                    title="Only letters, numbers, and spaces allowed" aria-required="true">
                             </div>
                         </div>
                     </div>
@@ -725,9 +721,7 @@
                                 <!-- SECURITY: USN format validation -->
                                 <input type="text" id="member1USN" placeholder="1OX00XX000" required maxlength="15"
                                     pattern="1[A-Za-z]{2}[0-9]{2}[A-Za-z]{2}[0-9]{3}"
-                                    title="Format: 1XX00XX000 (e.g., 1CR23CS001)" style="text-transform: uppercase;" aria-required="true" aria-describedby="member1USNError">
-                                <span class="field-error" id="member1USNError" style="display: none;" role="alert">⚠️ This USN is
-                                    already registered for this event</span>
+                                    title="Format: 1XX00XX000 (e.g., 1CR23CS001)" style="text-transform: uppercase;" aria-required="true">
                             </div>
                             <div class="form-group">
                                 <label for="member1Dept">Department <span class="required">*</span></label>
@@ -775,8 +769,6 @@
                                 <input type="text" id="member2USN" placeholder="1OX00XX000" maxlength="15"
                                     pattern="(1[A-Za-z]{2}[0-9]{2}[A-Za-z]{2}[0-9]{3})?" title="Format: 1XX00XX000"
                                     style="text-transform: uppercase;">
-                                <span class="field-error" id="member2USNError" style="display: none;">⚠️ This USN is
-                                    already registered for this event</span>
                             </div>
                             <div class="form-group">
                                 <label>Department</label>
@@ -824,8 +816,6 @@
                                 <input type="text" id="member3USN" placeholder="1OX00XX000" maxlength="15"
                                     pattern="(1[A-Za-z]{2}[0-9]{2}[A-Za-z]{2}[0-9]{3})?" title="Format: 1XX00XX000"
                                     style="text-transform: uppercase;">
-                                <span class="field-error" id="member3USNError" style="display: none;">⚠️ This USN is
-                                    already registered for this event</span>
                             </div>
                             <div class="form-group">
                                 <label>Department</label>
