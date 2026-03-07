@@ -591,6 +591,12 @@ function applyRoleBasedUI() {
         teamMgmtAction.style.display = isSuperAdmin ? '' : 'none';
     }
 
+    // === GALLERY MANAGEMENT QUICK ACTION: Only visible to super admin ===
+    const galleryMgmtAction = document.getElementById('gallery-management-action');
+    if (galleryMgmtAction) {
+        galleryMgmtAction.style.display = isSuperAdmin ? '' : 'none';
+    }
+
     // === CREATE EVENT BUTTON: Only visible to super admin ===
     const createEventBtn = document.querySelector('[onclick*="openCreateEventModal"]');
     if (createEventBtn) {
@@ -2087,12 +2093,25 @@ window.reloadFirestoreData = async function () {
 };
 
 // ===== MISC FUNCTIONS =====
-// function toggleNav() {
-//     document.getElementById('navLinks')?.classList.toggle('active');
-//     document.getElementById('hamburger')?.classList.toggle('active');
-// }
-// window.toggleNav = toggleNav;
 
+// Shared date/time formatting utilities
+function formatEventDate(dateStr) {
+    if (!dateStr) return { formatted: '', dayOfWeek: '' };
+    const dateObj = new Date(dateStr + 'T00:00:00');
+    return {
+        formatted: dateObj.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+        dayOfWeek: dateObj.toLocaleDateString('en-US', { weekday: 'long' })
+    };
+}
+
+function formatEventTime(timeStr) {
+    if (!timeStr) return '';
+    const [hours, minutes] = timeStr.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const hour12 = hour % 12 || 12;
+    return `${hour12}:${minutes} ${ampm}`;
+}
 
 function handleExport() { showToast('📥 Export feature coming soon'); }
 window.handleExport = handleExport;
@@ -2316,26 +2335,8 @@ async function createNewEvent() {
             await batch.commit();
         }
 
-        // Format date for display
-        let formattedDate = '';
-        let dayOfWeek = '';
-        if (eventDate) {
-            const dateObj = new Date(eventDate + 'T00:00:00');
-            formattedDate = dateObj.toLocaleDateString('en-US', {
-                year: 'numeric', month: 'long', day: 'numeric'
-            });
-            dayOfWeek = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
-        }
-
-        // Format time for display (12-hour format)
-        let formattedTime = '';
-        if (eventTime) {
-            const [hours, minutes] = eventTime.split(':');
-            const hour = parseInt(hours);
-            const ampm = hour >= 12 ? 'PM' : 'AM';
-            const hour12 = hour % 12 || 12;
-            formattedTime = `${hour12}:${minutes} ${ampm}`;
-        }
+        const { formatted: formattedDate, dayOfWeek } = formatEventDate(eventDate);
+        const formattedTime = formatEventTime(eventTime);
 
         // Create event in Firestore with all fields
         await setDoc(doc(db, 'events', code), {
@@ -2621,26 +2622,8 @@ async function saveEventEdit() {
     }
 
     try {
-        // Format date for display
-        let formattedDate = '';
-        let dayOfWeek = '';
-        if (eventDate) {
-            const dateObj = new Date(eventDate + 'T00:00:00');
-            formattedDate = dateObj.toLocaleDateString('en-US', {
-                year: 'numeric', month: 'long', day: 'numeric'
-            });
-            dayOfWeek = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
-        }
-
-        // Format time for display (12-hour format)
-        let formattedTime = '';
-        if (eventTime) {
-            const [hours, minutes] = eventTime.split(':');
-            const hour = parseInt(hours);
-            const ampm = hour >= 12 ? 'PM' : 'AM';
-            const hour12 = hour % 12 || 12;
-            formattedTime = `${hour12}:${minutes} ${ampm}`;
-        }
+        const { formatted: formattedDate, dayOfWeek } = formatEventDate(eventDate);
+        const formattedTime = formatEventTime(eventTime);
 
         // Update event in Firestore
         await updateDoc(doc(db, 'events', eventCode), {
@@ -4124,6 +4107,309 @@ async function confirmDeleteMember() {
 }
 window.confirmDeleteMember = confirmDeleteMember;
 
+// ===== GALLERY MANAGEMENT =====
+let galleryPhotosData = [];
+let galleryEventsCache = [];
+let currentGalleryFilter = 'all';
+
+// Open Gallery Management Modal
+function openGalleryManagement() {
+    if (!AdminPermissions.isSuperAdmin()) {
+        showToast('❌ Only Super Admins can manage gallery.');
+        return;
+    }
+    document.getElementById('galleryManagementModal').classList.add('active');
+    loadGalleryEvents();
+    loadGalleryPhotos();
+}
+window.openGalleryManagement = openGalleryManagement;
+
+// Load events for gallery dropdown
+async function loadGalleryEvents() {
+    try {
+        const snapshot = await getDocs(query(collection(db, 'events'), orderBy('name')));
+        galleryEventsCache = snapshot.docs.map(d => ({ code: d.id, name: d.data().name, emoji: d.data().emoji || '' }));
+        populateGalleryEventDropdown('newGalleryEvent');
+        populateGalleryEventDropdown('editGalleryEvent');
+    } catch (error) {
+        secureLog('Error loading events for gallery:', error);
+    }
+}
+
+function populateGalleryEventDropdown(selectId) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+    const currentVal = select.value;
+    select.innerHTML = '<option value="">Select an event...</option>';
+    galleryEventsCache.forEach(evt => {
+        const opt = document.createElement('option');
+        opt.value = evt.code;
+        opt.textContent = `${evt.emoji} ${evt.name}`;
+        select.appendChild(opt);
+    });
+    if (currentVal) select.value = currentVal;
+}
+
+// Load all gallery photos
+async function loadGalleryPhotos() {
+    const container = document.getElementById('galleryPhotosList');
+    container.innerHTML = `
+        <div class="gallery-mgmt-loading">
+            <div style="font-size: 32px; margin-bottom: 8px;">⏳</div>
+            Loading gallery photos...
+        </div>`;
+
+    try {
+        const snapshot = await getDocs(query(collection(db, 'gallery'), orderBy('order', 'asc')));
+        galleryPhotosData = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderGalleryMgmtFilters();
+        renderGalleryPhotosList();
+    } catch (error) {
+        secureLog('Error loading gallery photos:', error);
+        container.innerHTML = '<p style="text-align: center; color: var(--accent-red); padding: 2rem;">Error loading gallery photos.</p>';
+    }
+}
+
+function renderGalleryMgmtFilters() {
+    const filterRow = document.getElementById('galleryMgmtFilters');
+    const events = [...new Set(galleryPhotosData.map(p => p.eventName).filter(Boolean))];
+    let html = '<button class="gallery-mgmt-filter-btn active" onclick="filterGalleryMgmt(\'all\', this)">All</button>';
+    events.forEach(name => {
+        html += `<button class="gallery-mgmt-filter-btn" onclick="filterGalleryMgmt('${SecurityUtils.escapeHtml(name)}', this)">${SecurityUtils.escapeHtml(name)}</button>`;
+    });
+    filterRow.innerHTML = html;
+}
+window.filterGalleryMgmt = function(filter, btn) {
+    currentGalleryFilter = filter;
+    document.querySelectorAll('.gallery-mgmt-filter-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    renderGalleryPhotosList();
+};
+
+function renderGalleryPhotosList() {
+    const container = document.getElementById('galleryPhotosList');
+    const filtered = currentGalleryFilter === 'all'
+        ? galleryPhotosData
+        : galleryPhotosData.filter(p => p.eventName === currentGalleryFilter);
+
+    if (filtered.length === 0) {
+        container.innerHTML = `
+            <div class="gallery-mgmt-empty">
+                <div class="gallery-mgmt-empty-icon">📸</div>
+                <p>No gallery photos yet. Add one above!</p>
+            </div>`;
+        return;
+    }
+
+    let html = '<div class="gallery-mgmt-grid">';
+    filtered.forEach(photo => {
+        const imagePath = photo.imageUrl
+            ? (photo.imageUrl.startsWith('http') ? photo.imageUrl : photo.imageUrl)
+            : '';
+        const safeCaption = SecurityUtils.escapeHtml(photo.caption || 'Untitled');
+        const safeEvent = SecurityUtils.escapeHtml(photo.eventName || 'No event');
+        const visClass = photo.isVisible ? 'visible' : 'hidden';
+        const visText = photo.isVisible ? '👁 Visible' : '🚫 Hidden';
+        const cardClass = photo.isVisible ? '' : ' hidden-photo';
+
+        html += `
+            <div class="gallery-mgmt-card${cardClass}">
+                ${imagePath
+                    ? `<img class="gallery-mgmt-thumb" src="${SecurityUtils.escapeHtml(imagePath)}" alt="${safeCaption}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                       <div class="gallery-mgmt-thumb-placeholder" style="display:none;">🖼️</div>`
+                    : `<div class="gallery-mgmt-thumb-placeholder">🖼️</div>`}
+                <div class="gallery-mgmt-info">
+                    <div class="gallery-mgmt-caption">${safeCaption}</div>
+                    <div class="gallery-mgmt-event">${safeEvent} · #${photo.order || 1}</div>
+                    <div class="gallery-mgmt-badges">
+                        <span class="gallery-mgmt-badge ${visClass}">${visText}</span>
+                    </div>
+                </div>
+                <div class="gallery-mgmt-actions">
+                    <button onclick="openEditGalleryPhoto('${SecurityUtils.escapeHtml(photo.id)}')">✏️ Edit</button>
+                    <button onclick="openDeleteGalleryPhoto('${SecurityUtils.escapeHtml(photo.id)}')">🗑️</button>
+                </div>
+            </div>`;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// Add new gallery photo
+async function addGalleryPhoto() {
+    const imageUrl = document.getElementById('newGalleryImage').value.trim();
+    const caption = document.getElementById('newGalleryCaption').value.trim();
+    const eventCode = document.getElementById('newGalleryEvent').value;
+    const order = parseInt(document.getElementById('newGalleryOrder').value) || 1;
+    const isVisible = document.getElementById('newGalleryVisible').checked;
+
+    if (!imageUrl || !caption || !eventCode) {
+        showToast('Please fill in all required fields (image, caption, event)', 'error');
+        return;
+    }
+
+    // Validate image path - prevent path traversal
+    if (imageUrl.includes('..') || imageUrl.includes('\\') || (/^[a-z]+:/i.test(imageUrl) && !imageUrl.startsWith('http'))) {
+        showToast('Invalid image path. Use relative paths like "images/photo.jpg" or full URLs', 'error');
+        return;
+    }
+
+    if (!AdminPermissions.isSuperAdmin()) {
+        showToast('Only super admins can add gallery photos', 'error');
+        return;
+    }
+
+    // Rate limit check
+    const rateCheck = rateLimiters.update.recordAttempt('gallery_add');
+    if (!rateCheck.allowed) {
+        showToast(`⏳ Too many requests. Try again in ${rateCheck.retryAfter}s`);
+        return;
+    }
+
+    try {
+        const eventInfo = galleryEventsCache.find(e => e.code === eventCode);
+        const photoData = {
+            imageUrl: SecurityUtils.sanitizeString(imageUrl, 500),
+            caption: SecurityUtils.sanitizeString(caption, 100),
+            eventCode: SecurityUtils.sanitizeString(eventCode, 50),
+            eventName: eventInfo ? SecurityUtils.sanitizeString(eventInfo.name, 100) : '',
+            order: order,
+            isVisible: isVisible,
+            createdAt: serverTimestamp(),
+            createdBy: auth.currentUser?.email || 'unknown',
+            updatedAt: serverTimestamp()
+        };
+
+        await addDoc(collection(db, 'gallery'), photoData);
+
+        // Clear form
+        document.getElementById('newGalleryImage').value = '';
+        document.getElementById('newGalleryCaption').value = '';
+        document.getElementById('newGalleryEvent').value = '';
+        document.getElementById('newGalleryOrder').value = '1';
+        document.getElementById('newGalleryVisible').checked = true;
+
+        await logAdminAction('ADD_GALLERY_PHOTO', { caption: photoData.caption, eventCode: photoData.eventCode });
+        showToast('📸 Gallery photo added successfully!', 'success');
+        loadGalleryPhotos();
+    } catch (error) {
+        secureLog('Error adding gallery photo:', error);
+        showToast('Error adding gallery photo', 'error');
+    }
+}
+window.addGalleryPhoto = addGalleryPhoto;
+
+// Open edit gallery photo modal
+function openEditGalleryPhoto(photoId) {
+    const photo = galleryPhotosData.find(p => p.id === photoId);
+    if (!photo) return;
+
+    document.getElementById('editGalleryId').value = photoId;
+    document.getElementById('editGalleryImage').value = photo.imageUrl || '';
+    document.getElementById('editGalleryCaption').value = photo.caption || '';
+    document.getElementById('editGalleryEvent').value = photo.eventCode || '';
+    document.getElementById('editGalleryOrder').value = photo.order || 1;
+    document.getElementById('editGalleryVisible').checked = photo.isVisible !== false;
+
+    populateGalleryEventDropdown('editGalleryEvent');
+    document.getElementById('editGalleryEvent').value = photo.eventCode || '';
+
+    document.getElementById('editGalleryModal').classList.add('active');
+}
+window.openEditGalleryPhoto = openEditGalleryPhoto;
+
+// Save gallery photo edit
+async function saveGalleryPhotoEdit() {
+    const photoId = document.getElementById('editGalleryId').value;
+    const imageUrl = document.getElementById('editGalleryImage').value.trim();
+    const caption = document.getElementById('editGalleryCaption').value.trim();
+    const eventCode = document.getElementById('editGalleryEvent').value;
+    const order = parseInt(document.getElementById('editGalleryOrder').value) || 1;
+    const isVisible = document.getElementById('editGalleryVisible').checked;
+
+    if (!imageUrl || !caption || !eventCode) {
+        showToast('Please fill in all required fields', 'error');
+        return;
+    }
+
+    if (imageUrl.includes('..') || imageUrl.includes('\\') || (/^[a-z]+:/i.test(imageUrl) && !imageUrl.startsWith('http'))) {
+        showToast('Invalid image path', 'error');
+        return;
+    }
+
+    if (!AdminPermissions.isSuperAdmin()) {
+        showToast('Only super admins can edit gallery photos', 'error');
+        return;
+    }
+
+    try {
+        const eventInfo = galleryEventsCache.find(e => e.code === eventCode);
+        const photoRef = doc(db, 'gallery', photoId);
+        await updateDoc(photoRef, {
+            imageUrl: SecurityUtils.sanitizeString(imageUrl, 500),
+            caption: SecurityUtils.sanitizeString(caption, 100),
+            eventCode: SecurityUtils.sanitizeString(eventCode, 50),
+            eventName: eventInfo ? SecurityUtils.sanitizeString(eventInfo.name, 100) : '',
+            order: order,
+            isVisible: isVisible,
+            updatedAt: serverTimestamp()
+        });
+
+        closeModal('editGalleryModal');
+        await logAdminAction('EDIT_GALLERY_PHOTO', { photoId, caption });
+        showToast('📸 Gallery photo updated!', 'success');
+        loadGalleryPhotos();
+    } catch (error) {
+        secureLog('Error updating gallery photo:', error);
+        showToast('Error updating gallery photo', 'error');
+    }
+}
+window.saveGalleryPhotoEdit = saveGalleryPhotoEdit;
+
+// Open delete gallery photo confirmation
+function openDeleteGalleryPhoto(photoId) {
+    const photo = galleryPhotosData.find(p => p.id === photoId);
+    if (!photo) return;
+
+    document.getElementById('deleteGalleryId').value = photoId;
+    document.getElementById('deleteGalleryCaption').textContent = photo.caption || 'Untitled';
+    document.getElementById('deleteGalleryModal').classList.add('active');
+}
+window.openDeleteGalleryPhoto = openDeleteGalleryPhoto;
+
+// Confirm delete gallery photo
+async function confirmDeleteGalleryPhoto() {
+    const photoId = document.getElementById('deleteGalleryId').value;
+
+    if (!AdminPermissions.canDelete()) {
+        closeModal('deleteGalleryModal');
+        showToast('Only super admins can delete gallery photos', 'error');
+        return;
+    }
+
+    const rateCheck = rateLimiters.delete.recordAttempt('gallery_delete');
+    if (!rateCheck.allowed) {
+        showToast(`⏳ Too many requests. Try again in ${rateCheck.retryAfter}s`);
+        return;
+    }
+
+    try {
+        await deleteDoc(doc(db, 'gallery', photoId));
+        closeModal('deleteGalleryModal');
+        await logAdminAction('DELETE_GALLERY_PHOTO', { photoId });
+        showToast('🗑️ Gallery photo deleted!', 'success');
+        loadGalleryPhotos();
+    } catch (error) {
+        secureLog('Error deleting gallery photo:', error);
+        if (error.code === 'permission-denied') {
+            showToast('Permission denied. Check Firestore rules.', 'error');
+        } else {
+            showToast('Error deleting gallery photo: ' + error.message, 'error');
+        }
+    }
+}
+window.confirmDeleteGalleryPhoto = confirmDeleteGalleryPhoto;
+
 // ===== FEEDBACK VIEWER =====
 let feedbackData = [];
 
@@ -4451,11 +4737,7 @@ function updateEventDateTime(prefix) {
                 (dayNum === 3 || dayNum === 23) ? 'rd' : 'th';
 
         // Format time for display
-        const [hours, minutes] = state.selectedTime.split(':');
-        const hour = parseInt(hours);
-        const ampm = hour >= 12 ? 'PM' : 'AM';
-        const hour12 = hour % 12 || 12;
-        const displayTime = `${hour12}:${minutes} ${ampm}`;
+        const displayTime = formatEventTime(state.selectedTime);
 
         const displayDate = `${months[state.selectedDate.getMonth()]} ${dayNum}${suffix}, ${year} ${displayTime}`;
         const shortDisplay = `${months[state.selectedDate.getMonth()]} ${dayNum}${suffix}, ${year} • ${displayTime}`;

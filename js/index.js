@@ -183,6 +183,9 @@ function openModal() {
     document.getElementById('registrationForm').style.display = 'flex';
     document.getElementById('formSuccess').classList.remove('show');
 
+    // Reset all custom dropdowns to placeholder state
+    resetAllCustomSelects();
+
     // SECURITY: Clear any previous validation errors
     // Note: Rate limiting is active but hidden from users to avoid confusion
     if (window.ISTESecurity) {
@@ -289,6 +292,127 @@ function initSectionReveal() {
 
 // Initialize section reveal on DOM load
 document.addEventListener('DOMContentLoaded', initSectionReveal);
+
+// ===== CUSTOM DROPDOWN (Lightswind-inspired) =====
+
+function initCustomSelects() {
+    document.querySelectorAll('.custom-select').forEach(function (dropdown) {
+        var trigger = dropdown.querySelector('.select-trigger');
+        var content = dropdown.querySelector('.select-content');
+        if (!trigger || !content) return;
+
+        // Toggle on trigger click
+        trigger.addEventListener('click', function (e) {
+            e.stopPropagation();
+            var wasOpen = dropdown.classList.contains('open');
+            // Close all other dropdowns first
+            closeAllCustomSelects();
+            if (!wasOpen) {
+                dropdown.classList.add('open');
+                trigger.setAttribute('aria-expanded', 'true');
+            }
+        });
+
+        // Select item on click
+        content.querySelectorAll('.select-item').forEach(function (item) {
+            item.addEventListener('click', function (e) {
+                e.stopPropagation();
+                var value = item.dataset.value;
+                var text = item.childNodes[0].textContent;
+
+                // Update data-value on the dropdown container
+                dropdown.dataset.value = value;
+
+                // Update trigger display text
+                var selectedText = trigger.querySelector('.selected-text');
+                selectedText.textContent = text;
+                selectedText.classList.remove('placeholder');
+
+                // Update selected state on items
+                content.querySelectorAll('.select-item').forEach(function (si) {
+                    si.classList.remove('selected');
+                });
+                item.classList.add('selected');
+
+                // Close dropdown
+                dropdown.classList.remove('open');
+                trigger.setAttribute('aria-expanded', 'false');
+            });
+        });
+
+        // Keyboard support
+        trigger.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                dropdown.classList.remove('open');
+                trigger.setAttribute('aria-expanded', 'false');
+            } else if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                trigger.click();
+            } else if (e.key === 'ArrowDown' && dropdown.classList.contains('open')) {
+                e.preventDefault();
+                var firstItem = content.querySelector('.select-item');
+                if (firstItem) firstItem.focus();
+            }
+        });
+
+        content.querySelectorAll('.select-item').forEach(function (item, idx, items) {
+            item.setAttribute('tabindex', '0');
+            item.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    item.click();
+                } else if (e.key === 'Escape') {
+                    dropdown.classList.remove('open');
+                    trigger.setAttribute('aria-expanded', 'false');
+                    trigger.focus();
+                } else if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    if (idx < items.length - 1) items[idx + 1].focus();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    if (idx > 0) items[idx - 1].focus();
+                    else trigger.focus();
+                }
+            });
+        });
+    });
+
+    // Close on click outside
+    document.addEventListener('mousedown', function (e) {
+        if (!e.target.closest('.custom-select')) {
+            closeAllCustomSelects();
+        }
+    });
+}
+
+function closeAllCustomSelects() {
+    document.querySelectorAll('.custom-select.open').forEach(function (dropdown) {
+        dropdown.classList.remove('open');
+        var trigger = dropdown.querySelector('.select-trigger');
+        if (trigger) trigger.setAttribute('aria-expanded', 'false');
+    });
+}
+
+function resetAllCustomSelects() {
+    document.querySelectorAll('.custom-select').forEach(function (dropdown) {
+        dropdown.dataset.value = '';
+        dropdown.classList.remove('open');
+        var trigger = dropdown.querySelector('.select-trigger');
+        if (trigger) {
+            var selectedText = trigger.querySelector('.selected-text');
+            // Determine placeholder text from context (Dept or Sem)
+            var id = dropdown.id || '';
+            selectedText.textContent = id.includes('Dept') ? 'Select Dept' : 'Select Sem';
+            selectedText.classList.add('placeholder');
+            trigger.setAttribute('aria-expanded', 'false');
+        }
+        dropdown.querySelectorAll('.select-item').forEach(function (item) {
+            item.classList.remove('selected');
+        });
+    });
+}
+
+document.addEventListener('DOMContentLoaded', initCustomSelects);
 
 // ===== ANIMATED NUMBER COUNTER =====
 function animateNumber(el, target, suffix = '', duration = 2000) {
@@ -488,7 +612,6 @@ function initLightboxSwipe() {
 // Initialize all enhanced animations
 document.addEventListener('DOMContentLoaded', function() {
     initStatsCounter();
-    initGalleryReveal();
     initWinnerPodium();
     initLightboxSwipe();
 });
@@ -668,6 +791,138 @@ if (galleryScroll && galleryPrev && galleryNext) {
     });
 }
 
+// ===== DYNAMIC GALLERY LOADING =====
+let galleryAllPhotos = [];
+let currentGalleryEventFilter = 'all';
+
+async function loadGallery() {
+    const galleryScroll = document.getElementById('galleryScroll');
+    const galleryLoading = document.getElementById('galleryLoading');
+    const galleryEmpty = document.getElementById('galleryEmpty');
+    const galleryFilters = document.getElementById('galleryFilters');
+
+    if (!db || !galleryScroll) {
+        secureLog('[Gallery] Firebase not initialized or gallery container missing');
+        if (galleryLoading) galleryLoading.style.display = 'none';
+        if (galleryEmpty) galleryEmpty.style.display = '';
+        return;
+    }
+
+    try {
+        secureLog('[Gallery] Loading gallery from Firestore...');
+        const snapshot = await db.collection('gallery').get();
+
+        galleryAllPhotos = snapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .filter(p => p.isVisible === true)
+            .sort((a, b) => (a.order || 0) - (b.order || 0));
+
+        if (galleryLoading) galleryLoading.style.display = 'none';
+
+        if (galleryAllPhotos.length === 0) {
+            if (galleryEmpty) galleryEmpty.style.display = '';
+            if (galleryFilters) galleryFilters.style.display = 'none';
+            return;
+        }
+
+        // Build event filter chips
+        const eventNames = [...new Set(galleryAllPhotos.map(p => p.eventName).filter(Boolean))];
+        if (galleryFilters && eventNames.length > 1) {
+            let chipsHtml = '<button class="gallery-filter-chip active" onclick="filterGallery(\'all\')">All</button>';
+            eventNames.forEach(name => {
+                chipsHtml += `<button class="gallery-filter-chip" onclick="filterGallery('${escapeHtml(name)}')">` +
+                    `${escapeHtml(name)}</button>`;
+            });
+            galleryFilters.innerHTML = chipsHtml;
+        } else if (galleryFilters) {
+            galleryFilters.style.display = 'none';
+        }
+
+        renderGalleryItems(galleryAllPhotos);
+        initGalleryReveal();
+
+    } catch (error) {
+        secureLog('[Gallery] Error loading gallery:', error);
+        if (galleryLoading) galleryLoading.style.display = 'none';
+        if (galleryEmpty) galleryEmpty.style.display = '';
+    }
+}
+
+function renderGalleryItems(photos) {
+    const galleryScroll = document.getElementById('galleryScroll');
+    const galleryEmpty = document.getElementById('galleryEmpty');
+    if (!galleryScroll) return;
+
+    // Remove existing gallery items (keep loading/empty elements)
+    galleryScroll.querySelectorAll('.gallery-item').forEach(el => el.remove());
+
+    if (photos.length === 0) {
+        if (galleryEmpty) galleryEmpty.style.display = '';
+        return;
+    }
+
+    if (galleryEmpty) galleryEmpty.style.display = 'none';
+
+    photos.forEach(photo => {
+        const imagePath = photo.imageUrl
+            ? (photo.imageUrl.startsWith('http') ? photo.imageUrl : photo.imageUrl)
+            : '';
+        const safeCaption = escapeHtml(photo.caption || '');
+
+        const item = document.createElement('div');
+        item.className = 'gallery-item';
+        item.setAttribute('data-event', escapeHtml(photo.eventName || ''));
+        item.onclick = function() { openImage(this); };
+        item.innerHTML = `
+            <img src="${escapeHtml(imagePath)}" alt="${safeCaption}" loading="lazy"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+            <div style="width:100%;height:380px;display:none;align-items:center;justify-content:center;background:var(--bg-card);font-size:48px;color:var(--text-muted);">🖼️</div>
+            <div class="gallery-overlay">
+                <span>${safeCaption}</span>
+            </div>`;
+
+        // Insert before the empty state element
+        galleryScroll.insertBefore(item, galleryEmpty);
+    });
+}
+
+// Filter gallery by event
+window.filterGallery = function(eventName) {
+    currentGalleryEventFilter = eventName;
+
+    // Update active chip
+    document.querySelectorAll('.gallery-filter-chip').forEach(chip => {
+        chip.classList.remove('active');
+        const chipText = chip.textContent.trim();
+        if ((eventName === 'all' && chipText === 'All') || chipText === eventName) {
+            chip.classList.add('active');
+        }
+    });
+
+    const filtered = eventName === 'all'
+        ? galleryAllPhotos
+        : galleryAllPhotos.filter(p => p.eventName === eventName);
+
+    renderGalleryItems(filtered);
+    initGalleryReveal();
+
+    // Reset scroll to start
+    const galleryScroll = document.getElementById('galleryScroll');
+    if (galleryScroll) galleryScroll.scrollTo({ left: 0, behavior: 'smooth' });
+};
+
+// Load gallery on page load
+document.addEventListener('DOMContentLoaded', function() {
+    if (db) {
+        setTimeout(loadGallery, 500);
+    } else {
+        const galleryLoading = document.getElementById('galleryLoading');
+        const galleryEmpty = document.getElementById('galleryEmpty');
+        if (galleryLoading) galleryLoading.style.display = 'none';
+        if (galleryEmpty) galleryEmpty.style.display = '';
+    }
+});
+
 /**
  * SECURITY: Enhanced Form Submission Handler
  * - reCAPTCHA v3 bot detection (invisible)
@@ -706,16 +961,16 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
         teamName: document.getElementById('teamName').value,
         member1Name: document.getElementById('member1Name').value,
         member1USN: document.getElementById('member1USN').value,
-        member1Dept: document.getElementById('member1Dept').value,
-        member1Sem: document.getElementById('member1Sem').value,
+        member1Dept: document.getElementById('member1Dept').dataset.value,
+        member1Sem: document.getElementById('member1Sem').dataset.value,
         member2Name: document.getElementById('member2Name').value,
         member2USN: document.getElementById('member2USN').value,
-        member2Dept: document.getElementById('member2Dept').value,
-        member2Sem: document.getElementById('member2Sem').value,
+        member2Dept: document.getElementById('member2Dept').dataset.value,
+        member2Sem: document.getElementById('member2Sem').dataset.value,
         member3Name: document.getElementById('member3Name').value,
         member3USN: document.getElementById('member3USN').value,
-        member3Dept: document.getElementById('member3Dept').value,
-        member3Sem: document.getElementById('member3Sem').value
+        member3Dept: document.getElementById('member3Dept').dataset.value,
+        member3Sem: document.getElementById('member3Sem').dataset.value
     };
 
     // ===== SECURITY: Process through security module =====
@@ -846,28 +1101,6 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
         }
     }
 });
-
-// ===== THEME TOGGLE FUNCTIONALITY =====
-const themeToggle = document.getElementById('themeToggle');
-if (themeToggle) {
-    // Check for saved theme preference
-    const savedTheme = localStorage.getItem('iste-theme');
-    if (savedTheme === 'dark') {
-        // Redirect to dark theme page
-        window.location.href = 'index1.html';
-    }
-
-    // Handle toggle change
-    themeToggle.addEventListener('change', function () {
-        if (this.checked) {
-            localStorage.setItem('iste-theme', 'dark');
-            window.location.href = 'index1.html';
-        }
-    });
-
-    // Update toggle title on hover
-    themeToggle.parentElement.title = 'Switch to Ember (Dark) theme';
-}
 
 // ===== TESTIMONIAL CAROUSEL =====
 let testimonialIndex = 0;

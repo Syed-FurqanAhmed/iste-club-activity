@@ -1335,11 +1335,9 @@ nav {
 .filter-tabs {
     display: flex;
     background: var(--bg-input);
-    /* background: var(--bg-surface); */
     padding: 4px;
     border-radius: var(--radius-md);
     border: 1px solid rgba(249, 115, 22, 0.2);
-    /* box-shadow: 0 0 15px rgba(0, 0, 0, 0.2); */
     box-shadow: 0 0 15px #accafa;
 }
 
@@ -6762,4 +6760,170 @@ body.light-theme .settings-dropdown {
     .feedback-stat-item .stat-count {
         font-size: 18px;
     }
+}
+
+/* =========================================================================
+   GALLERY MANAGEMENT STYLES
+   ========================================================================= */
+.gallery-mgmt-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.gallery-mgmt-card {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid var(--border-color);
+    background: var(--bg-secondary);
+    transition: all 0.3s ease;
+}
+
+.gallery-mgmt-card:hover {
+    border-color: var(--accent-1);
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.15);
+}
+
+.gallery-mgmt-card.hidden-photo {
+    opacity: 0.5;
+}
+
+.gallery-mgmt-thumb {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    display: block;
+    background: var(--bg-tertiary);
+}
+
+.gallery-mgmt-thumb-placeholder {
+    width: 100%;
+    height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-tertiary);
+    font-size: 40px;
+    color: var(--text-muted);
+}
+
+.gallery-mgmt-info {
+    padding: 10px 12px;
+}
+
+.gallery-mgmt-caption {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.gallery-mgmt-event {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.gallery-mgmt-badges {
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
+    align-items: center;
+}
+
+.gallery-mgmt-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 50px;
+    background: var(--bg-tertiary);
+    color: var(--text-muted);
+}
+
+.gallery-mgmt-badge.visible {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+}
+
+.gallery-mgmt-badge.hidden {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
+
+.gallery-mgmt-actions {
+    display: flex;
+    gap: 0;
+    border-top: 1px solid var(--border-color);
+}
+
+.gallery-mgmt-actions button {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+}
+
+.gallery-mgmt-actions button:hover {
+    background: var(--bg-tertiary);
+}
+
+.gallery-mgmt-actions button:first-child {
+    border-right: 1px solid var(--border-color);
+}
+
+.gallery-mgmt-actions button:last-child:hover {
+    color: #ef4444;
+}
+
+.gallery-mgmt-loading {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-muted);
+}
+
+.gallery-mgmt-empty {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-muted);
+}
+
+.gallery-mgmt-empty-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+}
+
+.gallery-mgmt-filter-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.gallery-mgmt-filter-btn {
+    padding: 5px 14px;
+    border-radius: 50px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.gallery-mgmt-filter-btn:hover {
+    border-color: var(--accent-1);
+}
+
+.gallery-mgmt-filter-btn.active {
+    background: var(--accent-1);
+    border-color: var(--accent-1);
+    color: white;
 }

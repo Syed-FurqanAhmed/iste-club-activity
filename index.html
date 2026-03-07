@@ -305,25 +305,25 @@
                 <span class="section-tag" id="featuredEventTag">Upcoming Event</span>
                 <!-- Skeleton loading for title -->
                 <h2 id="featuredEventTitle">
-                    <span class="skeleton-text" style="display: inline-block; width: 300px; height: 40px; background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px;"></span>
+                    <span class="skeleton-shimmer skeleton-lg"></span>
                 </h2>
                 <div class="activity-details" id="featuredEventDetails">
                     <!-- Skeleton loading states -->
                     <div class="activity-detail skeleton-item">
                         <div class="activity-detail-icon">📅</div>
-                        <span style="display: inline-block; width: 180px; height: 20px; background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 4px;"></span>
+                        <span class="skeleton-shimmer skeleton-md" style="width: 180px;"></span>
                     </div>
                     <div class="activity-detail skeleton-item">
                         <div class="activity-detail-icon">🕐</div>
-                        <span style="display: inline-block; width: 80px; height: 20px; background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 4px;"></span>
+                        <span class="skeleton-shimmer skeleton-sm" style="width: 80px;"></span>
                     </div>
                     <div class="activity-detail skeleton-item">
                         <div class="activity-detail-icon">📍</div>
-                        <span style="display: inline-block; width: 200px; height: 20px; background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 4px;"></span>
+                        <span class="skeleton-shimmer skeleton-md" style="width: 200px;"></span>
                     </div>
                     <div class="activity-detail skeleton-item">
                         <div class="activity-detail-icon">👥</div>
-                        <span style="display: inline-block; width: 150px; height: 20px; background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 4px;"></span>
+                        <span class="skeleton-shimmer skeleton-md" style="width: 150px;"></span>
                     </div>
                 </div>
                 <div class="register-btn-wrapper">
@@ -332,7 +332,7 @@
                 </div>
             </div>
             <div class="activity-poster" id="featuredEventPoster">
-                <div class="skeleton-poster" style="width: 100%; height: 400px; background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 16px;"></div>
+                <div class="skeleton-poster skeleton-shimmer" style="width: 100%; height: 400px; border-radius: 16px;"></div>
             </div>
         </div>
         <!-- No Event State (hidden by default) -->
@@ -401,6 +401,8 @@
             <p class="section-subtitle">Relive the excitement from our past events.</p>
         </div>
 
+        <div class="gallery-filters" id="galleryFilters"></div>
+
         <div class="gallery-container">
             <button class="gallery-arrow gallery-arrow-left" id="galleryPrev" aria-label="Previous images">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -409,42 +411,11 @@
                 </svg>
             </button>
             <div class="gallery-scroll" id="galleryScroll">
-                <div class="gallery-item" onclick="openImage(this)">
-                    <img src="images/Gallery.jpg" alt="Event Highlights" loading="lazy" />
-                    <div class="gallery-overlay">
-                        <span>Event Highlights</span>
-                    </div>
+                <div class="gallery-loading" id="galleryLoading">
+                    <div class="spinner" style="width: 24px; height: 24px; border: 3px solid var(--glass-border); border-top-color: var(--accent-1); border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+                    Loading gallery...
                 </div>
-                <div class="gallery-item" onclick="openImage(this)">
-                    <img src="images/Gallery0.jpg" alt="Quick UI Battle" loading="lazy" />
-                    <div class="gallery-overlay">
-                        <span>Quick UI Battle</span>
-                    </div>
-                </div>
-                <div class="gallery-item" onclick="openImage(this)">
-                    <img src="images/Gallery1.jpg" alt="Tech Workshop" loading="lazy" />
-                    <div class="gallery-overlay">
-                        <span>Tech Workshop</span>
-                    </div>
-                </div>
-                <div class="gallery-item" onclick="openImage(this)">
-                    <img src="images/Gallery2.jpg" alt="Team Activities" loading="lazy" />
-                    <div class="gallery-overlay">
-                        <span>Team Activities</span>
-                    </div>
-                </div>
-                <div class="gallery-item" onclick="openImage(this)">
-                    <img src="images/IMG-20251217-WA0028.jpg" alt="PromptQuest 2024" loading="lazy" />
-                    <div class="gallery-overlay">
-                        <span>PromptQuest 2024</span>
-                    </div>
-                </div>
-                <div class="gallery-item" onclick="openImage(this)">
-                    <img src="images/IMG-20251217-WA0030.jpg" alt="Winners Ceremony" loading="lazy" />
-                    <div class="gallery-overlay">
-                        <span>Winners Ceremony</span>
-                    </div>
-                </div>
+                <!-- Gallery items dynamically loaded from Firestore -->
                 <!-- Empty State -->
                 <div class="empty-state" id="galleryEmpty" style="display: none;">
                     <div class="empty-state-icon">📸</div>
@@ -744,33 +715,43 @@
                             </div>
                             <div class="form-group">
                                 <label for="member1Dept">Department <span class="required">*</span></label>
-                                <select id="member1Dept" required aria-required="true">
-                                    <option value="">Select Dept</option>
-                                    <option value="ISE">ISE</option>
-                                    <option value="CSE">CSE</option>
-                                    <option value="AIML">AIML</option>
-                                    <option value="AI&DS">AI&DS</option>
-                                    <option value="ECE">ECE</option>
-                                    <option value="EEE">EEE</option>
-                                    <option value="CV">CV</option>
-                                    <option value="ME">ME</option>
-                                    <option value="Mechatronics">Mechatronics</option>
-                                    <option value="Other">Other</option>
-                                </select>
+                                <div class="custom-select" id="member1Dept" data-value="" data-required="true">
+                                    <button type="button" class="select-trigger" aria-haspopup="listbox" aria-expanded="false">
+                                        <span class="selected-text placeholder">Select Dept</span>
+                                        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                    </button>
+                                    <div class="select-content" role="listbox">
+                                        <div class="select-item" data-value="ISE" role="option">ISE<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="CSE" role="option">CSE<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="AIML" role="option">AIML<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="AI&DS" role="option">AI&amp;DS<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="ECE" role="option">ECE<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="EEE" role="option">EEE<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="CV" role="option">CV<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="ME" role="option">ME<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="Mechatronics" role="option">Mechatronics<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="Other" role="option">Other<span class="check">✓</span></div>
+                                    </div>
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label for="member1Sem">Semester <span class="required">*</span></label>
-                                <select id="member1Sem" required aria-required="true">
-                                    <option value="">Select Sem</option>
-                                    <option value="1">1st Sem</option>
-                                    <option value="2">2nd Sem</option>
-                                    <option value="3">3rd Sem</option>
-                                    <option value="4">4th Sem</option>
-                                    <option value="5">5th Sem</option>
-                                    <option value="6">6th Sem</option>
-                                    <option value="7">7th Sem</option>
-                                    <option value="8">8th Sem</option>
-                                </select>
+                                <div class="custom-select" id="member1Sem" data-value="" data-required="true">
+                                    <button type="button" class="select-trigger" aria-haspopup="listbox" aria-expanded="false">
+                                        <span class="selected-text placeholder">Select Sem</span>
+                                        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                    </button>
+                                    <div class="select-content" role="listbox">
+                                        <div class="select-item" data-value="1" role="option">1st Sem<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="2" role="option">2nd Sem<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="3" role="option">3rd Sem<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="4" role="option">4th Sem<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="5" role="option">5th Sem<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="6" role="option">6th Sem<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="7" role="option">7th Sem<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="8" role="option">8th Sem<span class="check">✓</span></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -793,33 +774,43 @@
                             </div>
                             <div class="form-group">
                                 <label>Department</label>
-                                <select id="member2Dept">
-                                    <option value="">Select Dept</option>
-                                    <option value="ISE">ISE</option>
-                                    <option value="CSE">CSE</option>
-                                    <option value="AIML">AIML</option>
-                                    <option value="AI&DS">AI&DS</option>
-                                    <option value="ECE">ECE</option>
-                                    <option value="EEE">EEE</option>
-                                    <option value="CV">CV</option>
-                                    <option value="ME">ME</option>
-                                    <option value="Mechatronics">Mechatronics</option>
-                                    <option value="Other">Other</option>
-                                </select>
+                                <div class="custom-select" id="member2Dept" data-value="">
+                                    <button type="button" class="select-trigger" aria-haspopup="listbox" aria-expanded="false">
+                                        <span class="selected-text placeholder">Select Dept</span>
+                                        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                    </button>
+                                    <div class="select-content" role="listbox">
+                                        <div class="select-item" data-value="ISE" role="option">ISE<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="CSE" role="option">CSE<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="AIML" role="option">AIML<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="AI&DS" role="option">AI&amp;DS<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="ECE" role="option">ECE<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="EEE" role="option">EEE<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="CV" role="option">CV<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="ME" role="option">ME<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="Mechatronics" role="option">Mechatronics<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="Other" role="option">Other<span class="check">✓</span></div>
+                                    </div>
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label>Semester</label>
-                                <select id="member2Sem">
-                                    <option value="">Select Sem</option>
-                                    <option value="1">1st Sem</option>
-                                    <option value="2">2nd Sem</option>
-                                    <option value="3">3rd Sem</option>
-                                    <option value="4">4th Sem</option>
-                                    <option value="5">5th Sem</option>
-                                    <option value="6">6th Sem</option>
-                                    <option value="7">7th Sem</option>
-                                    <option value="8">8th Sem</option>
-                                </select>
+                                <div class="custom-select" id="member2Sem" data-value="">
+                                    <button type="button" class="select-trigger" aria-haspopup="listbox" aria-expanded="false">
+                                        <span class="selected-text placeholder">Select Sem</span>
+                                        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                    </button>
+                                    <div class="select-content" role="listbox">
+                                        <div class="select-item" data-value="1" role="option">1st Sem<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="2" role="option">2nd Sem<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="3" role="option">3rd Sem<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="4" role="option">4th Sem<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="5" role="option">5th Sem<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="6" role="option">6th Sem<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="7" role="option">7th Sem<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="8" role="option">8th Sem<span class="check">✓</span></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -842,33 +833,43 @@
                             </div>
                             <div class="form-group">
                                 <label>Department</label>
-                                <select id="member3Dept">
-                                    <option value="">Select Dept</option>
-                                    <option value="ISE">ISE</option>
-                                    <option value="CSE">CSE</option>
-                                    <option value="AIML">AIML</option>
-                                    <option value="AI&DS">AI&DS</option>
-                                    <option value="ECE">ECE</option>
-                                    <option value="EEE">EEE</option>
-                                    <option value="CV">CV</option>
-                                    <option value="ME">ME</option>
-                                    <option value="Mechatronics">Mechatronics</option>
-                                    <option value="Other">Other</option>
-                                </select>
+                                <div class="custom-select" id="member3Dept" data-value="">
+                                    <button type="button" class="select-trigger" aria-haspopup="listbox" aria-expanded="false">
+                                        <span class="selected-text placeholder">Select Dept</span>
+                                        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                    </button>
+                                    <div class="select-content" role="listbox">
+                                        <div class="select-item" data-value="ISE" role="option">ISE<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="CSE" role="option">CSE<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="AIML" role="option">AIML<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="AI&DS" role="option">AI&amp;DS<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="ECE" role="option">ECE<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="EEE" role="option">EEE<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="CV" role="option">CV<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="ME" role="option">ME<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="Mechatronics" role="option">Mechatronics<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="Other" role="option">Other<span class="check">✓</span></div>
+                                    </div>
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label>Semester</label>
-                                <select id="member3Sem">
-                                    <option value="">Select Sem</option>
-                                    <option value="1">1st Sem</option>
-                                    <option value="2">2nd Sem</option>
-                                    <option value="3">3rd Sem</option>
-                                    <option value="4">4th Sem</option>
-                                    <option value="5">5th Sem</option>
-                                    <option value="6">6th Sem</option>
-                                    <option value="7">7th Sem</option>
-                                    <option value="8">8th Sem</option>
-                                </select>
+                                <div class="custom-select" id="member3Sem" data-value="">
+                                    <button type="button" class="select-trigger" aria-haspopup="listbox" aria-expanded="false">
+                                        <span class="selected-text placeholder">Select Sem</span>
+                                        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                    </button>
+                                    <div class="select-content" role="listbox">
+                                        <div class="select-item" data-value="1" role="option">1st Sem<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="2" role="option">2nd Sem<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="3" role="option">3rd Sem<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="4" role="option">4th Sem<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="5" role="option">5th Sem<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="6" role="option">6th Sem<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="7" role="option">7th Sem<span class="check">✓</span></div>
+                                        <div class="select-item" data-value="8" role="option">8th Sem<span class="check">✓</span></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
