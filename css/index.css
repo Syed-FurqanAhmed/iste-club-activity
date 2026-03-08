@@ -159,6 +159,17 @@
 
         html {
             scroll-behavior: smooth;
+            -webkit-text-size-adjust: 100%;
+            -moz-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+        }
+
+        *,
+        *::before,
+        *::after {
+            -webkit-text-size-adjust: 100%;
+            -moz-text-size-adjust: 100%;
+            text-size-adjust: 100%;
         }
 
         body {
@@ -3307,7 +3318,7 @@
             }
 
             .hero h1 {
-                font-size: clamp(36px, 8vw, 52px);
+                font-size: 36px;
             }
 
             .hero-description {
@@ -3334,6 +3345,14 @@
 
             .activity-poster {
                 order: -1;
+            }
+
+            .section-title {
+                font-size: 32px;
+            }
+
+            .activity-info h2 {
+                font-size: 32px;
             }
         }
 
@@ -3440,6 +3459,18 @@
 
             .modal-body {
                 padding: 20px;
+            }
+
+            .hero h1 {
+                font-size: 32px;
+            }
+
+            .section-title {
+                font-size: 28px;
+            }
+
+            .activity-info h2 {
+                font-size: 28px;
             }
         }
 
