@@ -579,26 +579,32 @@ function applyRoleBasedUI() {
         drawerDeleteBtn.style.display = isSuperAdmin ? '' : 'none';
     }
 
-    // === ADMIN MANAGEMENT QUICK ACTION: Only visible to super admin ===
-    const adminMgmtAction = document.getElementById('admin-management-action');
-    if (adminMgmtAction) {
-        adminMgmtAction.style.display = isSuperAdmin ? '' : 'none';
+    // === SIDEBAR: Admin management nav item ===
+    const sidebarAdminMgmt = document.getElementById('sidebar-admin-management');
+    if (sidebarAdminMgmt) {
+        sidebarAdminMgmt.style.display = isSuperAdmin ? '' : 'none';
     }
 
-    // === TEAM MANAGEMENT QUICK ACTION: Only visible to super admin ===
-    const teamMgmtAction = document.getElementById('team-management-action');
-    if (teamMgmtAction) {
-        teamMgmtAction.style.display = isSuperAdmin ? '' : 'none';
+    // === SIDEBAR: Team management nav item ===
+    const sidebarTeamMgmt = document.getElementById('sidebar-team-management');
+    if (sidebarTeamMgmt) {
+        sidebarTeamMgmt.style.display = isSuperAdmin ? '' : 'none';
     }
 
-    // === GALLERY MANAGEMENT QUICK ACTION: Only visible to super admin ===
-    const galleryMgmtAction = document.getElementById('gallery-management-action');
-    if (galleryMgmtAction) {
-        galleryMgmtAction.style.display = isSuperAdmin ? '' : 'none';
+    // === SIDEBAR: Gallery management nav item ===
+    const sidebarGalleryMgmt = document.getElementById('sidebar-gallery-management');
+    if (sidebarGalleryMgmt) {
+        sidebarGalleryMgmt.style.display = isSuperAdmin ? '' : 'none';
+    }
+
+    // === SIDEBAR: Admin group (whole section) ===
+    const sidebarAdminGroup = document.getElementById('sidebarAdminGroup');
+    if (sidebarAdminGroup) {
+        sidebarAdminGroup.style.display = isSuperAdmin ? '' : 'none';
     }
 
     // === CREATE EVENT BUTTON: Only visible to super admin ===
-    const createEventBtn = document.querySelector('[onclick*="openCreateEventModal"]');
+    const createEventBtn = document.querySelector('#createEventToggleBtn');
     if (createEventBtn) {
         createEventBtn.style.display = isSuperAdmin ? '' : 'none';
     }
@@ -617,10 +623,8 @@ async function openAdminManagement() {
         showToast('❌ Access denied. Super Admin only.');
         return;
     }
-
-    document.getElementById('adminManagementModal').classList.add('active');
-    populateEventCheckboxes();
-    await loadAdminList();
+    const navBtn = document.querySelector('.sidebar-nav-item[data-view="admins"]');
+    switchAdminView('admins', navBtn);
 }
 window.openAdminManagement = openAdminManagement;
 
@@ -2119,7 +2123,16 @@ window.handleExport = handleExport;
 function handleSendEmail() { showToast('📧 Email feature'); }
 window.handleSendEmail = handleSendEmail;
 
-function handleAddEvent() { document.getElementById('createEventModal')?.classList.add('active'); }
+function handleAddEvent() {
+    const navBtn = document.querySelector('.sidebar-nav-item[data-view="events"]');
+    switchAdminView('events', navBtn);
+    setTimeout(() => {
+        const form = document.getElementById('inlineCreateEventForm');
+        if (form && form.style.display === 'none') {
+            toggleCreateEventForm();
+        }
+    }, 150);
+}
 window.handleAddEvent = handleAddEvent;
 
 // ===== REGISTRATION ROUTING DROPDOWN =====
@@ -2231,25 +2244,35 @@ document.addEventListener('click', (e) => {
     }
 });
 
-// Alias for openCreateEventModal
-function openCreateEventModal() {
-    document.getElementById('createEventModal')?.classList.add('active');
-    // Reset form - basic fields
-    document.getElementById('newEventName').value = '';
-    document.getElementById('newEventCode').value = '';
-    document.getElementById('selectedEventEmoji').value = '🎯';
-    document.querySelectorAll('.emoji-option').forEach(btn => btn.classList.remove('selected'));
-    document.querySelector('.emoji-option[data-emoji="🎯"]')?.classList.add('selected');
-
-    // Reset new fields - use calendar widget
-    eventCalClear('newEvent');
-    document.getElementById('newEventVenue').value = '';
-    document.getElementById('newEventTeamMin').value = '2';
-    document.getElementById('newEventTeamMax').value = '3';
-    document.getElementById('newEventPoster').value = '';
-    document.getElementById('newEventFeatured').checked = false;
-    document.getElementById('newEventRegStatus').value = 'open';
+// Toggle inline create event form
+function toggleCreateEventForm() {
+    const form = document.getElementById('inlineCreateEventForm');
+    if (!form) return;
+    const isVisible = form.style.display !== 'none';
+    if (isVisible) {
+        form.style.display = 'none';
+    } else {
+        form.style.display = 'block';
+        // Reset form fields
+        document.getElementById('newEventName').value = '';
+        document.getElementById('newEventCode').value = '';
+        document.getElementById('selectedEventEmoji').value = '🎯';
+        document.querySelectorAll('.emoji-option').forEach(btn => btn.classList.remove('selected'));
+        document.querySelector('.emoji-option[data-emoji="🎯"]')?.classList.add('selected');
+        eventCalClear('newEvent');
+        document.getElementById('newEventVenue').value = '';
+        document.getElementById('newEventTeamMin').value = '2';
+        document.getElementById('newEventTeamMax').value = '3';
+        document.getElementById('newEventPoster').value = '';
+        document.getElementById('newEventFeatured').checked = false;
+        document.getElementById('newEventRegStatus').value = 'open';
+        form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 }
+window.toggleCreateEventForm = toggleCreateEventForm;
+
+// Keep old alias working
+function openCreateEventModal() { toggleCreateEventForm(); }
 window.openCreateEventModal = openCreateEventModal;
 
 // Select emoji for new event
@@ -2376,7 +2399,9 @@ async function createNewEvent() {
         if (isFeatured) {
             showToast('⭐ Now featured on the main page!');
         }
-        closeModal('createEventModal');
+        // Hide inline form
+        const inlineForm = document.getElementById('inlineCreateEventForm');
+        if (inlineForm) inlineForm.style.display = 'none';
 
         // Dynamically update the UI without page reload
         await initDynamicEvents();
@@ -2979,6 +3004,7 @@ window.handleLogin = function (event) {
 
             // Apply role-based UI visibility
             applyRoleBasedUI();
+            updateSidebarUserInfo();
 
             // Re-initialize events with proper role filtering
             // This ensures normal admins only see their assigned events
@@ -2999,6 +3025,8 @@ window.handleLogin = function (event) {
             // Show appropriate dashboard
             document.getElementById('login-page').style.display = 'none';
             document.getElementById('admin-dashboard').classList.add('active');
+            const siteNav = document.getElementById('navbar');
+            if (siteNav) siteNav.style.display = 'none';
 
             // Show role-specific welcome message
             const roleLabel = adminData.role === 'super' ? '🔴 Super Admin' : '🟡 Admin';
@@ -3710,10 +3738,13 @@ window.addEventListener('DOMContentLoaded', async () => {
             if (adminData) {
                 // Apply role-based UI
                 applyRoleBasedUI();
+                updateSidebarUserInfo();
 
                 // Show dashboard
                 document.getElementById('login-page').style.display = 'none';
                 document.getElementById('admin-dashboard').classList.add('active');
+                const siteNav = document.getElementById('navbar');
+                if (siteNav) siteNav.style.display = 'none';
 
                 // Initialize the dynamic event system
                 await initDynamicEvents();
@@ -3771,8 +3802,8 @@ function openTeamManagement() {
         showToast('❌ Only Super Admins can manage team members.');
         return;
     }
-    document.getElementById('teamManagementModal').classList.add('active');
-    loadTeamMembers();
+    const navBtn = document.querySelector('.sidebar-nav-item[data-view="team"]');
+    switchAdminView('team', navBtn);
 }
 window.openTeamManagement = openTeamManagement;
 
@@ -4118,9 +4149,8 @@ function openGalleryManagement() {
         showToast('❌ Only Super Admins can manage gallery.');
         return;
     }
-    document.getElementById('galleryManagementModal').classList.add('active');
-    loadGalleryEvents();
-    loadGalleryPhotos();
+    const navBtn = document.querySelector('.sidebar-nav-item[data-view="gallery"]');
+    switchAdminView('gallery', navBtn);
 }
 window.openGalleryManagement = openGalleryManagement;
 
@@ -4414,8 +4444,8 @@ window.confirmDeleteGalleryPhoto = confirmDeleteGalleryPhoto;
 let feedbackData = [];
 
 async function openFeedbackViewer() {
-    document.getElementById('feedbackModal').classList.add('active');
-    await loadFeedback();
+    const navBtn = document.querySelector('.sidebar-nav-item[data-view="feedback"]');
+    switchAdminView('feedback', navBtn);
 }
 window.openFeedbackViewer = openFeedbackViewer;
 
@@ -4954,3 +4984,71 @@ document.addEventListener('click', (e) => {
         });
     }
 });
+
+// ===== SIDEBAR NAVIGATION =====
+
+function toggleAdminSidebar() {
+    const sidebar = document.getElementById('adminSidebar');
+    const overlay = document.getElementById('adminSidebarOverlay');
+    if (!sidebar) return;
+
+    const isMobile = window.innerWidth <= 1024;
+    if (isMobile) {
+        sidebar.classList.toggle('mobile-open');
+        overlay?.classList.toggle('active');
+        document.body.style.overflow = sidebar.classList.contains('mobile-open') ? 'hidden' : '';
+    } else {
+        sidebar.classList.toggle('collapsed');
+        try { localStorage.setItem('sidebar-collapsed', sidebar.classList.contains('collapsed')); } catch (_) {}
+    }
+}
+window.toggleAdminSidebar = toggleAdminSidebar;
+
+function switchAdminView(viewName, navBtn) {
+    // Hide all views
+    document.querySelectorAll('.admin-view').forEach(v => v.classList.remove('active'));
+    // Show target view
+    const target = document.getElementById('view-' + viewName);
+    if (target) target.classList.add('active');
+
+    // Update active nav item
+    document.querySelectorAll('.sidebar-nav-item[data-view]').forEach(b => b.classList.remove('active'));
+    if (navBtn) navBtn.classList.add('active');
+
+    // Update top bar title
+    const titleMap = { dashboard: 'Dashboard Overview', events: 'Event Management', team: 'Team Members', gallery: 'Gallery Management', admins: 'Admin Management', feedback: 'User Feedback' };
+    const titleEl = document.getElementById('topBarTitle');
+    if (titleEl) titleEl.textContent = titleMap[viewName] || viewName;
+
+    // Load data for the view
+    if (viewName === 'team') loadTeamMembers();
+    if (viewName === 'gallery') { loadGalleryEvents(); loadGalleryPhotos(); }
+    if (viewName === 'admins') { populateEventCheckboxes(); loadAdminList(); }
+    if (viewName === 'feedback') loadFeedback();
+
+    // Close sidebar on mobile after navigation
+    const sidebar = document.getElementById('adminSidebar');
+    if (sidebar?.classList.contains('mobile-open')) toggleAdminSidebar();
+}
+window.switchAdminView = switchAdminView;
+
+function updateSidebarUserInfo() {
+    const info = AdminPermissions.getAdminInfo();
+    if (!info) return;
+    const nameEl = document.getElementById('sidebarUserName');
+    const roleEl = document.getElementById('sidebarUserRole');
+    const avatarEl = document.getElementById('sidebarUserAvatar');
+    if (nameEl) nameEl.textContent = info.displayName || 'Admin';
+    if (roleEl) roleEl.textContent = info.role === 'super' ? 'Super Admin' : 'Admin';
+    if (avatarEl) avatarEl.textContent = (info.displayName || 'A').charAt(0).toUpperCase();
+}
+
+// Restore sidebar collapsed state on load
+(function initSidebar() {
+    try {
+        const sidebar = document.getElementById('adminSidebar');
+        if (sidebar && localStorage.getItem('sidebar-collapsed') === 'true' && window.innerWidth > 1024) {
+            sidebar.classList.add('collapsed');
+        }
+    } catch (_) {}
+})();
