@@ -212,10 +212,18 @@ function closeImageModal() {
 }
 
 // ===== SUCCESS MODAL & CONFETTI =====
+let currentFeaturedEventName = '';
+
 function showSuccessModal(teamName, eventName, memberCount) {
+    const featuredTitleText = (document.getElementById('featuredEventTitle')?.textContent || '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    const resolvedEventName = eventName || currentFeaturedEventName || featuredTitleText || 'Featured Event';
+
     // Update modal content
     document.getElementById('successTeamName').textContent = teamName || 'Your Team';
-    document.getElementById('successEventName').textContent = eventName || 'Quick Draw UI Battle';
+    document.getElementById('successEventName').textContent = resolvedEventName;
     document.getElementById('successMemberCount').textContent = memberCount + ' member' + (memberCount > 1 ? 's' : '') + ' registered';
 
     // Show modal
@@ -267,6 +275,31 @@ function launchConfetti() {
     }
 
     setTimeout(() => { container.innerHTML = ''; }, CLEAR_DELAY_MS);
+}
+
+async function resolveSuccessEventName(activeEventCode) {
+    if (currentFeaturedEventName) {
+        return currentFeaturedEventName;
+    }
+
+    if (db && activeEventCode) {
+        try {
+            const eventDoc = await db.collection('events').doc(activeEventCode).get();
+            if (eventDoc.exists && eventDoc.data()?.name) {
+                return eventDoc.data().name;
+            }
+        } catch (err) {
+            secureLog('[SuccessModal] Could not resolve event name from events collection');
+        }
+    }
+
+    const fallbackNames = {
+        testing: 'Testing (Sandbox)',
+        promptquest: 'PromptQuest',
+        uibattle: 'Quick Draw UI Battle',
+        hackathon: 'Hackathon'
+    };
+    return fallbackNames[activeEventCode] || activeEventCode || 'Featured Event';
 }
 
 // ===== SECTION REVEAL ON SCROLL =====
@@ -1078,9 +1111,10 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
         const memberCount = 1 + [formData.member2Name, formData.member3Name].filter(Boolean).length;
 
         // Close registration modal and show success modal with confetti
+        const successEventName = await resolveSuccessEventName(activeEvent);
         closeModal();
         setTimeout(() => {
-            showSuccessModal(formData.teamName, 'Quick Draw UI Battle', memberCount);
+            showSuccessModal(formData.teamName, successEventName, memberCount);
         }, 300);
 
     } catch (err) {
@@ -1349,6 +1383,7 @@ function renderFeaturedEvent(event) {
     if (noEventEl) noEventEl.style.display = 'none';
     
     // Update title - handle both "Name - Subtitle" and simple names
+    currentFeaturedEventName = event?.name || '';
     if (titleEl) {
         const nameParts = event.name.split(' - ');
         if (nameParts.length > 1) {
@@ -1421,6 +1456,7 @@ function renderFeaturedEvent(event) {
 
 // Show "no featured event" state
 function showNoFeaturedEvent() {
+    currentFeaturedEventName = '';
     const contentEl = document.querySelector('.activity-content');
     const noEventEl = document.getElementById('noFeaturedEvent');
     
