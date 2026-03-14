@@ -1023,7 +1023,13 @@ document.getElementById('registrationForm').addEventListener('submit', async fun
         // Dynamic routing: Read active event from config
         let activeEvent = 'testing'; // Default fallback
         try {
-            const configDoc = await db.collection('config').doc('routing').get();
+            let configDoc = await db.collection('config').doc('registration').get();
+
+            // Backward-compat fallback for older admin saves.
+            if (!configDoc.exists) {
+                configDoc = await db.collection('config').doc('routing').get();
+            }
+
             if (configDoc.exists && configDoc.data().activeEvent) {
                 activeEvent = configDoc.data().activeEvent;
                 secureLog('[Routing] Registering to event:', activeEvent);

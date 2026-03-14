@@ -2204,11 +2204,17 @@ window.selectOption = selectOption;
 
 async function saveRoutingConfig(eventCode) {
     try {
-        await setDoc(doc(db, 'config', 'routing'), {
+        const payload = {
             activeEvent: eventCode,
             updatedAt: serverTimestamp(),
             updatedBy: auth.currentUser?.email || 'unknown'
-        });
+        };
+
+        // Keep both docs in sync for compatibility across old/new pages.
+        await Promise.all([
+            setDoc(doc(db, 'config', 'registration'), payload),
+            setDoc(doc(db, 'config', 'routing'), payload)
+        ]);
         await logAdminAction('UPDATE_ROUTING', { activeEvent: eventCode });
     } catch (error) {
         secureLog('Error saving routing config:', error);
@@ -2219,7 +2225,12 @@ window.saveRoutingConfig = saveRoutingConfig;
 
 async function loadRoutingConfig() {
     try {
-        const configDoc = await getDoc(doc(db, 'config', 'routing'));
+        // Prefer 'registration' (public-readable in rules), fall back to legacy 'routing'.
+        let configDoc = await getDoc(doc(db, 'config', 'registration'));
+        if (!configDoc.exists()) {
+            configDoc = await getDoc(doc(db, 'config', 'routing'));
+        }
+
         if (configDoc.exists()) {
             const config = configDoc.data();
             const activeEvent = config.activeEvent || 'testing';
