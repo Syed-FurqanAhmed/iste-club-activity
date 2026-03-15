@@ -1382,14 +1382,21 @@ function renderFeaturedEvent(event) {
     if (contentEl) contentEl.style.display = '';
     if (noEventEl) noEventEl.style.display = 'none';
     
-    // Update title - handle both "Name - Subtitle" and simple names
-    currentFeaturedEventName = event?.name || '';
+    // Update title - prefer separate description field, fall back to legacy "Name - Subtitle" format.
+    const eventTitle = event?.name || '';
+    const eventDescription = (event?.description || '').trim();
+    currentFeaturedEventName = eventTitle;
+
     if (titleEl) {
-        const nameParts = event.name.split(' - ');
-        if (nameParts.length > 1) {
-            titleEl.innerHTML = `${escapeHtml(nameParts[0])} - <span class="gradient-text">${escapeHtml(nameParts.slice(1).join(' - '))}</span>`;
+        if (eventDescription) {
+            titleEl.innerHTML = `${escapeHtml(eventTitle)} - <span class="gradient-text">${escapeHtml(eventDescription)}</span>`;
         } else {
-            titleEl.innerHTML = `<span class="gradient-text">${escapeHtml(event.name)}</span>`;
+            const nameParts = eventTitle.split(' - ');
+            if (nameParts.length > 1) {
+                titleEl.innerHTML = `${escapeHtml(nameParts[0])} - <span class="gradient-text">${escapeHtml(nameParts.slice(1).join(' - '))}</span>`;
+            } else {
+                titleEl.innerHTML = `<span class="gradient-text">${escapeHtml(eventTitle)}</span>`;
+            }
         }
     }
     

@@ -1159,12 +1159,39 @@ async function confirmDelete() {
     if (result.success) {
         showToast(`🗑️ Deleted "${teamName}"`);
         const row = document.querySelector(`tr[data-team="${teamId}"]`);
-        if (row) row.remove();
+        if (row) {
+            const tbody = row.closest('tbody');
+            row.remove();
+            if (tbody) {
+                renumberRegistrationRows(tbody);
+                refreshEventCountFromTable(tbody);
+            }
+        }
     } else {
         showToast('⚠️ Delete failed');
     }
 }
 window.confirmDelete = confirmDelete;
+
+function renumberRegistrationRows(tbody) {
+    let serial = 1;
+    tbody.querySelectorAll('tr[data-team]').forEach(row => {
+        const badge = row.querySelector('.team-badge');
+        if (badge) badge.textContent = serial++;
+    });
+}
+
+function refreshEventCountFromTable(tbody) {
+    const tbodyId = tbody?.id || '';
+    if (!tbodyId.endsWith('-tbody')) return;
+
+    const eventCode = tbodyId.slice(0, -6);
+    const countEl = document.getElementById(`${eventCode}-count`);
+    if (!countEl) return;
+
+    const teamCount = tbody.querySelectorAll('tr[data-team]').length;
+    countEl.textContent = `👥 ${teamCount} teams`;
+}
 
 // ===== TEAM DRAWER (SECURED) =====
 function openTeamDrawer(teamId, teamData) {
@@ -2267,6 +2294,8 @@ function toggleCreateEventForm() {
         // Reset form fields
         document.getElementById('newEventName').value = '';
         document.getElementById('newEventCode').value = '';
+        const newEventDescriptionInput = document.getElementById('newEventDescription');
+        if (newEventDescriptionInput) newEventDescriptionInput.value = '';
         document.getElementById('selectedEventEmoji').value = '🎯';
         document.querySelectorAll('.emoji-option').forEach(btn => btn.classList.remove('selected'));
         document.querySelector('.emoji-option[data-emoji="🎯"]')?.classList.add('selected');
@@ -2298,6 +2327,7 @@ window.selectEventEmoji = selectEventEmoji;
 async function createNewEvent() {
     const name = document.getElementById('newEventName').value.trim();
     const code = document.getElementById('newEventCode').value.trim().toLowerCase();
+    const description = (document.getElementById('newEventDescription')?.value || '').trim();
     const emoji = document.getElementById('selectedEventEmoji').value || '🎯';
 
     // New fields
@@ -2375,6 +2405,7 @@ async function createNewEvent() {
         // Create event in Firestore with all fields
         await setDoc(doc(db, 'events', code), {
             name: SecurityUtils.sanitizeString(name, 100),
+            description: SecurityUtils.sanitizeString(description, 150),
             code: code,
             emoji: emoji,
             createdAt: serverTimestamp(),
@@ -2574,6 +2605,8 @@ function openEditEventModal(eventCode) {
     document.getElementById('editEventCode').value = eventCode;
     document.getElementById('editEventCodeDisplay').value = eventCode;
     document.getElementById('editEventName').value = event.name || '';
+    const editEventDescriptionInput = document.getElementById('editEventDescription');
+    if (editEventDescriptionInput) editEventDescriptionInput.value = event.description || '';
     document.getElementById('editEventVenue').value = event.venue || '';
     document.getElementById('editEventTeamMin').value = event.teamSize?.min || 2;
     document.getElementById('editEventTeamMax').value = event.teamSize?.max || 3;
@@ -2630,6 +2663,7 @@ window.selectEditEventEmoji = selectEditEventEmoji;
 async function saveEventEdit() {
     const eventCode = document.getElementById('editEventCode').value;
     const name = document.getElementById('editEventName').value.trim();
+    const description = (document.getElementById('editEventDescription')?.value || '').trim();
     const emoji = document.getElementById('editSelectedEventEmoji').value || '🎯';
     const eventDate = document.getElementById('editEventDate').value;
     const eventTime = document.getElementById('editEventTime').value;
@@ -2664,6 +2698,7 @@ async function saveEventEdit() {
         // Update event in Firestore
         await updateDoc(doc(db, 'events', eventCode), {
             name: SecurityUtils.sanitizeString(name, 100),
+            description: SecurityUtils.sanitizeString(description, 150),
             emoji: emoji,
             isActive: isActive,
             eventDate: formattedDate,

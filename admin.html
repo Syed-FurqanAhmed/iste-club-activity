@@ -242,6 +242,10 @@
                     <input type="text" id="editEventName" placeholder="e.g. Code Sprint 2.0" maxlength="100">
                 </div>
                 <div class="form-group">
+                    <label>Event Description / Subheading</label>
+                    <input type="text" id="editEventDescription" placeholder="e.g. Your Voice Matters More Than You Think" maxlength="150">
+                </div>
+                <div class="form-group">
                     <label>Event Code</label>
                     <input type="text" id="editEventCodeDisplay" disabled style="opacity: 0.6; cursor: not-allowed;">
                     <p style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Event code cannot be changed
@@ -1064,6 +1068,10 @@
                                         <label>Event Code (lowercase, no spaces) <span class="required">*</span></label>
                                         <input type="text" id="newEventCode" placeholder="e.g. codesprint" pattern="[a-z0-9_]+" maxlength="50"
                                             oninput="this.value = this.value.toLowerCase().replace(/[^a-z0-9_]/g, '')">
+                                    </div>
+                                    <div class="form-group" style="grid-column: 1 / -1;">
+                                        <label>Event Description / Subheading</label>
+                                        <input type="text" id="newEventDescription" placeholder="e.g. Your Voice Matters More Than You Think" maxlength="150">
                                     </div>
                                 </div>
                                 <div class="form-group">
