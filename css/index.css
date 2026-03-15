@@ -1415,7 +1415,31 @@
             font-size: clamp(32px, 5vw, 48px);
             font-weight: 800;
             margin-bottom: 20px;
-            color: var(--text-primary);
+            color: var(--accent-1);
+            display: grid;
+            gap: 10px;
+            line-height: 1.12;
+            letter-spacing: -0.02em;
+        }
+
+        .activity-info h2 .event-main {
+            display: block;
+            color: var(--accent-1);
+            text-wrap: balance;
+        }
+
+        .activity-info h2 .event-sub {
+            display: block;
+            font-family: 'Nyght Serif', 'Playfair Display', serif;
+            font-size: clamp(18px, 2.2vw, 24px);
+            font-weight: 400;
+            line-height: 1.28;
+            letter-spacing: 0;
+            color: #334155;
+            max-width: 24ch;
+            text-wrap: balance;
+            border-left: 3px solid rgba(99, 102, 241, 0.35);
+            padding-left: 14px;
         }
 
         .activity-info h2 .gradient-text {
@@ -3353,6 +3377,11 @@
 
             .activity-info h2 {
                 font-size: 32px;
+                gap: 8px;
+            }
+
+            .activity-info h2 .event-sub {
+                max-width: none;
             }
         }
 
@@ -3471,6 +3500,12 @@
 
             .activity-info h2 {
                 font-size: 28px;
+                gap: 6px;
+            }
+
+            .activity-info h2 .event-sub {
+                font-size: clamp(16px, 4.8vw, 20px);
+                padding-left: 10px;
             }
         }
 

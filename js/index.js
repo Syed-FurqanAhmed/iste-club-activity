@@ -1382,22 +1382,35 @@ function renderFeaturedEvent(event) {
     if (contentEl) contentEl.style.display = '';
     if (noEventEl) noEventEl.style.display = 'none';
     
-    // Update title - prefer separate description field, fall back to legacy "Name - Subtitle" format.
+    // Update title with clear hierarchy: kicker, headline, and subheadline.
     const eventTitle = event?.name || '';
     const eventDescription = (event?.description || '').trim();
     currentFeaturedEventName = eventTitle;
 
     if (titleEl) {
-        if (eventDescription) {
-            titleEl.innerHTML = `${escapeHtml(eventTitle)} - <span class="gradient-text">${escapeHtml(eventDescription)}</span>`;
-        } else {
+        let mainHeading = eventTitle;
+        let subHeading = eventDescription;
+
+        if (!subHeading) {
             const nameParts = eventTitle.split(' - ');
             if (nameParts.length > 1) {
-                titleEl.innerHTML = `${escapeHtml(nameParts[0])} - <span class="gradient-text">${escapeHtml(nameParts.slice(1).join(' - '))}</span>`;
-            } else {
-                titleEl.innerHTML = `<span class="gradient-text">${escapeHtml(eventTitle)}</span>`;
+                mainHeading = nameParts[0];
+                subHeading = nameParts.slice(1).join(' - ');
             }
         }
+
+        // Fallback so the featured area never looks incomplete when description is empty.
+        if (!subHeading) {
+            const normalizedTitle = (mainHeading || '').toLowerCase();
+            if (normalizedTitle.includes('ted talk')) {
+                subHeading = 'Your Voice Matters More Than You Think';
+            }
+        }
+
+        titleEl.innerHTML = `
+            <span class="event-main">${escapeHtml(mainHeading)}</span>
+            ${subHeading ? `<span class="event-sub">${escapeHtml(subHeading)}</span>` : ''}
+        `;
     }
     
     // Update details
