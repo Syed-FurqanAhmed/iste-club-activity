@@ -1428,19 +1428,23 @@ function renderFeaturedEvent(event) {
         detailsEl.innerHTML = `
             <div class="activity-detail">
                 <div class="activity-detail-icon">📅</div>
-                <span>${escapeHtml(dateDisplay)}</span>
+                <span class="activity-detail-label">Date:</span>
+                <span class="activity-detail-value">${escapeHtml(dateDisplay)}</span>
             </div>
             <div class="activity-detail">
                 <div class="activity-detail-icon">🕐</div>
-                <span>${escapeHtml(event.eventTime || 'Time TBA')}</span>
+                <span class="activity-detail-label">Time:</span>
+                <span class="activity-detail-value">${escapeHtml(event.eventTime || 'Time TBA')}</span>
             </div>
             <div class="activity-detail">
                 <div class="activity-detail-icon">📍</div>
-                <span>${escapeHtml(event.venue || 'Venue TBA')}</span>
+                <span class="activity-detail-label">Venue:</span>
+                <span class="activity-detail-value">${escapeHtml(event.venue || 'Venue TBA')}</span>
             </div>
             <div class="activity-detail">
                 <div class="activity-detail-icon">👥</div>
-                <span>Team Size: ${escapeHtml(teamSizeText)}</span>
+                <span class="activity-detail-label">Team Size:</span>
+                <span class="activity-detail-value">${escapeHtml(teamSizeText)}</span>
             </div>
         `;
     }

@@ -1454,13 +1454,14 @@
             flex-direction: column;
             gap: 16px;
             margin-bottom: 30px;
+            text-align: left;
         }
 
         .activity-detail {
-            display: flex;
+            display: grid;
+            grid-template-columns: 48px max-content minmax(0, 1fr);
             align-items: center;
-            gap: 15px;
-            color: var(--text-secondary);
+            column-gap: 10px;
             font-size: 16px;
         }
 
@@ -1474,6 +1475,19 @@
             justify-content: center;
             font-size: 22px;
             box-shadow: var(--shadow-soft);
+        }
+
+        .activity-detail-label {
+            font-weight: 700;
+            letter-spacing: 0.01em;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .activity-detail-value {
+            min-width: 0;
+            color: var(--text-secondary);
+            line-height: 1.4;
         }
 
         .activity-poster {
@@ -3506,6 +3520,18 @@
             .activity-info h2 .event-sub {
                 font-size: clamp(16px, 4.8vw, 20px);
                 padding-left: 10px;
+            }
+
+            .activity-detail {
+                grid-template-columns: 44px max-content minmax(0, 1fr);
+                column-gap: 8px;
+                font-size: 15px;
+            }
+
+            .activity-detail-icon {
+                width: 44px;
+                height: 44px;
+                font-size: 20px;
             }
         }
 
