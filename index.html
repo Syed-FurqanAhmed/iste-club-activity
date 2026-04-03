@@ -122,10 +122,12 @@
         <div class="nav-links" id="navLinks">
             <a href="#" class="active">Home</a>
             <a href="#about">About</a>
+            <a href="#affiliation">Affiliation</a>
             <a href="#activity">Events</a>
+            <a href="#winners">Winners</a>
             <a href="#gallery">Gallery</a>
             <a href="#team">Team</a>
-            <a href="#updates" class="nav-cta">Get Updates</a>
+            <a href="admin.html" class="nav-cta">Admin</a>
         </div>
         <div class="hamburger" id="hamburger" onclick="toggleNav()" aria-label="Toggle navigation menu" role="button"
             tabindex="0" aria-expanded="false" aria-controls="navLinks">
@@ -139,26 +141,19 @@
     <section class="hero" id="main-content">
         <div class="hero-content">
             <div class="hero-text">
-                <span class="hero-badge">For builders, not bystanders</span>
-                <h1>Build real skills with <br><span class="gradient-text">ISTE TOCE</span></h1>
-                <p class="hero-description">Move from classroom theory to confident execution through workshops,
-                    design battles, and peer-led projects.</p>
+                <h1>Welcome to <br><span class="gradient-text">ISTE Tech Hub</span></h1>
+                <p class="hero-description">Join the most vibrant technical community. Participate in workshops,
+                    hackathons, and coding challenges to level up your skills.</p>
                 <div class="hero-buttons">
-                    <a href="#updates" class="btn btn-primary">Get Event Updates</a>
-                    <a href="#activity" class="btn btn-secondary">See Upcoming Event</a>
+                    <a href="#activity" class="btn btn-primary">Explore Events ✨</a>
+                    <a href="#about" class="btn btn-secondary">Learn More</a>
                 </div>
-                <div class="hero-trust" aria-label="Trust signals">
-                    <div class="trust-pill">
-                        <strong>500+</strong>
-                        <small>Active Members</small>
-                    </div>
-                    <div class="trust-pill">
-                        <strong>25+</strong>
-                        <small>Events Hosted</small>
-                    </div>
-                    <div class="trust-pill">
-                        <strong>KA-093</strong>
-                        <small>ISTE Chapter Since 2007</small>
+                <!-- ISTE Credential Badge -->
+                <div class="hero-credential-badge">
+                    <span class="credential-icon">🏅</span>
+                    <div class="credential-text">
+                        <strong>ISTE Certified</strong>
+                        <small>Student Chapter KA-093 | Since 2007</small>
                     </div>
                 </div>
             </div>
@@ -194,23 +189,6 @@
         </div>
     </section>
 
-    <!-- UPDATES CTA -->
-    <section class="updates-cta reveal" id="updates">
-        <div class="updates-card">
-            <div class="updates-copy">
-                <span class="section-tag">Stay in the Loop</span>
-                <h2 class="updates-title">Get event updates first.</h2>
-                <p class="updates-subtitle">Drop your email in 10 seconds. Register your full team only when you are ready.</p>
-            </div>
-            <form class="updates-form" id="updatesForm" novalidate>
-                <label class="visually-hidden" for="updatesEmail">Email address</label>
-                <input type="email" id="updatesEmail" name="updatesEmail" placeholder="you@college.edu" autocomplete="email" required maxlength="100">
-                <button class="btn btn-primary" id="updatesSubmit" type="submit">Notify Me</button>
-                <p class="updates-status" id="updatesStatus" role="status" aria-live="polite"></p>
-            </form>
-        </div>
-    </section>
-
     <!-- ABOUT SECTION -->
     <section class="about reveal" id="about">
         <div class="section-header">
@@ -221,17 +199,17 @@
         </div>
         <div class="features-grid">
             <div class="feature-card">
-                <div class="feature-icon">01</div>
+                <div class="feature-icon">💡</div>
                 <h3>Innovation Hub</h3>
                 <p>Explore cutting-edge technologies and develop innovative solutions to real-world problems.</p>
             </div>
             <div class="feature-card">
-                <div class="feature-icon">02</div>
+                <div class="feature-icon">🎯</div>
                 <h3>Skill Development</h3>
                 <p>Enhance your technical skills through workshops, bootcamps, and hands-on projects.</p>
             </div>
             <div class="feature-card">
-                <div class="feature-icon">03</div>
+                <div class="feature-icon">🤝</div>
                 <h3>Community</h3>
                 <p>Connect with like-minded peers, mentors, and industry professionals.</p>
             </div>
@@ -354,7 +332,7 @@
                 </div>
                 <div class="register-btn-wrapper">
                     <span class="event-status-badge" id="eventStatusBadge">Loading...</span>
-                    <button class="btn btn-primary" onclick="openModal()" id="registerBtn" disabled>Register Team</button>
+                    <button class="btn btn-primary" onclick="openModal()" id="registerBtn" disabled>Register Now 🎉</button>
                 </div>
             </div>
             <div class="activity-poster" id="featuredEventPoster">
