@@ -21,6 +21,52 @@
     const DEBUG_MODE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     const secureLog = (...args) => { if (DEBUG_MODE) console.log(...args); };
 
+    // ===== IMAGE PROTECTION (CLIENT-SIDE DETERRENTS) =====
+    function hardenImageElement(img) {
+        if (!img || img.dataset.protectedImage === 'true') return;
+        img.dataset.protectedImage = 'true';
+        img.classList.add('protected-image');
+        img.setAttribute('draggable', 'false');
+    }
+
+    function hardenImagesInRoot(root) {
+        if (!root || typeof root.querySelectorAll !== 'function') return;
+        root.querySelectorAll('img').forEach(hardenImageElement);
+    }
+
+    function initImageProtection() {
+        hardenImagesInRoot(document);
+
+        document.addEventListener('contextmenu', function (event) {
+            if (event.target && event.target.closest && event.target.closest('img')) {
+                event.preventDefault();
+            }
+        });
+
+        document.addEventListener('dragstart', function (event) {
+            if (event.target && event.target.closest && event.target.closest('img')) {
+                event.preventDefault();
+            }
+        });
+
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    if (!(node instanceof Element)) return;
+                    if (node.tagName === 'IMG') {
+                        hardenImageElement(node);
+                    } else {
+                        hardenImagesInRoot(node);
+                    }
+                });
+            });
+        });
+
+        if (document.body) {
+            observer.observe(document.body, { childList: true, subtree: true });
+        }
+    }
+
     // Initialize Firebase with error handling
     let db;
     try {
@@ -39,6 +85,8 @@
 
     // ===== SECURITY INITIALIZATION =====
     document.addEventListener('DOMContentLoaded', function () {
+        initImageProtection();
+
         // Check if Firebase is configured
         if (!db) {
             secureLog('[App] Firebase not configured. Some features will be unavailable.');
