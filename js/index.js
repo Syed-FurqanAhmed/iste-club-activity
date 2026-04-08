@@ -233,6 +233,8 @@
 
         // Reset all custom dropdowns to placeholder state
         resetAllCustomSelects();
+        setCustomSelectValue('memberCount', '1', '1 Member');
+        updateMemberSectionsVisibility(1);
 
         // SECURITY: Clear any previous validation errors
         // Note: Rate limiting is active but hidden from users to avoid confusion
@@ -415,6 +417,10 @@
                     });
                     item.classList.add('selected');
 
+                    if (dropdown.id === 'memberCount') {
+                        updateMemberSectionsVisibility(parseInt(value, 10) || 1);
+                    }
+
                     // Close dropdown
                     dropdown.classList.remove('open');
                     trigger.setAttribute('aria-expanded', 'false');
@@ -474,6 +480,116 @@
         });
     }
 
+    function getCustomSelectPlaceholder(id) {
+        if (id === 'memberCount') return 'Select Members';
+        if (id.includes('Dept')) return 'Select Dept';
+        if (id.includes('Sem')) return 'Select Sem';
+        return 'Select';
+    }
+
+    function resetCustomSelectById(selectId) {
+        var dropdown = document.getElementById(selectId);
+        if (!dropdown) return;
+
+        dropdown.dataset.value = '';
+        dropdown.classList.remove('open');
+
+        var trigger = dropdown.querySelector('.select-trigger');
+        if (trigger) {
+            var selectedText = trigger.querySelector('.selected-text');
+            selectedText.textContent = getCustomSelectPlaceholder(dropdown.id || '');
+            selectedText.classList.add('placeholder');
+            trigger.setAttribute('aria-expanded', 'false');
+        }
+
+        dropdown.querySelectorAll('.select-item').forEach(function (item) {
+            item.classList.remove('selected');
+        });
+    }
+
+    function setCustomSelectValue(selectId, value, displayText) {
+        var dropdown = document.getElementById(selectId);
+        if (!dropdown) return;
+
+        dropdown.dataset.value = value;
+
+        var trigger = dropdown.querySelector('.select-trigger');
+        if (trigger) {
+            var selectedText = trigger.querySelector('.selected-text');
+            selectedText.textContent = displayText;
+            selectedText.classList.remove('placeholder');
+            trigger.setAttribute('aria-expanded', 'false');
+        }
+
+        dropdown.querySelectorAll('.select-item').forEach(function (item) {
+            item.classList.toggle('selected', item.dataset.value === value);
+        });
+    }
+
+    function clearMemberValidationErrors(memberIndex) {
+        ['Name', 'USN', 'Dept', 'Sem'].forEach(function (fieldKey) {
+            var field = document.getElementById('member' + memberIndex + fieldKey);
+            if (!field) return;
+
+            field.classList.remove('input-error');
+            field.style.borderColor = '';
+
+            var group = field.closest('.form-group');
+            if (group) {
+                group.querySelectorAll('.validation-error').forEach(function (errorEl) {
+                    errorEl.remove();
+                });
+            }
+        });
+
+        var usnError = document.getElementById('member' + memberIndex + 'USNError');
+        if (usnError) {
+            usnError.style.display = 'none';
+        }
+    }
+
+    function clearMemberFields(memberIndex) {
+        var nameInput = document.getElementById('member' + memberIndex + 'Name');
+        var usnInput = document.getElementById('member' + memberIndex + 'USN');
+
+        if (nameInput) nameInput.value = '';
+        if (usnInput) usnInput.value = '';
+
+        resetCustomSelectById('member' + memberIndex + 'Dept');
+        resetCustomSelectById('member' + memberIndex + 'Sem');
+        clearMemberValidationErrors(memberIndex);
+    }
+
+    function updateMemberSectionsVisibility(memberCount) {
+        var normalizedCount = Math.min(Math.max(parseInt(memberCount, 10) || 1, 1), 4);
+
+        for (var memberIndex = 1; memberIndex <= 4; memberIndex++) {
+            var section = document.getElementById('memberSection' + memberIndex);
+            if (!section) continue;
+
+            var shouldShow = memberIndex <= normalizedCount;
+            section.style.display = shouldShow ? '' : 'none';
+
+            if (!shouldShow) {
+                clearMemberFields(memberIndex);
+            }
+        }
+    }
+
+    function normalizeMemberDataForCount(formData) {
+        var normalizedCount = Math.min(Math.max(parseInt(formData.memberCount, 10) || 1, 1), 4);
+        formData.memberCount = normalizedCount;
+
+        for (var memberIndex = 2; memberIndex <= 4; memberIndex++) {
+            if (memberIndex > normalizedCount) {
+                formData['member' + memberIndex + 'Name'] = '';
+                formData['member' + memberIndex + 'USN'] = '';
+                formData['member' + memberIndex + 'Dept'] = '';
+                formData['member' + memberIndex + 'Sem'] = '';
+            }
+        }
+    }
+
     function resetAllCustomSelects() {
         document.querySelectorAll('.custom-select').forEach(function (dropdown) {
             dropdown.dataset.value = '';
@@ -481,9 +597,8 @@
             var trigger = dropdown.querySelector('.select-trigger');
             if (trigger) {
                 var selectedText = trigger.querySelector('.selected-text');
-                // Determine placeholder text from context (Dept or Sem)
                 var id = dropdown.id || '';
-                selectedText.textContent = id.includes('Dept') ? 'Select Dept' : 'Select Sem';
+                selectedText.textContent = getCustomSelectPlaceholder(id);
                 selectedText.classList.add('placeholder');
                 trigger.setAttribute('aria-expanded', 'false');
             }
@@ -1040,6 +1155,7 @@
         const formData = {
             teamEmail: document.getElementById('teamEmail').value,
             teamName: document.getElementById('teamName').value,
+            memberCount: parseInt(document.getElementById('memberCount').dataset.value || '1', 10),
             member1Name: document.getElementById('member1Name').value,
             member1USN: document.getElementById('member1USN').value,
             member1Dept: document.getElementById('member1Dept').dataset.value,
@@ -1051,8 +1167,14 @@
             member3Name: document.getElementById('member3Name').value,
             member3USN: document.getElementById('member3USN').value,
             member3Dept: document.getElementById('member3Dept').dataset.value,
-            member3Sem: document.getElementById('member3Sem').dataset.value
+            member3Sem: document.getElementById('member3Sem').dataset.value,
+            member4Name: document.getElementById('member4Name').value,
+            member4USN: document.getElementById('member4USN').value,
+            member4Dept: document.getElementById('member4Dept').dataset.value,
+            member4Sem: document.getElementById('member4Sem').dataset.value
         };
+
+        normalizeMemberDataForCount(formData);
 
         // ===== SECURITY: Process through security module =====
         if (window.ISTESecurity) {
@@ -1076,6 +1198,7 @@
             // Use sanitized data
             formData.teamName = result.data.teamName;
             formData.teamEmail = result.data.teamEmail;
+            formData.memberCount = result.data.memberCount || formData.memberCount;
             formData.member1Name = result.data.member1Name;
             formData.member1USN = result.data.member1USN;
             formData.member1Dept = result.data.member1Dept;
@@ -1085,6 +1208,10 @@
             formData.member3Name = result.data.member3Name;
             formData.member3USN = result.data.member3USN;
             formData.member3Dept = result.data.member3Dept;
+            formData.member4Name = result.data.member4Name;
+            formData.member4USN = result.data.member4USN;
+            formData.member4Dept = result.data.member4Dept;
+            normalizeMemberDataForCount(formData);
         } else {
             // Fallback: basic button disable
             btn.classList.add('loading');
@@ -1142,6 +1269,12 @@
                     dept: formData.member3Dept || null,
                     semester: formData.member3Sem || null
                 },
+                member4: {
+                    name: formData.member4Name || null,
+                    usn: formData.member4USN || null,
+                    dept: formData.member4Dept || null,
+                    semester: formData.member4Sem || null
+                },
                 registeredAt: firebase.firestore.FieldValue.serverTimestamp(),
                 status: 'Pending'  // Must be 'Pending' with capital P per firestore.rules
             });
@@ -1155,8 +1288,7 @@
                 window.ISTESecurity.registrationLimiter.resetErrorCount();
             }
 
-            // Count members (1 required + optional 2 and 3)
-            const memberCount = 1 + [formData.member2Name, formData.member3Name].filter(Boolean).length;
+            const memberCount = formData.memberCount || 1;
 
             // Close registration modal and show success modal with confetti
             const successEventName = await resolveSuccessEventName(activeEvent);
